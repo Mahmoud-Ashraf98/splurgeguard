@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { X, ChevronDown, ShieldCheck, BarChart3, Check } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import {
-  ALL_CATEGORIES,
   DISCRETIONARY_CATEGORIES,
   ESSENTIAL_CATEGORIES,
+  isEssentialCategory,
 } from "@/lib/splurge-types";
 import { fmtVND } from "@/lib/splurge-utils";
 
@@ -18,6 +18,7 @@ export function LogSheet({ open, onClose }: Props) {
   const [mode, setMode] = useState<"log" | "vault">("log");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [catOpen, setCatOpen] = useState(false);
   const [justification, setJustification] = useState("");
   const [currency, setCurrency] = useState<"VND" | "USD">("VND");
   // vault
@@ -33,6 +34,7 @@ export function LogSheet({ open, onClose }: Props) {
       setItemName("");
       setDelayHours(24);
       setMode("log");
+      setCatOpen(false);
     }
   }, [open]);
 
