@@ -173,8 +173,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [hydrated, data.userState, data.transactions, mutate]);
 
   const smartDailyLimit = useMemo(
-    () => (data.userState ? calcSmartDailyLimit(data.userState) : 0),
-    [data.userState]
+    () => (data.userState ? calcSmartDailyLimit(data.userState, new Date(), data.transactions) : 0),
+    [data.userState, data.transactions]
   );
 
   const todayDiscretionary = useMemo(
