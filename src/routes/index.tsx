@@ -38,88 +38,103 @@ function Index() {
   };
 
   return (
-    <div className="px-5 pb-32 pt-6">
-      <header className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Welcome Back</p>
-          <h1 className="text-xl font-bold text-white">Vibe Coder</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-white">Vibe Coder</h1>
         </div>
         <button
           onClick={app.toggleCurrency}
-          className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs text-emerald-400 hover:border-emerald-400"
+          className="rounded-lg border border-white/5 bg-slate-900/40 px-3 py-1.5 font-mono text-xs tracking-widest text-emerald-400 backdrop-blur-xl transition-all hover:border-emerald-400/40 hover:shadow-[0_0_20px_-5px_#00ff87]"
         >
           {cur}
         </button>
       </header>
 
-      <div className="mb-6 flex flex-col items-center rounded-2xl border border-slate-800 bg-slate-900 p-6">
-        <StatusRing used={app.todayDiscretionary} limit={app.smartDailyLimit} />
-        <div className="mt-4 grid w-full grid-cols-2 gap-3 text-center">
-          <div className="rounded-lg bg-slate-950 p-3">
-            <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Spent Today</p>
-            <p className="mt-0.5 font-mono text-sm font-bold text-white">{fmtMoney(app.todayDiscretionary, cur, rate)}</p>
+      <div className="mb-8 flex flex-col items-center">
+        <StatusRing
+          used={app.todayDiscretionary}
+          limit={app.smartDailyLimit}
+          remainingLabel={fmtMoney(remaining, cur, rate)}
+        />
+        <div className="mt-6 flex w-full items-center justify-around">
+          <div className="flex flex-col items-center">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
+            <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.todayDiscretionary, cur, rate)}</span>
           </div>
-          <div className="rounded-lg bg-slate-950 p-3">
-            <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Remaining</p>
-            <p className="mt-0.5 font-mono text-sm font-bold text-emerald-400">{fmtMoney(remaining, cur, rate)}</p>
+          <div className="h-8 w-px bg-white/5" />
+          <div className="flex flex-col items-center">
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
+            <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.smartDailyLimit, cur, rate)}</span>
           </div>
-        </div>
-        <div className="mt-3 w-full rounded-lg bg-slate-950 p-3 text-center">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Smart Daily Limit</p>
-          <p className="mt-0.5 font-mono text-base font-bold text-cyan-400">{fmtMoney(app.smartDailyLimit, cur, rate)}</p>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-slate-900 to-cyan-950/30 p-5">
+      <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-cyan-400" />
-            <span className="font-mono text-xs uppercase tracking-wider text-slate-400">Discipline Points</span>
+            <Coins className="h-4 w-4 text-cyan-400" style={{ filter: "drop-shadow(0 0 8px rgba(0,212,255,0.6))" }} />
+            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Discipline Points</span>
           </div>
           <button
             onClick={() => setDpModal(true)}
-            className="rounded-md border border-cyan-400/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-cyan-400 hover:bg-cyan-400/10"
+            className="rounded-md border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-400/10 hover:shadow-[0_0_15px_-3px_#00d4ff]"
           >
             Spend DP
           </button>
         </div>
-        <div className="mb-3 flex items-end justify-between">
-          <p className="font-mono text-4xl font-black text-cyan-400">{us.totalDP}</p>
-          <div className="flex items-center gap-1.5 text-amber-400">
-            <Flame className="h-5 w-5" />
-            <span className="font-mono text-lg font-bold">{us.currentStreakDays}</span>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">day streak</span>
+        <div className="mb-4 flex items-end justify-between">
+          <p
+            className="font-mono text-5xl font-black tabular-nums text-cyan-400"
+            style={{ filter: "drop-shadow(0 0 12px rgba(0,212,255,0.6))" }}
+          >
+            {us.totalDP}
+          </p>
+          <div className="flex items-center gap-1.5">
+            <Flame
+              className="h-5 w-5 text-amber-400"
+              style={{ filter: "drop-shadow(0 0 8px rgba(251,191,36,0.7))" }}
+            />
+            <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{us.currentStreakDays}</span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">day streak</span>
           </div>
         </div>
-        <div className="mb-1 flex justify-between font-mono text-[10px] text-slate-500">
+        <div className="mb-1.5 flex justify-between font-mono text-[10px] uppercase tracking-widest text-slate-500">
           <span>Next milestone</span>
-          <span>{us.currentStreakDays}/{next} days</span>
+          <span className="tabular-nums">{us.currentStreakDays}/{next}</span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
-          <div className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400" style={{ width: `${milestoneProgress * 100}%` }} />
+        <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.5)]"
+            style={{ width: `${milestoneProgress * 100}%` }}
+          />
         </div>
       </div>
 
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-slate-400">Active Vault</h2>
-          <Link to="/vault" className="font-mono text-[10px] uppercase tracking-wider text-cyan-400">View all →</Link>
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Active Vault</h2>
+          <Link to="/vault" className="font-mono text-[10px] uppercase tracking-widest text-cyan-400 hover:text-cyan-300">View all →</Link>
         </div>
         {activeVault.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center">
+          <div className="rounded-2xl border border-dashed border-white/5 bg-slate-900/20 p-6 text-center backdrop-blur-xl">
             <Lock className="mx-auto mb-2 h-6 w-6 text-slate-600" />
             <p className="text-xs text-slate-500">No items cooling. Resist an impulse → vault it.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {activeVault.map((v) => (
-              <div key={v.id} className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+              <div
+                key={v.id}
+                className="rounded-xl border border-white/5 bg-slate-900/30 p-3 shadow-xl shadow-black/40 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_10px_30px_-15px_rgba(0,0,0,0.8)]"
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-white">{v.itemName}</p>
-                    <p className="font-mono text-[10px] uppercase text-slate-500">{v.category} · {v.delayHours}h</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">{v.category} · {v.delayHours}h</p>
                   </div>
-                  <p className="font-mono text-sm text-cyan-400">{fmtMoney(v.estimatedAmountVND, cur, rate)}</p>
+                  <p className="font-mono text-sm tabular-nums text-cyan-400">{fmtMoney(v.estimatedAmountVND, cur, rate)}</p>
                 </div>
               </div>
             ))}
@@ -130,7 +145,7 @@ function Index() {
       <div className="fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5">
         <button
           onClick={() => setSheetOpen(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-400 py-4 font-mono text-sm font-bold uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(0,255,135,0.4)] transition-all hover:bg-emerald-300"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_20px_-5px_#00ff87] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_-5px_#00ff87] active:scale-[0.98]"
         >
           <Plus className="h-5 w-5" /> Log Expense
         </button>
