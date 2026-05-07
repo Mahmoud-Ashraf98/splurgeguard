@@ -19,11 +19,13 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider transition-colors ${
-                active ? "text-emerald-400" : "text-slate-500 hover:text-slate-300"
+              className={`flex flex-1 flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider transition-all duration-300 ${
+                active ? "-translate-y-1 text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon
+                className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
+              />
               <span className="font-mono">{label}</span>
             </Link>
           );

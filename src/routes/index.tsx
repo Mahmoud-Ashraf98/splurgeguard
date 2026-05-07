@@ -41,8 +41,13 @@ function Index() {
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back</p>
-          <h1 className="mt-1 text-xl font-bold tracking-tight text-white">Vibe Coder</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
+          <h1
+            className="mt-1 text-2xl font-bold tracking-tight text-white"
+            style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
+          >
+            {us.userName || "Operator"}
+          </h1>
         </div>
         <button
           onClick={app.toggleCurrency}
