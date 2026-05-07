@@ -124,6 +124,36 @@ function StatsPage() {
         )}
       </div>
 
+      {activeAmortizations.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Active Amortizations</h2>
+          <div className="space-y-2">
+            {activeAmortizations.map(({ tx, remaining, pct }) => (
+              <div
+                key={tx.id}
+                className="rounded-xl border border-cyan-400/20 bg-slate-900/40 p-4 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04),0_10px_30px_-15px_rgba(0,212,255,0.25)]"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-white">{tx.justification || tx.category}</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                      {tx.category} · {tx.amortizationDays}d
+                    </p>
+                  </div>
+                  <p className="font-mono text-sm tabular-nums text-cyan-400">{fmtMoney(Math.round(remaining), cur, rate)}</p>
+                </div>
+                <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.5)] transition-all"
+                    style={{ width: `${pct * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div>
         <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Transactions</h2>
         {app.data.transactions.length === 0 ? (
