@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const yDate = new Date(us.lastLoginDate + "T12:00:00");
       const ySpent = discretionarySpentOn(data.transactions, yKey);
       const tempUS: UserState = { ...us };
-      const yLimit = calcSmartDailyLimit(tempUS, yDate);
+      const yLimit = calcSmartDailyLimit(tempUS, yDate, data.transactions);
       if (ySpent <= yLimit) {
         newDP += 50;
         newStreak += 1;
