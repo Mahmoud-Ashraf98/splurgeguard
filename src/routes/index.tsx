@@ -96,10 +96,20 @@ function Index() {
           >
             {us.totalDP}
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            {[3, 7, 14].includes(us.currentStreakDays) && (
+              <div
+                className="relative flex h-9 w-9 items-center justify-center bg-gradient-to-br from-amber-300 to-amber-600 text-slate-950"
+                style={{
+                  clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+                  filter: "drop-shadow(0 0 12px rgba(245,158,11,0.85))",
+                }}
+              >
+                <span className="font-mono text-xs font-black tabular-nums">{us.currentStreakDays}</span>
+              </div>
+            )}
             <Flame
-              className="h-5 w-5 text-amber-400"
-              style={{ filter: "drop-shadow(0 0 8px rgba(251,191,36,0.7))" }}
+              className="h-5 w-5 animate-pulse text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"
             />
             <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{us.currentStreakDays}</span>
             <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">day streak</span>
