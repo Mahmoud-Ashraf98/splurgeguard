@@ -73,6 +73,9 @@ export function LogSheet({ open, onClose }: Props) {
   // vault
   const [itemName, setItemName] = useState("");
   const [delayHours, setDelayHours] = useState(24);
+  // amortization
+  const [amortize, setAmortize] = useState(false);
+  const [amortDays, setAmortDays] = useState("30");
 
   useEffect(() => {
     if (!open) {
@@ -84,8 +87,16 @@ export function LogSheet({ open, onClose }: Props) {
       setDelayHours(24);
       setMode("log");
       setCatOpen(false);
+      setAmortize(false);
+      setAmortDays("30");
     }
   }, [open]);
+
+  const isDiscretionarySelected = category && !isEssentialCategory(category) && category !== "Weed";
+
+  useEffect(() => {
+    if (!isDiscretionarySelected && amortize) setAmortize(false);
+  }, [isDiscretionarySelected, amortize]);
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
   const rate = data.userState?.usdExchangeRate ?? 25400;
