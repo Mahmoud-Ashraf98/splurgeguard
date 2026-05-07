@@ -14,6 +14,14 @@ import {
   Shirt,
   Plane,
   Leaf,
+  Wifi,
+  HeartPulse,
+  Archive,
+  UtensilsCrossed,
+  CreditCard,
+  Cpu,
+  Dumbbell,
+  Sparkles,
   MoreHorizontal,
 } from "lucide-react";
 
@@ -23,10 +31,18 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Motorbike expenses": Fuel,
   "Rent": Home,
   "Visa and documents fees": FileText,
+  "Utilities, Phone & Internet": Wifi,
+  "Medical & Pharmacy": HeartPulse,
+  "Other Essentials": Archive,
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
   "Weed": Leaf,
+  "Dining Out & Street Food": UtensilsCrossed,
+  "Software & Digital Subscriptions": CreditCard,
+  "Tech & Hardware Upgrades": Cpu,
+  "Fitness & Supplements": Dumbbell,
+  "Other Splurges": Sparkles,
 };
 
 const CatIcon = ({ name, className }: { name: string; className?: string }) => {

@@ -50,6 +50,9 @@ export const ESSENTIAL_CATEGORIES = [
   "Motorbike expenses",
   "Rent",
   "Visa and documents fees",
+  "Utilities, Phone & Internet",
+  "Medical & Pharmacy",
+  "Other Essentials",
 ];
 
 export const DISCRETIONARY_CATEGORIES = [
@@ -57,6 +60,11 @@ export const DISCRETIONARY_CATEGORIES = [
   "Clothes",
   "Travelling",
   "Weed",
+  "Dining Out & Street Food",
+  "Software & Digital Subscriptions",
+  "Tech & Hardware Upgrades",
+  "Fitness & Supplements",
+  "Other Splurges",
 ];
 
 export const ALL_CATEGORIES = [...ESSENTIAL_CATEGORIES, ...DISCRETIONARY_CATEGORIES];
