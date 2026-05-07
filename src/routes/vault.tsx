@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Lock, CheckCircle2, Trash2 } from "lucide-react";
+import { Lock, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { fmtMoney } from "@/lib/splurge-utils";
 import { toast } from "sonner";
