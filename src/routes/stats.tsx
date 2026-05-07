@@ -40,6 +40,18 @@ function StatsPage() {
   const discardedCount = app.data.vaultItems.filter((v) => v.status === "discarded").length;
   const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
 
+  const now = Date.now();
+  const activeAmortizations = app.data.transactions
+    .map((t) => {
+      if (!t.amortizationDays || t.amortizationDays <= 1) return null;
+      const daysSince = (now - new Date(t.timestamp).getTime()) / 86400000;
+      if (daysSince >= t.amortizationDays || daysSince < 0) return null;
+      const remaining = t.amountVND * (1 - daysSince / t.amortizationDays);
+      const pct = Math.min(1, daysSince / t.amortizationDays);
+      return { tx: t, remaining, pct };
+    })
+    .filter((x): x is { tx: typeof app.data.transactions[number]; remaining: number; pct: number } => !!x);
+
   // Donut
   let cumulative = 0;
   const radius = 60;
