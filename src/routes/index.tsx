@@ -77,6 +77,27 @@ function Index() {
         </div>
       </div>
 
+      {(() => {
+        const daysUntilPayday = Math.max(0, Math.ceil((new Date(us.paydayDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+        const balanceFormatted = cur === "USD"
+          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.round(us.currentBalanceVND / rate))
+          : new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(us.currentBalanceVND);
+        return (
+          <div className="flex justify-between items-center w-full bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 mb-4 shadow-lg">
+            <div className="flex flex-col items-start">
+              <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1">Total Cycle Balance</span>
+              <span className="text-xl font-mono text-[#f1f5f9] tabular-nums drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{balanceFormatted}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 text-right">Time to Payday</span>
+              <span className="text-lg font-mono text-cyan-300 text-right tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                {daysUntilPayday === 0 ? "TODAY" : `${daysUntilPayday} DAYS`}
+              </span>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
