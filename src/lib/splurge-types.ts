@@ -2,6 +2,7 @@ export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
 
 export interface UserState {
+  userName: string;
   currentBalanceVND: number;
   essentialSpentVND: number;
   cycleStartDate: string;

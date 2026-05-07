@@ -41,8 +41,13 @@ function Index() {
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
       <header className="mb-8 flex items-center justify-between">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back</p>
-          <h1 className="mt-1 text-xl font-bold tracking-tight text-white">Vibe Coder</h1>
+          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
+          <h1
+            className="mt-1 text-2xl font-bold tracking-tight text-white"
+            style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
+          >
+            {us.userName || "Operator"}
+          </h1>
         </div>
         <button
           onClick={app.toggleCurrency}
@@ -91,10 +96,20 @@ function Index() {
           >
             {us.totalDP}
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            {[3, 7, 14].includes(us.currentStreakDays) && (
+              <div
+                className="relative flex h-9 w-9 items-center justify-center bg-gradient-to-br from-amber-300 to-amber-600 text-slate-950"
+                style={{
+                  clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+                  filter: "drop-shadow(0 0 12px rgba(245,158,11,0.85))",
+                }}
+              >
+                <span className="font-mono text-xs font-black tabular-nums">{us.currentStreakDays}</span>
+              </div>
+            )}
             <Flame
-              className="h-5 w-5 text-amber-400"
-              style={{ filter: "drop-shadow(0 0 8px rgba(251,191,36,0.7))" }}
+              className="h-5 w-5 animate-pulse text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"
             />
             <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{us.currentStreakDays}</span>
             <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">day streak</span>

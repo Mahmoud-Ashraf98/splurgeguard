@@ -184,6 +184,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const initUser: AppContextValue["initUser"] = (input) => {
     const today = new Date();
     const us: UserState = {
+      userName: input.userName ?? "Mahmoud",
       currentBalanceVND: input.currentBalanceVND ?? 0,
       essentialSpentVND: 0,
       cycleStartDate: today.toISOString(),

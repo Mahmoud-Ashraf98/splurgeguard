@@ -54,9 +54,16 @@ function VaultPage() {
       </header>
 
       {items.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-800 p-10 text-center">
-          <Lock className="mx-auto mb-3 h-8 w-8 text-slate-600" />
-          <p className="text-sm text-slate-500">Your vault is empty.</p>
+        <div className="rounded-2xl border border-dashed border-white/5 bg-slate-900/20 p-12 text-center backdrop-blur-xl">
+          <div className="relative mx-auto mb-4 flex h-32 items-center justify-center">
+            <div className="absolute h-32 w-32 animate-pulse rounded-full bg-cyan-500/10 blur-2xl" />
+            <Lock
+              className="relative h-24 w-24 animate-bounce text-cyan-400 opacity-20"
+              style={{ animationDuration: "3s" }}
+            />
+          </div>
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Vault is empty</p>
+          <p className="mt-2 text-xs text-slate-600">Resist an impulse → lock it here.</p>
         </div>
       )}
 
