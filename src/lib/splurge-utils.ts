@@ -24,17 +24,30 @@ export const daysBetween = (a: Date | string, b: Date | string) => {
   return Math.round((kb - ka) / 86400000);
 };
 
-export const calcSmartDailyLimit = (us: UserState, today = new Date()) => {
+export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Transaction[] = []) => {
   const daysUntilPayday = Math.max(1, daysBetween(today, us.paydayDate));
   const totalCycleDays = Math.max(1, daysBetween(us.cycleStartDate, us.paydayDate));
   const daysPassed = Math.max(0, daysBetween(us.cycleStartDate, today));
   const proximityWeighting = Math.min(1.2, 1.0 + 0.2 * (daysPassed / totalCycleDays));
-  return Math.floor((us.currentBalanceVND / daysUntilPayday) * proximityWeighting);
+  const totalUnAmortized = txs.reduce((sum, tx) => {
+    if (!tx.amortizationDays || tx.amortizationDays <= 1) return sum;
+    const daysSince = (today.getTime() - new Date(tx.timestamp).getTime()) / 86400000;
+    if (daysSince >= tx.amortizationDays || daysSince < 0) return sum;
+    return sum + tx.amountVND * (1 - daysSince / tx.amortizationDays);
+  }, 0);
+  const virtualBalance = us.currentBalanceVND + totalUnAmortized;
+  return Math.floor((virtualBalance / daysUntilPayday) * proximityWeighting);
 };
 
 export const discretionarySpentOn = (txs: Transaction[], dKey: string) =>
   txs
-    .filter((t) => !t.isEssential && t.category !== "Weed" && dayKey(t.timestamp) === dKey)
+    .filter(
+      (t) =>
+        !t.isEssential &&
+        t.category !== "Weed" &&
+        (!t.amortizationDays || t.amortizationDays <= 1) &&
+        dayKey(t.timestamp) === dKey
+    )
     .reduce((s, t) => s + t.amountVND, 0);
 
 export const weeklyWeedSpent = (txs: Transaction[], today = new Date()) => {
