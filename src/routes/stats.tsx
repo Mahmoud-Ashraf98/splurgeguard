@@ -1,6 +1,34 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
+import {
+  Trash2,
+  Activity,
+  Shield,
+  Wallet,
+  PieChart,
+  Lock,
+  BarChart3,
+  TrendingDown,
+  List,
+  Leaf,
+  CreditCard,
+  Beef,
+  ShoppingBasket,
+  Bike,
+  Home,
+  FileText,
+  Zap,
+  Pill,
+  Package,
+  CupSoda,
+  Shirt,
+  Plane,
+  UtensilsCrossed,
+  Cpu,
+  Dumbbell,
+  Sparkles,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { fmtMoney } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
@@ -10,6 +38,26 @@ export const Route = createFileRoute("/stats")({
 });
 
 const COLORS = ["#00ff87", "#fbbf24", "#00d4ff", "#ff4757", "#a855f7"];
+
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  "Meat and chicken": Beef,
+  "Other essential home groceries": ShoppingBasket,
+  "Motorbike expenses": Bike,
+  "Rent": Home,
+  "Visa and documents fees": FileText,
+  "Utilities, Phone & Internet": Zap,
+  "Medical & Pharmacy": Pill,
+  "Other Essentials": Package,
+  "Diet soda and bottled cold tea soft drinks": CupSoda,
+  "Clothes": Shirt,
+  "Travelling": Plane,
+  "Weed": Leaf,
+  "Dining Out & Street Food": UtensilsCrossed,
+  "Software & Digital Subscriptions": CreditCard,
+  "Tech & Hardware Upgrades": Cpu,
+  "Fitness & Supplements": Dumbbell,
+  "Other Splurges": Sparkles,
+};
 
 function StatsPage() {
   const app = useApp();
@@ -52,39 +100,57 @@ function StatsPage() {
     })
     .filter((x): x is { tx: typeof app.data.transactions[number]; remaining: number; pct: number } => !!x);
 
-  // Donut
   let cumulative = 0;
   const radius = 60;
   const circ = 2 * Math.PI * radius;
 
   return (
-    <div className="px-5 pb-24 pt-6">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-24 pt-6">
       <header className="mb-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Cycle</p>
-        <h1 className="text-2xl font-bold text-white">Statistics</h1>
+        <div className="flex items-center gap-2 mb-6">
+          <Activity className="w-6 h-6 text-cyan-500" />
+          <h1 className="text-xl font-bold tracking-widest uppercase text-[#f1f5f9] drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+            Cycle Telemetry
+          </h1>
+        </div>
       </header>
 
       <div className="mb-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Essential</p>
-          <p className="mt-1 font-mono text-base font-bold text-white">{fmtMoney(us.essentialSpentVND, cur, rate)}</p>
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
+          <p className="text-[10px] tracking-widest uppercase text-slate-400">
+            <Shield className="w-4 h-4 inline-block mr-1 text-emerald-500" />
+            Essential
+          </p>
+          <p className="mt-1 text-emerald-400 font-mono text-xl font-bold">{fmtMoney(us.essentialSpentVND, cur, rate)}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Discretionary</p>
-          <p className="mt-1 font-mono text-base font-bold text-emerald-400">{fmtMoney(discretionaryTotal, cur, rate)}</p>
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
+          <p className="text-[10px] tracking-widest uppercase text-slate-400">
+            <Wallet className="w-4 h-4 inline-block mr-1 text-amber-500" />
+            Discretionary
+          </p>
+          <p className="mt-1 text-amber-400 font-mono text-xl font-bold">{fmtMoney(discretionaryTotal, cur, rate)}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">% Used</p>
-          <p className="mt-1 font-mono text-base font-bold text-amber-400">{usedPct.toFixed(1)}%</p>
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
+          <p className="text-[10px] tracking-widest uppercase text-slate-400">
+            <PieChart className="w-4 h-4 inline-block mr-1 text-cyan-500" />
+            % Used
+          </p>
+          <p className="mt-1 text-cyan-400 font-mono text-xl font-bold">{usedPct.toFixed(1)}%</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-          <p className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Vault Discarded</p>
-          <p className="mt-1 font-mono text-base font-bold text-cyan-400">{discardedCount}</p>
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
+          <p className="text-[10px] tracking-widest uppercase text-slate-400">
+            <Lock className="w-4 h-4 inline-block mr-1 text-purple-500" />
+            Vault Discarded
+          </p>
+          <p className="mt-1 text-purple-400 font-mono text-xl font-bold">{discardedCount}</p>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Discretionary Breakdown</h2>
+      <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
+        <div className="mb-4">
+          <BarChart3 className="w-4 h-4 inline-block mr-2 text-slate-400" />
+          <span className="text-xs tracking-widest uppercase text-slate-400">Discretionary Breakdown</span>
+        </div>
         {breakdown.length === 0 ? (
           <p className="py-6 text-center text-xs text-slate-500">No discretionary spending yet.</p>
         ) : (
@@ -125,26 +191,31 @@ function StatsPage() {
       </div>
 
       {activeAmortizations.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Active Amortizations</h2>
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
+          <div className="mb-4">
+            <TrendingDown className="w-4 h-4 inline-block mr-2 text-cyan-500" />
+            <span className="text-xs tracking-widest uppercase text-cyan-500">Active Amortizations</span>
+          </div>
           <div className="space-y-2">
             {activeAmortizations.map(({ tx, remaining, pct }) => (
               <div
                 key={tx.id}
-                className="rounded-xl border border-cyan-400/20 bg-slate-900/40 p-4 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04),0_10px_30px_-15px_rgba(0,212,255,0.25)]"
+                className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
               >
                 <div className="mb-2 flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-white">{tx.justification || tx.category}</p>
+                    <p className="truncate w-full text-sm text-white">{tx.justification || tx.category}</p>
                     <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
                       {tx.category} · {tx.amortizationDays}d
                     </p>
                   </div>
-                  <p className="font-mono text-sm tabular-nums text-cyan-400">{fmtMoney(Math.round(remaining), cur, rate)}</p>
+                  <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)]">
+                    {fmtMoney(Math.round(remaining), cur, rate)}
+                  </p>
                 </div>
-                <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
+                <div className="h-1 overflow-hidden rounded-full bg-slate-800">
                   <div
-                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.5)] transition-all"
+                    className="h-full bg-cyan-500 shadow-[0_0_10px_#00d4ff] transition-all"
                     style={{ width: `${pct * 100}%` }}
                   />
                 </div>
@@ -154,38 +225,48 @@ function StatsPage() {
         </div>
       )}
 
-      <div>
-        <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Transactions</h2>
+      <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5">
+        <div className="mb-4">
+          <List className="w-4 h-4 inline-block mr-2 text-slate-400" />
+          <span className="text-xs tracking-widest uppercase text-slate-400">Transaction Ledger</span>
+        </div>
         {app.data.transactions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
             No transactions yet.
           </p>
         ) : (
-          <div className="space-y-2">
-            {app.data.transactions.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 p-3">
+          <div>
+            {app.data.transactions.map((t) => {
+              const Icon = CATEGORY_ICON[t.category] ?? Package;
+              const iconColor = t.isEssential
+                ? "text-emerald-400"
+                : t.category === "Weed"
+                  ? "text-rose-500"
+                  : "text-amber-400";
+              return (
                 <div
-                  className={`h-9 w-1 rounded-full ${
-                    t.isEssential ? "bg-slate-600" : t.category === "Weed" ? "bg-rose-500" : "bg-emerald-400"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm text-white">{t.category}</p>
-                  <p className="truncate font-mono text-[10px] text-slate-500">
-                    {new Date(t.timestamp).toLocaleString()} {t.fromVault && "· vault"}
-                  </p>
-                </div>
-                <p className={`font-mono text-sm ${t.isEssential ? "text-slate-300" : "text-emerald-400"}`}>
-                  {fmtMoney(t.amountVND, cur, rate)}
-                </p>
-                <button
-                  onClick={() => app.deleteTransaction(t.id)}
-                  className="rounded-md p-1.5 text-slate-600 hover:bg-rose-500/10 hover:text-rose-500"
+                  key={t.id}
+                  className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 mb-2 flex justify-between items-center"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  <Icon className={`w-5 h-5 mr-3 shrink-0 ${iconColor}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm text-white">{t.category}</p>
+                    <p className="truncate font-mono text-[10px] text-slate-500">
+                      {new Date(t.timestamp).toLocaleString()} {t.fromVault && "· vault"}
+                    </p>
+                  </div>
+                  <p className={`font-mono text-sm mx-3 ${t.isEssential ? "text-slate-300" : "text-emerald-400"}`}>
+                    {fmtMoney(t.amountVND, cur, rate)}
+                  </p>
+                  <button
+                    onClick={() => app.deleteTransaction(t.id)}
+                    className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
