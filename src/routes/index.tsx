@@ -112,6 +112,38 @@ function Index() {
         </div>
       </div>
 
+      {us.weeklyWeedLimitVND > 0 && (() => {
+        const spent = weeklyWeedSpent(app.data.transactions);
+        const limit = us.weeklyWeedLimitVND;
+        const pct = Math.min(1, spent / limit);
+        const over = spent > limit;
+        const warn = pct >= 0.8;
+        const barColor = over
+          ? "from-rose-500 to-red-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
+          : warn
+          ? "from-amber-400 to-orange-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]"
+          : "from-emerald-400 to-teal-400 shadow-[0_0_10px_rgba(0,255,135,0.5)]";
+        const valColor = over ? "text-rose-400" : warn ? "text-amber-400" : "text-emerald-400";
+        return (
+          <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest text-slate-500">Weekly Weed Protocol</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">Mon → Sun</span>
+            </div>
+            <div className="mb-2 flex items-baseline justify-between">
+              <span className={`font-mono text-2xl font-bold tabular-nums ${valColor}`}>{fmtMoney(spent, cur, rate)}</span>
+              <span className="font-mono text-xs tabular-nums text-slate-500">/ {fmtMoney(limit, cur, rate)}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/60">
+              <div
+                className={`h-full bg-gradient-to-r ${barColor} transition-all duration-500`}
+                style={{ width: `${pct * 100}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Active Vault</h2>
