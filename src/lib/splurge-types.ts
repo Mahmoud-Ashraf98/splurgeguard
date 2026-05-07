@@ -25,6 +25,7 @@ export interface Transaction {
   isEssential: boolean;
   justification: string;
   fromVault: boolean;
+  amortizationDays?: number;
 }
 
 export interface VaultItem {
