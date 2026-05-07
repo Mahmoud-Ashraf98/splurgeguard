@@ -99,7 +99,7 @@ export function LogSheet({ open, onClose }: Props) {
   }, [isDiscretionarySelected, amortize]);
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
-  const rate = data.userState?.usdExchangeRate ?? 25400;
+  const rate = data.userState?.usdExchangeRate ?? 26310;
 
   const amountVND = useMemo(() => {
     const n = Number(amount);
