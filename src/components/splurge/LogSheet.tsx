@@ -1,5 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, ChevronDown, ShieldCheck, BarChart3, Check } from "lucide-react";
+import {
+  X,
+  ChevronDown,
+  ShieldCheck,
+  BarChart3,
+  Check,
+  Beef,
+  ShoppingCart,
+  Fuel,
+  Home,
+  FileText,
+  CupSoda,
+  Shirt,
+  Plane,
+  Leaf,
+  MoreHorizontal,
+} from "lucide-react";
+
+const categoryIcons: Record<string, React.ElementType> = {
+  "Meat and chicken": Beef,
+  "Other essential home groceries": ShoppingCart,
+  "Motorbike expenses": Fuel,
+  "Rent": Home,
+  "Visa and documents fees": FileText,
+  "Diet soda and bottled cold tea soft drinks": CupSoda,
+  "Clothes": Shirt,
+  "Travelling": Plane,
+  "Weed": Leaf,
+};
+
+const CatIcon = ({ name, className }: { name: string; className?: string }) => {
+  const Icon = categoryIcons[name] ?? MoreHorizontal;
+  return <Icon className={className} />;
+};
 import { useApp } from "@/context/AppContext";
 import {
   DISCRETIONARY_CATEGORIES,
