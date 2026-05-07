@@ -264,22 +264,28 @@ export function LogSheet({ open, onClose }: Props) {
             <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
               Cooling Period
             </label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2 w-full">
               {[
-                { v: 24, l: "24h" },
-                { v: 48, l: "48h" },
-                { v: 168, l: "7 days" },
-              ].map(({ v, l }) => (
+                { label: "1h", hours: 1 },
+                { label: "12h", hours: 12 },
+                { label: "24h", hours: 24 },
+                { label: "48h", hours: 48 },
+                { label: "3 days", hours: 72 },
+                { label: "5 days", hours: 120 },
+                { label: "7 days", hours: 168 },
+                { label: "14 days", hours: 336 },
+                { label: "30 days", hours: 720 },
+              ].map(({ label, hours }) => (
                 <button
-                  key={v}
-                  onClick={() => setDelayHours(v)}
-                  className={`flex-1 rounded-lg border py-2 font-mono text-sm ${
-                    delayHours === v
-                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-400"
-                      : "border-slate-700 bg-slate-950 text-slate-400"
+                  key={hours}
+                  onClick={() => setDelayHours(hours)}
+                  className={`rounded-lg border font-mono text-xs sm:text-sm py-2 px-1 whitespace-nowrap text-center transition-all ${
+                    delayHours === hours
+                      ? "text-cyan-400 border-cyan-400/50 bg-cyan-950/30"
+                      : "text-slate-400 border-slate-700/50 bg-slate-950"
                   }`}
                 >
-                  {l}
+                  {label}
                 </button>
               ))}
             </div>
