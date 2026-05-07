@@ -14,6 +14,14 @@ import {
   Shirt,
   Plane,
   Leaf,
+  Wifi,
+  HeartPulse,
+  Archive,
+  UtensilsCrossed,
+  CreditCard,
+  Cpu,
+  Dumbbell,
+  Sparkles,
   MoreHorizontal,
 } from "lucide-react";
 
@@ -23,10 +31,18 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Motorbike expenses": Fuel,
   "Rent": Home,
   "Visa and documents fees": FileText,
+  "Utilities, Phone & Internet": Wifi,
+  "Medical & Pharmacy": HeartPulse,
+  "Other Essentials": Archive,
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
   "Weed": Leaf,
+  "Dining Out & Street Food": UtensilsCrossed,
+  "Software & Digital Subscriptions": CreditCard,
+  "Tech & Hardware Upgrades": Cpu,
+  "Fitness & Supplements": Dumbbell,
+  "Other Splurges": Sparkles,
 };
 
 const CatIcon = ({ name, className }: { name: string; className?: string }) => {
@@ -197,7 +213,7 @@ export function LogSheet({ open, onClose }: Props) {
           </button>
 
           {catOpen && (
-            <div className="mt-2 overflow-hidden rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in">
+            <div className="mt-2 max-h-60 overflow-y-auto overscroll-contain rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
               <div className="px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/70">
                 Essentials
               </div>
