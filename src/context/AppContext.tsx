@@ -207,9 +207,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const logExpense: AppContextValue["logExpense"] = (input) => {
     if (!data.userState) return false;
     const isEss = isEssentialCategory(input.category);
+    const amortDays = input.amortizationDays && input.amortizationDays > 1 ? Math.floor(input.amortizationDays) : undefined;
+    const countsTowardDaily = !isEss && input.category !== "Weed" && !amortDays;
 
-    // BR-004 check first (only for discretionary)
-    if (!isEss && input.category !== "Weed") {
+    // BR-004 check first (only for non-amortized discretionary)
+    if (countsTowardDaily) {
       const todaySpent = todayDiscretionary;
       const limit = smartDailyLimit;
       if (todaySpent + input.amountVND > limit) {
@@ -228,7 +230,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             fromVault: !!input.fromVault,
           };
           let dp = d.userState.totalDP - 25;
-          // BR-001 reward also applies
           dp += dpForAmount(input.amountVND, input.category, !!input.fromVault);
           return {
             ...d,
@@ -263,6 +264,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isEssential: isEss,
         justification: input.justification,
         fromVault: !!input.fromVault,
+        amortizationDays: amortDays,
       };
       const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault);
       let dp = d.userState.totalDP + dpEarned;
