@@ -182,11 +182,12 @@ export function LogSheet({ open, onClose }: Props) {
           >
             <span className="flex items-center gap-2">
               {category ? (
-                isEssentialCategory(category) ? (
-                  <ShieldCheck className="h-4 w-4 text-cyan-400" />
-                ) : (
-                  <BarChart3 className="h-4 w-4 text-emerald-400" />
-                )
+                <CatIcon
+                  name={category}
+                  className={`h-4 w-4 ${
+                    isEssentialCategory(category) ? "text-cyan-400" : "text-emerald-400"
+                  }`}
+                />
               ) : null}
               <span className={category ? "text-white" : "text-slate-500"}>
                 {category || "Select category..."}
