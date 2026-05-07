@@ -43,6 +43,7 @@ interface AppContextValue {
     justification: string;
     fromVault?: boolean;
     vaultId?: string;
+    amortizationDays?: number;
   }) => boolean;
   addToVault: (input: Omit<VaultItem, "id" | "createdAt" | "status">) => void;
   markVaultReady: (id: string) => void;
