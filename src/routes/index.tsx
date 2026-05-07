@@ -5,7 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
-import { fmtMoney, nextMilestone } from "@/lib/splurge-utils";
+import { fmtMoney, nextMilestone, weeklyWeedSpent } from "@/lib/splurge-utils";
 
 export const Route = createFileRoute("/")({
   component: Index,
