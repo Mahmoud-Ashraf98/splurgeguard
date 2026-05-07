@@ -26,12 +26,6 @@ function VaultPage() {
     return () => clearInterval(i);
   }, []);
 
-  const us = app.data.userState;
-  if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
-
-  const cur = us.displayCurrency;
-  const rate = us.usdExchangeRate;
-
   // Auto-promote cooling -> ready
   useEffect(() => {
     app.data.vaultItems.forEach((v) => {
@@ -45,6 +39,11 @@ function VaultPage() {
     });
   }, [now, app]);
 
+  const us = app.data.userState;
+  if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
+
+  const cur = us.displayCurrency;
+  const rate = us.usdExchangeRate;
   const items = app.data.vaultItems;
 
   return (
