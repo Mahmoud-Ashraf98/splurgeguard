@@ -53,6 +53,15 @@ function SettingsPage() {
         <h1 className="text-2xl font-bold text-white">Settings</h1>
       </header>
 
+      <section className="mb-6 rounded-2xl border border-white/5 bg-slate-900/40 p-5 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
+        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Operator</h2>
+        <Field
+          label="Operator Name"
+          value={us.userName ?? ""}
+          onChange={(e: any) => app.updateUserState({ userName: e.target.value })}
+        />
+      </section>
+
       <section className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
         <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Cycle</h2>
         <Field
