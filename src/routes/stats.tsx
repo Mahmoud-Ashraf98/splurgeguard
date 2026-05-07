@@ -110,7 +110,7 @@ function StatsPage() {
         <div className="flex items-center gap-2 mb-6">
           <Activity className="w-6 h-6 text-cyan-500" />
           <h1 className="text-xl font-bold tracking-widest uppercase text-[#f1f5f9] drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
-            Cycle Telemetry
+            Your Spending Habits
           </h1>
         </div>
       </header>
@@ -119,28 +119,28 @@ function StatsPage() {
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
           <p className="text-[10px] tracking-widest uppercase text-slate-400">
             <Shield className="w-4 h-4 inline-block mr-1 text-emerald-500" />
-            Essential
+            Boring Bills (Needs)
           </p>
           <p className="mt-1 text-emerald-400 font-mono text-xl font-bold">{fmtMoney(us.essentialSpentVND, cur, rate)}</p>
         </div>
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
           <p className="text-[10px] tracking-widest uppercase text-slate-400">
             <Wallet className="w-4 h-4 inline-block mr-1 text-amber-500" />
-            Discretionary
+            Fun Money (Splurges)
           </p>
           <p className="mt-1 text-amber-400 font-mono text-xl font-bold">{fmtMoney(discretionaryTotal, cur, rate)}</p>
         </div>
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
           <p className="text-[10px] tracking-widest uppercase text-slate-400">
             <PieChart className="w-4 h-4 inline-block mr-1 text-cyan-500" />
-            % Used
+            Budget Used
           </p>
           <p className="mt-1 text-cyan-400 font-mono text-xl font-bold">{usedPct.toFixed(1)}%</p>
         </div>
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
           <p className="text-[10px] tracking-widest uppercase text-slate-400">
             <Lock className="w-4 h-4 inline-block mr-1 text-purple-500" />
-            Vault Discarded
+            Impulses Crushed
           </p>
           <p className="mt-1 text-purple-400 font-mono text-xl font-bold">{discardedCount}</p>
         </div>
@@ -149,7 +149,7 @@ function StatsPage() {
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
         <div className="mb-4">
           <BarChart3 className="w-4 h-4 inline-block mr-2 text-slate-400" />
-          <span className="text-xs tracking-widest uppercase text-slate-400">Discretionary Breakdown</span>
+          <span className="text-xs tracking-widest uppercase text-slate-400">How You Spent Your Fun Money</span>
         </div>
         {breakdown.length === 0 ? (
           <p className="py-6 text-center text-xs text-slate-500">No discretionary spending yet.</p>
@@ -192,10 +192,11 @@ function StatsPage() {
 
       {activeAmortizations.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
-          <div className="mb-4">
+          <div className="mb-1">
             <TrendingDown className="w-4 h-4 inline-block mr-2 text-cyan-500" />
-            <span className="text-xs tracking-widest uppercase text-cyan-500">Active Amortizations</span>
+            <span className="text-xs tracking-widest uppercase text-cyan-500">Spread-Out Costs</span>
           </div>
+          <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
           <div className="space-y-2">
             {activeAmortizations.map(({ tx, remaining, pct }) => (
               <div
@@ -228,7 +229,7 @@ function StatsPage() {
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5">
         <div className="mb-4">
           <List className="w-4 h-4 inline-block mr-2 text-slate-400" />
-          <span className="text-xs tracking-widest uppercase text-slate-400">Transaction Ledger</span>
+          <span className="text-xs tracking-widest uppercase text-slate-400">Recent Transactions</span>
         </div>
         {app.data.transactions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
