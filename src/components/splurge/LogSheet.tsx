@@ -73,6 +73,9 @@ export function LogSheet({ open, onClose }: Props) {
   // vault
   const [itemName, setItemName] = useState("");
   const [delayHours, setDelayHours] = useState(24);
+  // amortization
+  const [amortize, setAmortize] = useState(false);
+  const [amortDays, setAmortDays] = useState("30");
 
   useEffect(() => {
     if (!open) {
@@ -84,8 +87,16 @@ export function LogSheet({ open, onClose }: Props) {
       setDelayHours(24);
       setMode("log");
       setCatOpen(false);
+      setAmortize(false);
+      setAmortDays("30");
     }
   }, [open]);
+
+  const isDiscretionarySelected = category && !isEssentialCategory(category) && category !== "Weed";
+
+  useEffect(() => {
+    if (!isDiscretionarySelected && amortize) setAmortize(false);
+  }, [isDiscretionarySelected, amortize]);
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
   const rate = data.userState?.usdExchangeRate ?? 25400;
@@ -105,12 +116,14 @@ export function LogSheet({ open, onClose }: Props) {
 
   const submitLog = () => {
     if (!canLog) return;
+    const parsedAmort = amortize && isDiscretionarySelected ? Math.max(2, parseInt(amortDays, 10) || 2) : undefined;
     logExpense({
       amountVND,
       originalAmount: showCurrency && currency === "USD" ? Number(amount) : undefined,
       originalCurrency: showCurrency ? currency : "VND",
       category,
       justification: justification.trim(),
+      amortizationDays: parsedAmort,
     });
     onClose();
   };
@@ -320,6 +333,56 @@ export function LogSheet({ open, onClose }: Props) {
             className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-emerald-400"
           />
         </div>
+
+        {mode === "log" && isDiscretionarySelected && (
+          <div className="mb-5 rounded-xl border border-slate-700/60 bg-slate-950/50 p-4">
+            <button
+              type="button"
+              onClick={() => setAmortize((v) => !v)}
+              className="flex w-full items-center justify-between"
+            >
+              <div className="text-left">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400">
+                  Spread Cost Over Time
+                </p>
+                <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
+                  Subscriptions / Bulk
+                </p>
+              </div>
+              <span
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${
+                  amortize ? "bg-cyan-400 shadow-[0_0_15px_-3px_#00d4ff]" : "bg-slate-700"
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-slate-950 transition-transform ${
+                    amortize ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </span>
+            </button>
+            {amortize && (
+              <div className="mt-3">
+                <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                  Duration in Days
+                </label>
+                <input
+                  type="number"
+                  min={2}
+                  inputMode="numeric"
+                  value={amortDays}
+                  onChange={(e) => setAmortDays(e.target.value.replace(/\D/g, ""))}
+                  className="w-full rounded-lg border border-cyan-400/40 bg-slate-950 px-4 py-2.5 text-right font-mono text-lg tabular-nums text-cyan-400 outline-none focus:border-cyan-400"
+                />
+                {amountVND > 0 && parseInt(amortDays || "0", 10) >= 2 && (
+                  <p className="mt-1.5 text-right font-mono text-[10px] tracking-widest text-slate-500">
+                    ≈ {fmtVND(Math.floor(amountVND / parseInt(amortDays, 10)))} / day
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <button
           onClick={mode === "log" ? submitLog : submitVault}

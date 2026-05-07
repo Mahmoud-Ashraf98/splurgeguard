@@ -40,6 +40,18 @@ function StatsPage() {
   const discardedCount = app.data.vaultItems.filter((v) => v.status === "discarded").length;
   const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
 
+  const now = Date.now();
+  const activeAmortizations = app.data.transactions
+    .map((t) => {
+      if (!t.amortizationDays || t.amortizationDays <= 1) return null;
+      const daysSince = (now - new Date(t.timestamp).getTime()) / 86400000;
+      if (daysSince >= t.amortizationDays || daysSince < 0) return null;
+      const remaining = t.amountVND * (1 - daysSince / t.amortizationDays);
+      const pct = Math.min(1, daysSince / t.amortizationDays);
+      return { tx: t, remaining, pct };
+    })
+    .filter((x): x is { tx: typeof app.data.transactions[number]; remaining: number; pct: number } => !!x);
+
   // Donut
   let cumulative = 0;
   const radius = 60;
@@ -111,6 +123,36 @@ function StatsPage() {
           </div>
         )}
       </div>
+
+      {activeAmortizations.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Active Amortizations</h2>
+          <div className="space-y-2">
+            {activeAmortizations.map(({ tx, remaining, pct }) => (
+              <div
+                key={tx.id}
+                className="rounded-xl border border-cyan-400/20 bg-slate-900/40 p-4 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04),0_10px_30px_-15px_rgba(0,212,255,0.25)]"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-white">{tx.justification || tx.category}</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                      {tx.category} · {tx.amortizationDays}d
+                    </p>
+                  </div>
+                  <p className="font-mono text-sm tabular-nums text-cyan-400">{fmtMoney(Math.round(remaining), cur, rate)}</p>
+                </div>
+                <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.5)] transition-all"
+                    style={{ width: `${pct * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-slate-400">Transactions</h2>

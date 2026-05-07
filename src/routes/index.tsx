@@ -72,6 +72,7 @@ function Index() {
           <div className="flex flex-col items-center">
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
             <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.smartDailyLimit, cur, rate)}</span>
+            <span className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-500/50">Includes Active Amortizations</span>
           </div>
         </div>
       </div>
