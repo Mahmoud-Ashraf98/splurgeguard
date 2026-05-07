@@ -142,23 +142,64 @@ export function LogSheet({ open, onClose }: Props) {
           <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
             Category
           </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none focus:border-emerald-400"
+          <button
+            type="button"
+            onClick={() => setCatOpen((o) => !o)}
+            className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-left text-white outline-none transition-all hover:border-emerald-400/50 focus:border-emerald-400"
           >
-            <option value="">Select category...</option>
-            <optgroup label="Essentials">
+            <span className="flex items-center gap-2">
+              {category ? (
+                isEssentialCategory(category) ? (
+                  <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                ) : (
+                  <BarChart3 className="h-4 w-4 text-emerald-400" />
+                )
+              ) : null}
+              <span className={category ? "text-white" : "text-slate-500"}>
+                {category || "Select category..."}
+              </span>
+            </span>
+            <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform ${catOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {catOpen && (
+            <div className="mt-2 overflow-hidden rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in">
+              <div className="px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/70">
+                Essentials
+              </div>
               {ESSENTIAL_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { setCategory(c); setCatOpen(false); }}
+                  className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-cyan-400/10"
+                >
+                  <span className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                    {c}
+                  </span>
+                  {category === c && <Check className="h-4 w-4 text-cyan-400" />}
+                </button>
               ))}
-            </optgroup>
-            <optgroup label="Discretionary">
+              <div className="border-t border-slate-800 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-emerald-400/70">
+                Discretionary
+              </div>
               {DISCRETIONARY_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { setCategory(c); setCatOpen(false); }}
+                  className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-emerald-400/10"
+                >
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4 text-emerald-400" />
+                    {c}
+                  </span>
+                  {category === c && <Check className="h-4 w-4 text-emerald-400" />}
+                </button>
               ))}
-            </optgroup>
-          </select>
+            </div>
+          )}
         </div>
 
         {showCurrency && mode === "log" && (
