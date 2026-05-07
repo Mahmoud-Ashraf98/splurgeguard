@@ -225,9 +225,9 @@ export function LogSheet({ open, onClose }: Props) {
                   onClick={() => { setCategory(c); setCatOpen(false); }}
                   className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-emerald-400/10"
                 >
-                  <span className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-emerald-400" />
-                    {c}
+                  <span className="flex items-center gap-2 text-emerald-400">
+                    <CatIcon name={c} className="h-4 w-4" />
+                    <span className="text-slate-200">{c}</span>
                   </span>
                   {category === c && <Check className="h-4 w-4 text-emerald-400" />}
                 </button>
