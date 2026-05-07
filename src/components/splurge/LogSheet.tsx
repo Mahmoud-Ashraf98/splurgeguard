@@ -1,5 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, ChevronDown, ShieldCheck, BarChart3, Check } from "lucide-react";
+import {
+  X,
+  ChevronDown,
+  ShieldCheck,
+  BarChart3,
+  Check,
+  Beef,
+  ShoppingCart,
+  Fuel,
+  Home,
+  FileText,
+  CupSoda,
+  Shirt,
+  Plane,
+  Leaf,
+  MoreHorizontal,
+} from "lucide-react";
+
+const categoryIcons: Record<string, React.ElementType> = {
+  "Meat and chicken": Beef,
+  "Other essential home groceries": ShoppingCart,
+  "Motorbike expenses": Fuel,
+  "Rent": Home,
+  "Visa and documents fees": FileText,
+  "Diet soda and bottled cold tea soft drinks": CupSoda,
+  "Clothes": Shirt,
+  "Travelling": Plane,
+  "Weed": Leaf,
+};
+
+const CatIcon = ({ name, className }: { name: string; className?: string }) => {
+  const Icon = categoryIcons[name] ?? MoreHorizontal;
+  return <Icon className={className} />;
+};
 import { useApp } from "@/context/AppContext";
 import {
   DISCRETIONARY_CATEGORIES,
@@ -149,11 +182,12 @@ export function LogSheet({ open, onClose }: Props) {
           >
             <span className="flex items-center gap-2">
               {category ? (
-                isEssentialCategory(category) ? (
-                  <ShieldCheck className="h-4 w-4 text-cyan-400" />
-                ) : (
-                  <BarChart3 className="h-4 w-4 text-emerald-400" />
-                )
+                <CatIcon
+                  name={category}
+                  className={`h-4 w-4 ${
+                    isEssentialCategory(category) ? "text-cyan-400" : "text-emerald-400"
+                  }`}
+                />
               ) : null}
               <span className={category ? "text-white" : "text-slate-500"}>
                 {category || "Select category..."}
@@ -174,9 +208,9 @@ export function LogSheet({ open, onClose }: Props) {
                   onClick={() => { setCategory(c); setCatOpen(false); }}
                   className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-cyan-400/10"
                 >
-                  <span className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-cyan-400" />
-                    {c}
+                  <span className="flex items-center gap-2 text-cyan-400">
+                    <CatIcon name={c} className="h-4 w-4" />
+                    <span className="text-slate-200">{c}</span>
                   </span>
                   {category === c && <Check className="h-4 w-4 text-cyan-400" />}
                 </button>
@@ -191,9 +225,9 @@ export function LogSheet({ open, onClose }: Props) {
                   onClick={() => { setCategory(c); setCatOpen(false); }}
                   className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-emerald-400/10"
                 >
-                  <span className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-emerald-400" />
-                    {c}
+                  <span className="flex items-center gap-2 text-emerald-400">
+                    <CatIcon name={c} className="h-4 w-4" />
+                    <span className="text-slate-200">{c}</span>
                   </span>
                   {category === c && <Check className="h-4 w-4 text-emerald-400" />}
                 </button>
@@ -230,22 +264,28 @@ export function LogSheet({ open, onClose }: Props) {
             <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
               Cooling Period
             </label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2 w-full">
               {[
-                { v: 24, l: "24h" },
-                { v: 48, l: "48h" },
-                { v: 168, l: "7 days" },
-              ].map(({ v, l }) => (
+                { label: "1h", hours: 1 },
+                { label: "12h", hours: 12 },
+                { label: "24h", hours: 24 },
+                { label: "48h", hours: 48 },
+                { label: "3 days", hours: 72 },
+                { label: "5 days", hours: 120 },
+                { label: "7 days", hours: 168 },
+                { label: "14 days", hours: 336 },
+                { label: "30 days", hours: 720 },
+              ].map(({ label, hours }) => (
                 <button
-                  key={v}
-                  onClick={() => setDelayHours(v)}
-                  className={`flex-1 rounded-lg border py-2 font-mono text-sm ${
-                    delayHours === v
-                      ? "border-cyan-400 bg-cyan-400/10 text-cyan-400"
-                      : "border-slate-700 bg-slate-950 text-slate-400"
+                  key={hours}
+                  onClick={() => setDelayHours(hours)}
+                  className={`rounded-lg border font-mono text-xs sm:text-sm py-2 px-1 whitespace-nowrap text-center transition-all ${
+                    delayHours === hours
+                      ? "text-cyan-400 border-cyan-400/50 bg-cyan-950/30"
+                      : "text-slate-400 border-slate-700/50 bg-slate-950"
                   }`}
                 >
-                  {l}
+                  {label}
                 </button>
               ))}
             </div>
