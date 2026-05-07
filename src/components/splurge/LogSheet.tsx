@@ -213,7 +213,7 @@ export function LogSheet({ open, onClose }: Props) {
           </button>
 
           {catOpen && (
-            <div className="mt-2 overflow-hidden rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in">
+            <div className="mt-2 max-h-60 overflow-y-auto overscroll-contain rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
               <div className="px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/70">
                 Essentials
               </div>
