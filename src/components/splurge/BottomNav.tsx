@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, BarChart3, Lock, Settings as SettingsIcon } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 
 const items = [
   { to: "/", label: "Home", Icon: Home },
@@ -10,6 +11,8 @@ const items = [
 
 export function BottomNav() {
   const loc = useLocation();
+  const app = useApp();
+  if (!app.data.userState) return null;
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-md items-stretch justify-around">
