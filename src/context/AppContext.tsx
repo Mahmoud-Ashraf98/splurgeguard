@@ -194,7 +194,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentStreakDays: 0,
       lastLoginDate: dayKey(today),
       weeklyWeedLimitVND: input.weeklyWeedLimitVND ?? 0,
-      usdExchangeRate: input.usdExchangeRate ?? 25400,
+      usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
     };
     setData({ userState: us, transactions: [], vaultItems: [] });
