@@ -34,8 +34,18 @@ export const calcSmartDailyLimit = (us: UserState, today = new Date()) => {
 
 export const discretionarySpentOn = (txs: Transaction[], dKey: string) =>
   txs
-    .filter((t) => !t.isEssential && dayKey(t.timestamp) === dKey)
+    .filter((t) => !t.isEssential && t.category !== "Weed" && dayKey(t.timestamp) === dKey)
     .reduce((s, t) => s + t.amountVND, 0);
+
+export const weeklyWeedSpent = (txs: Transaction[], today = new Date()) => {
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dow = d.getDay();
+  const diffToMonday = (dow + 6) % 7;
+  const monday = new Date(d.getTime() - diffToMonday * 86400000);
+  return txs
+    .filter((t) => t.category === "Weed" && new Date(t.timestamp) >= monday)
+    .reduce((s, t) => s + t.amountVND, 0);
+};
 
 export const uuid = () =>
   (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();

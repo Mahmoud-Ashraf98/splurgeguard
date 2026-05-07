@@ -207,7 +207,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const isEss = isEssentialCategory(input.category);
 
     // BR-004 check first (only for discretionary)
-    if (!isEss) {
+    if (!isEss && input.category !== "Weed") {
       const todaySpent = todayDiscretionary;
       const limit = smartDailyLimit;
       if (todaySpent + input.amountVND > limit) {
