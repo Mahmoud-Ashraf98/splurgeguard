@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Upload, Trash2 } from "lucide-react";
+import { Download, Upload, Trash2, User, Sliders, ShieldCheck } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { STORAGE_KEY } from "@/lib/splurge-types";
 
@@ -32,77 +32,121 @@ function SettingsPage() {
     r.readAsText(f);
   };
 
-  const Field = ({ label, value, onChange, type = "text" }: any) => (
-    <div className="mb-3">
-      <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">{label}</label>
+  const Field = ({
+    label,
+    value,
+    onChange,
+    type = "text",
+    helper,
+  }: {
+    label: string;
+    value: any;
+    onChange: (e: any) => void;
+    type?: string;
+    helper?: string;
+  }) => (
+    <div className="mb-4">
+      <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
         onChange={onChange}
-        className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 font-mono text-sm text-white outline-none focus:border-emerald-400"
+        className="w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600"
       />
+      {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
     </div>
   );
+
+  const sectionClass =
+    "bg-slate-900/30 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 mb-6 shadow-lg";
+  const headerClass =
+    "flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-cyan-500 mb-4 pb-2 border-b border-slate-700/50";
 
   const paydayInputValue = us.paydayDate.split("T")[0];
 
   return (
     <div className="px-5 pb-24 pt-6">
       <header className="mb-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Configuration</p>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
+        <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
+          Configuration
+        </p>
+        <h1 className="text-2xl font-bold text-white">Control Panel</h1>
       </header>
 
-      <section className="mb-6 rounded-2xl border border-white/5 bg-slate-900/40 p-5 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
-        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Operator</h2>
+      <section className={sectionClass}>
+        <h2 className={headerClass}>
+          <User className="h-4 w-4" /> Identity
+        </h2>
         <Field
-          label="Operator Name"
+          label="Your Name / Alias"
           value={us.userName ?? ""}
-          onChange={(e: any) => app.updateUserState({ userName: e.target.value })}
+          onChange={(e) => app.updateUserState({ userName: e.target.value })}
+          helper="How the app addresses you across the dashboard."
         />
       </section>
 
-      <section className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Cycle</h2>
+      <section className={sectionClass}>
+        <h2 className={headerClass}>
+          <Sliders className="h-4 w-4" /> Budget & Limits
+        </h2>
         <Field
-          label="Current Balance (VND)"
+          label="Available Splurge Budget (VND)"
           type="number"
           value={us.currentBalanceVND}
-          onChange={(e: any) => app.updateUserState({ currentBalanceVND: Math.floor(Number(e.target.value) || 0) })}
+          onChange={(e) =>
+            app.updateUserState({ currentBalanceVND: Math.floor(Number(e.target.value) || 0) })
+          }
+          helper="The money left for non-essentials until your next payday."
         />
         <Field
-          label="Next Payday"
+          label="Next Payday / Cycle Reset"
           type="date"
           value={paydayInputValue}
-          onChange={(e: any) => app.updateUserState({ paydayDate: new Date(e.target.value + "T23:59:59").toISOString() })}
+          onChange={(e) =>
+            app.updateUserState({ paydayDate: new Date(e.target.value + "T23:59:59").toISOString() })
+          }
+          helper="When your splurge budget refills and the cycle starts over."
         />
         <Field
-          label="Weekly Weed Limit (VND)"
+          label="Weekly Weed Protocol Limit (VND)"
           type="number"
           value={us.weeklyWeedLimitVND}
-          onChange={(e: any) => app.updateUserState({ weeklyWeedLimitVND: Math.floor(Number(e.target.value) || 0) })}
+          onChange={(e) =>
+            app.updateUserState({ weeklyWeedLimitVND: Math.floor(Number(e.target.value) || 0) })
+          }
+          helper="Target maximum spend for this category to earn your 250 DP weekly bonus."
         />
         <Field
-          label="USD Exchange Rate"
+          label="Custom USD Exchange Rate"
           type="number"
           value={us.usdExchangeRate}
-          onChange={(e: any) => app.updateUserState({ usdExchangeRate: Math.floor(Number(e.target.value) || 1) })}
+          onChange={(e) =>
+            app.updateUserState({ usdExchangeRate: Math.floor(Number(e.target.value) || 1) })
+          }
+          helper="Used when toggling the dashboard between VND and USD."
         />
       </section>
 
-      <section className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
-        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-slate-400">Data</h2>
+      <section className={sectionClass}>
+        <h2 className={headerClass}>
+          <ShieldCheck className="h-4 w-4" /> Backup & Security
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Your data lives only on this device. Save a backup file you can restore later.
+        </p>
         <button
           onClick={exportData}
-          className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-400/5 py-3 font-mono text-xs uppercase tracking-wider text-emerald-400 hover:bg-emerald-400/10"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-cyan-500/30 text-cyan-400 bg-cyan-950/20 transition-all hover:bg-cyan-900/40 hover:border-cyan-400 mb-2 font-mono text-xs uppercase tracking-wider"
         >
-          <Download className="h-4 w-4" /> Export JSON
+          <Download className="h-4 w-4" /> Download Backup File
         </button>
         <button
           onClick={() => fileRef.current?.click()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-400/5 py-3 font-mono text-xs uppercase tracking-wider text-cyan-400 hover:bg-cyan-400/10"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-cyan-500/30 text-cyan-400 bg-cyan-950/20 transition-all hover:bg-cyan-900/40 hover:border-cyan-400 font-mono text-xs uppercase tracking-wider"
         >
-          <Upload className="h-4 w-4" /> Import JSON
+          <Upload className="h-4 w-4" /> Restore from Backup
         </button>
         <input
           ref={fileRef}
@@ -113,12 +157,17 @@ function SettingsPage() {
         />
       </section>
 
-      <section className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-5">
-        <h2 className="mb-4 font-mono text-xs uppercase tracking-wider text-rose-400">Danger Zone</h2>
+      <section className="bg-rose-950/10 backdrop-blur-xl border border-rose-500/30 rounded-2xl p-5 mb-6 shadow-lg">
+        <h2 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-rose-400 mb-4 pb-2 border-b border-rose-500/30">
+          <Trash2 className="h-4 w-4" /> Danger Zone
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Warning: This will permanently wipe all transactions, points, and settings from this device.
+        </p>
         {!confirmClear ? (
           <button
             onClick={() => setConfirmClear(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-rose-500/50 py-3 font-mono text-xs uppercase tracking-wider text-rose-400 hover:bg-rose-500/10"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-rose-500/50 text-rose-400 bg-rose-950/20 transition-all hover:bg-rose-900/60 hover:border-rose-500 hover:shadow-[0_0_15px_rgba(244,63,94,0.4)] font-mono text-xs uppercase tracking-wider"
           >
             <Trash2 className="h-4 w-4" /> Clear All Data
           </button>
@@ -128,13 +177,16 @@ function SettingsPage() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => setConfirmClear(false)}
-                className="rounded-lg border border-slate-700 py-2.5 font-mono text-xs uppercase text-slate-400"
+                className="rounded-lg border border-slate-700 py-2.5 font-mono text-xs uppercase text-slate-400 hover:bg-slate-800/50 transition-all"
               >
                 Cancel
               </button>
               <button
-                onClick={() => { app.clearData(); setConfirmClear(false); }}
-                className="rounded-lg bg-rose-500 py-2.5 font-mono text-xs font-bold uppercase text-white"
+                onClick={() => {
+                  app.clearData();
+                  setConfirmClear(false);
+                }}
+                className="rounded-lg bg-rose-500 py-2.5 font-mono text-xs font-bold uppercase text-white hover:bg-rose-600 transition-all"
               >
                 Wipe
               </button>
