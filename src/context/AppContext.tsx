@@ -261,7 +261,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             fromVault: !!input.fromVault,
           };
           let dp = d.userState.totalDP - 25;
-          dp += dpForAmount(input.amountVND, input.category, !!input.fromVault);
+          dp += dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
           return {
             ...d,
             userState: {
@@ -297,15 +297,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fromVault: !!input.fromVault,
         amortizationDays: amortDays,
       };
-      const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault);
+      const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
       let dp = d.userState.totalDP + dpEarned;
       let vaultItems = d.vaultItems;
       if (input.vaultId) {
         const vi = d.vaultItems.find((v) => v.id === input.vaultId);
-        if (vi && vi.category === "Weed") {
+        if (vi && habitLower && vi.category.toLowerCase().trim() === habitLower) {
           const bonus = 15 * Math.floor(vi.delayHours / 24);
           dp += bonus;
-          if (bonus > 0) bonusMsg = `🌿 Vault discipline! +${bonus} DP bonus`;
+          if (bonus > 0) bonusMsg = `🎯 Vault discipline! +${bonus} DP bonus`;
         }
         vaultItems = vaultItems.map((v) =>
           v.id === input.vaultId ? { ...v, status: "approved" as const } : v
@@ -319,7 +319,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       else newUS.currentBalanceVND = d.userState.currentBalanceVND - input.amountVND;
       return { ...d, userState: newUS, transactions: [tx, ...d.transactions], vaultItems };
     });
-    const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault);
+    const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
     toast.success(`Expense Logged. +${dpEarned} DP Earned.`);
     if (bonusMsg) setTimeout(() => toast.success(bonusMsg), 600);
     return true;
