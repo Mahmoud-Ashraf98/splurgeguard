@@ -13,7 +13,7 @@ import {
   CupSoda,
   Shirt,
   Plane,
-  Leaf,
+  Target,
   Wifi,
   HeartPulse,
   Archive,
@@ -37,7 +37,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
-  "Weed": Leaf,
+  
   "Dining Out & Street Food": UtensilsCrossed,
   "Software & Digital Subscriptions": CreditCard,
   "Tech & Hardware Upgrades": Cpu,
@@ -45,7 +45,8 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Other Splurges": Sparkles,
 };
 
-const CatIcon = ({ name, className }: { name: string; className?: string }) => {
+const CatIcon = ({ name, className, isHabit }: { name: string; className?: string; isHabit?: boolean }) => {
+  if (isHabit) return <Target className={className} />;
   const Icon = categoryIcons[name] ?? MoreHorizontal;
   return <Icon className={className} />;
 };
@@ -92,7 +93,15 @@ export function LogSheet({ open, onClose }: Props) {
     }
   }, [open]);
 
-  const isDiscretionarySelected = category && !isEssentialCategory(category) && category !== "Weed";
+  const targetHabit = data.userState?.targetHabit ?? "";
+  const habitLower = targetHabit.toLowerCase().trim();
+  const isHabitCategory = !!habitLower && category.toLowerCase().trim() === habitLower;
+  const isDiscretionarySelected = !!category && !isEssentialCategory(category) && !isHabitCategory;
+
+  const discretionaryWithHabit = useMemo(
+    () => Array.from(new Set([...DISCRETIONARY_CATEGORIES, ...(targetHabit ? [targetHabit] : [])])),
+    [targetHabit]
+  );
 
   useEffect(() => {
     if (!isDiscretionarySelected && amortize) setAmortize(false);
@@ -213,8 +222,13 @@ export function LogSheet({ open, onClose }: Props) {
               {category ? (
                 <CatIcon
                   name={category}
+                  isHabit={isHabitCategory}
                   className={`h-4 w-4 ${
-                    isEssentialCategory(category) ? "text-cyan-400" : "text-emerald-400"
+                    isEssentialCategory(category)
+                      ? "text-cyan-400"
+                      : isHabitCategory
+                        ? "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]"
+                        : "text-emerald-400"
                   }`}
                 />
               ) : null}
@@ -247,20 +261,23 @@ export function LogSheet({ open, onClose }: Props) {
               <div className="border-t border-slate-800 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-emerald-400/70">
                 Discretionary
               </div>
-              {DISCRETIONARY_CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => { setCategory(c); setCatOpen(false); }}
-                  className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-emerald-400/10"
-                >
-                  <span className="flex items-center gap-2 text-emerald-400">
-                    <CatIcon name={c} className="h-4 w-4" />
-                    <span className="text-slate-200">{c}</span>
-                  </span>
-                  {category === c && <Check className="h-4 w-4 text-emerald-400" />}
-                </button>
-              ))}
+              {discretionaryWithHabit.map((c) => {
+                const isHabit = !!habitLower && c.toLowerCase().trim() === habitLower;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => { setCategory(c); setCatOpen(false); }}
+                    className="flex w-full items-center justify-between border-t border-slate-800/60 px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-emerald-400/10"
+                  >
+                    <span className={`flex items-center gap-2 ${isHabit ? "text-rose-500" : "text-emerald-400"}`}>
+                      <CatIcon name={c} isHabit={isHabit} className="h-4 w-4" />
+                      <span className="text-slate-200">{c}{isHabit && " 🎯"}</span>
+                    </span>
+                    {category === c && <Check className={`h-4 w-4 ${isHabit ? "text-rose-500" : "text-emerald-400"}`} />}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

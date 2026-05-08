@@ -10,7 +10,7 @@ import {
   BarChart3,
   TrendingDown,
   List,
-  Leaf,
+  Target,
   CreditCard,
   Beef,
   ShoppingBasket,
@@ -51,7 +51,7 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
-  "Weed": Leaf,
+  
   "Dining Out & Street Food": UtensilsCrossed,
   "Software & Digital Subscriptions": CreditCard,
   "Tech & Hardware Upgrades": Cpu,
@@ -71,7 +71,10 @@ function StatsPage() {
       .forEach((t) => {
         map[t.category] = (map[t.category] || 0) + t.amountVND;
       });
-    return DISCRETIONARY_CATEGORIES.map((c, i) => ({
+    const cats = Array.from(
+      new Set([...DISCRETIONARY_CATEGORIES, ...(us.targetHabit ? [us.targetHabit] : [])])
+    );
+    return cats.map((c, i) => ({
       cat: c,
       amt: map[c] || 0,
       color: COLORS[i % COLORS.length],
@@ -238,11 +241,12 @@ function StatsPage() {
         ) : (
           <div>
             {app.data.transactions.map((t) => {
-              const Icon = CATEGORY_ICON[t.category] ?? Package;
+              const isHabit = !!us.targetHabit && t.category.toLowerCase().trim() === us.targetHabit.toLowerCase().trim();
+              const Icon = isHabit ? Target : (CATEGORY_ICON[t.category] ?? Package);
               const iconColor = t.isEssential
                 ? "text-emerald-400"
-                : t.category === "Weed"
-                  ? "text-rose-500"
+                : isHabit
+                  ? "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]"
                   : "text-amber-400";
               return (
                 <div

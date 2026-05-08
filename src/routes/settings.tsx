@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Wallet,
   Calendar,
-  Leaf,
+  Target as TargetIcon,
   DollarSign,
   Gamepad2,
   PenTool,
@@ -165,14 +165,21 @@ function SettingsPage() {
             extraInputClass="pr-10"
           />
           <Field
-            label="Weekly Weed Protocol Limit (VND)"
+            label="Target Habit Name"
+            value={us.targetHabit ?? ""}
+            onChange={(e) => app.updateUserState({ targetHabit: e.target.value })}
+            helper="The habit you want to control. Renaming this will update past transactions to keep history consistent."
+            Icon={TargetIcon}
+          />
+          <Field
+            label="Weekly Habit Limit (VND)"
             type="number"
-            value={us.weeklyWeedLimitVND}
+            value={us.weeklyHabitLimitVND}
             onChange={(e) =>
-              app.updateUserState({ weeklyWeedLimitVND: Math.floor(Number(e.target.value) || 0) })
+              app.updateUserState({ weeklyHabitLimitVND: Math.floor(Number(e.target.value) || 0) })
             }
-            helper="Target maximum spend for this category to earn your 250 DP weekly bonus."
-            Icon={Leaf}
+            helper="Target maximum spend on this habit per week to earn your 250 DP weekly bonus."
+            Icon={TargetIcon}
           />
           <Field
             label="Custom USD Exchange Rate"

@@ -69,7 +69,13 @@ const load = (): AppData => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultData;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw) as AppData;
+    // Migration guard: legacy data without targetHabit -> wipe to force fresh onboarding
+    if (parsed.userState && !(parsed.userState as any).targetHabit) {
+      localStorage.removeItem(STORAGE_KEY);
+      return defaultData;
+    }
+    return parsed;
   } catch {
     return defaultData;
   }
@@ -144,15 +150,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       messages.push({ msg: `⚠️ Missed ${missed} day(s). −${penalty} DP. Streak reset.`, type: "warning" });
     }
 
-    // BR-008: Weekly weed check on Monday
+    // BR-008: Weekly habit check on Monday
     if (today.getDay() === 1) {
+      const habit = us.targetHabit;
+      const habitLower = habit?.toLowerCase().trim();
       const weekAgo = new Date(today.getTime() - 7 * 86400000);
-      const weedSpent = data.transactions
-        .filter((t) => t.category === "Weed" && new Date(t.timestamp) >= weekAgo)
+      const habitSpent = data.transactions
+        .filter((t) => habitLower && t.category.toLowerCase().trim() === habitLower && new Date(t.timestamp) >= weekAgo)
         .reduce((s, t) => s + t.amountVND, 0);
-      if (weedSpent < us.weeklyWeedLimitVND) {
+      if (us.weeklyHabitLimitVND > 0 && habitSpent < us.weeklyHabitLimitVND) {
         newDP += 250;
-        messages.push({ msg: `🌿 Weekly Weed limit respected! +250 DP`, type: "success" });
+        messages.push({ msg: `🎯 Weekly ${habit} limit respected! +250 DP`, type: "success" });
       }
     }
 
@@ -178,8 +186,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const todayDiscretionary = useMemo(
-    () => discretionarySpentOn(data.transactions, dayKey(new Date())),
-    [data.transactions]
+    () => discretionarySpentOn(data.transactions, dayKey(new Date()), data.userState?.targetHabit),
+    [data.transactions, data.userState?.targetHabit]
   );
 
   const initUser: AppContextValue["initUser"] = (input) => {
@@ -193,7 +201,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       totalDP: 0,
       currentStreakDays: 0,
       lastLoginDate: dayKey(today),
-      weeklyWeedLimitVND: input.weeklyWeedLimitVND ?? 0,
+      weeklyHabitLimitVND: input.weeklyHabitLimitVND ?? 0,
+      targetHabit: (input.targetHabit ?? "").trim(),
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
     };
@@ -201,14 +210,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
-    mutate((d) => ({ ...d, userState: d.userState ? { ...d.userState, ...patch } : d.userState }));
+    mutate((d) => {
+      if (!d.userState) return d;
+      const oldHabit = d.userState.targetHabit;
+      const newHabit = patch.targetHabit;
+      const newUS = { ...d.userState, ...patch };
+      // Mid-cycle migration: rename historical transactions matching the old habit
+      let txs = d.transactions;
+      if (
+        typeof newHabit === "string" &&
+        oldHabit &&
+        newHabit.trim() &&
+        oldHabit.toLowerCase().trim() !== newHabit.toLowerCase().trim()
+      ) {
+        const oldLower = oldHabit.toLowerCase().trim();
+        txs = d.transactions.map((t) =>
+          t.category.toLowerCase().trim() === oldLower ? { ...t, category: newHabit.trim() } : t
+        );
+      }
+      return { ...d, userState: newUS, transactions: txs };
+    });
   };
 
   const logExpense: AppContextValue["logExpense"] = (input) => {
     if (!data.userState) return false;
     const isEss = isEssentialCategory(input.category);
     const amortDays = input.amortizationDays && input.amortizationDays > 1 ? Math.floor(input.amortizationDays) : undefined;
-    const countsTowardDaily = !isEss && input.category !== "Weed" && !amortDays;
+    const habit = data.userState.targetHabit;
+    const habitLower = habit?.toLowerCase().trim();
+    const isHabit = !!habitLower && input.category.toLowerCase().trim() === habitLower;
+    const countsTowardDaily = !isEss && !isHabit && !amortDays;
 
     // BR-004 check first (only for non-amortized discretionary)
     if (countsTowardDaily) {
@@ -230,7 +261,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             fromVault: !!input.fromVault,
           };
           let dp = d.userState.totalDP - 25;
-          dp += dpForAmount(input.amountVND, input.category, !!input.fromVault);
+          dp += dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
           return {
             ...d,
             userState: {
@@ -266,15 +297,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fromVault: !!input.fromVault,
         amortizationDays: amortDays,
       };
-      const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault);
+      const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
       let dp = d.userState.totalDP + dpEarned;
       let vaultItems = d.vaultItems;
       if (input.vaultId) {
         const vi = d.vaultItems.find((v) => v.id === input.vaultId);
-        if (vi && vi.category === "Weed") {
+        if (vi && habitLower && vi.category.toLowerCase().trim() === habitLower) {
           const bonus = 15 * Math.floor(vi.delayHours / 24);
           dp += bonus;
-          if (bonus > 0) bonusMsg = `🌿 Vault discipline! +${bonus} DP bonus`;
+          if (bonus > 0) bonusMsg = `🎯 Vault discipline! +${bonus} DP bonus`;
         }
         vaultItems = vaultItems.map((v) =>
           v.id === input.vaultId ? { ...v, status: "approved" as const } : v
@@ -288,7 +319,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       else newUS.currentBalanceVND = d.userState.currentBalanceVND - input.amountVND;
       return { ...d, userState: newUS, transactions: [tx, ...d.transactions], vaultItems };
     });
-    const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault);
+    const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
     toast.success(`Expense Logged. +${dpEarned} DP Earned.`);
     if (bonusMsg) setTimeout(() => toast.success(bonusMsg), 600);
     return true;

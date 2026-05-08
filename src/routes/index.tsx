@@ -5,7 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
-import { fmtMoney, nextMilestone, weeklyWeedSpent } from "@/lib/splurge-utils";
+import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -149,9 +149,9 @@ function Index() {
         </div>
       </div>
 
-      {us.weeklyWeedLimitVND > 0 && (() => {
-        const spent = weeklyWeedSpent(app.data.transactions);
-        const limit = us.weeklyWeedLimitVND;
+      {us.weeklyHabitLimitVND > 0 && us.targetHabit && (() => {
+        const spent = weeklyHabitSpent(app.data.transactions, us.targetHabit);
+        const limit = us.weeklyHabitLimitVND;
         const pct = Math.min(1, spent / limit);
         const over = spent > limit;
         const warn = pct >= 0.8;
@@ -164,7 +164,7 @@ function Index() {
         return (
           <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
             <div className="mb-3 flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest text-slate-500">Weekly Weed Protocol</span>
+              <span className="font-mono text-xs uppercase tracking-widest text-slate-500">Weekly {us.targetHabit} Limit</span>
               <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">Mon → Sun</span>
             </div>
             <div className="mb-2 flex items-baseline justify-between">

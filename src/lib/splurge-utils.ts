@@ -39,32 +39,42 @@ export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Tran
   return Math.floor((virtualBalance / daysUntilPayday) * proximityWeighting);
 };
 
-export const discretionarySpentOn = (txs: Transaction[], dKey: string) =>
+const matchesHabit = (cat: string, habit?: string) =>
+  !!habit && cat.toLowerCase().trim() === habit.toLowerCase().trim();
+
+export const discretionarySpentOn = (txs: Transaction[], dKey: string, targetHabit?: string) =>
   txs
     .filter(
       (t) =>
         !t.isEssential &&
-        t.category !== "Weed" &&
+        !matchesHabit(t.category, targetHabit) &&
         (!t.amortizationDays || t.amortizationDays <= 1) &&
         dayKey(t.timestamp) === dKey
     )
     .reduce((s, t) => s + t.amountVND, 0);
 
-export const weeklyWeedSpent = (txs: Transaction[], today = new Date()) => {
+export const weeklyHabitSpent = (txs: Transaction[], targetHabit: string, today = new Date()) => {
   const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const dow = d.getDay();
   const diffToMonday = (dow + 6) % 7;
   const monday = new Date(d.getTime() - diffToMonday * 86400000);
   return txs
-    .filter((t) => t.category === "Weed" && new Date(t.timestamp) >= monday)
+    .filter((t) => matchesHabit(t.category, targetHabit) && new Date(t.timestamp) >= monday)
+    .reduce((s, t) => s + t.amountVND, 0);
+};
+
+export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, days = 7, today = new Date()) => {
+  const cutoff = today.getTime() - days * 86400000;
+  return txs
+    .filter((t) => matchesHabit(t.category, targetHabit) && new Date(t.timestamp).getTime() >= cutoff)
     .reduce((s, t) => s + t.amountVND, 0);
 };
 
 export const uuid = () =>
   (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();
 
-export const dpForAmount = (amountVND: number, category: string, fromVault: boolean) => {
-  if (category === "Weed" && !fromVault) return 0;
+export const dpForAmount = (amountVND: number, category: string, fromVault: boolean, targetHabit?: string) => {
+  if (matchesHabit(category, targetHabit) && !fromVault) return 0;
   if (amountVND < 50000) return 5;
   if (amountVND <= 200000) return 3;
   return 1;

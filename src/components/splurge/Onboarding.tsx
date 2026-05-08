@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Terminal, User, Wallet, Calendar, Leaf } from "lucide-react";
+import { Terminal, User, Wallet, Calendar, Target } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export function Onboarding() {
@@ -7,9 +7,15 @@ export function Onboarding() {
   const [userName, setUserName] = useState("Mahmoud");
   const [balance, setBalance] = useState("");
   const [payday, setPayday] = useState("");
-  const [weed, setWeed] = useState("");
+  const [targetHabit, setTargetHabit] = useState("");
+  const [habitLimit, setHabitLimit] = useState("");
 
-  const canSubmit = userName.trim().length > 0 && Number(balance) > 0 && payday && Number(weed) >= 0;
+  const canSubmit =
+    userName.trim().length > 0 &&
+    Number(balance) > 0 &&
+    payday &&
+    targetHabit.trim().length > 0 &&
+    Number(habitLimit) >= 0;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -17,7 +23,8 @@ export function Onboarding() {
       userName: userName.trim(),
       currentBalanceVND: Math.floor(Number(balance)),
       paydayDate: new Date(payday + "T23:59:59").toISOString(),
-      weeklyWeedLimitVND: Math.floor(Number(weed)),
+      targetHabit: targetHabit.trim(),
+      weeklyHabitLimitVND: Math.floor(Number(habitLimit)),
     });
   };
 
@@ -94,19 +101,34 @@ export function Onboarding() {
           </div>
           <div>
             <label className="mb-2 block text-sm text-slate-300">
-              Weekly Weed Target (VND)
+              What habit do you want to control/reduce?
             </label>
             <div className="relative">
-              <Leaf className={iconClass} />
+              <Target className={iconClass} />
+              <input
+                value={targetHabit}
+                onChange={(e) => setTargetHabit(e.target.value)}
+                placeholder="e.g., Fast food, In-app purchases, Vaping"
+                className={inputClass}
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">We will track this specifically and reward you for resisting it.</p>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm text-slate-300">
+              Weekly Limit for this habit (VND)
+            </label>
+            <div className="relative">
+              <Target className={iconClass} />
               <input
                 inputMode="numeric"
-                value={weed}
-                onChange={(e) => setWeed(e.target.value.replace(/\D/g, ""))}
+                value={habitLimit}
+                onChange={(e) => setHabitLimit(e.target.value.replace(/\D/g, ""))}
                 placeholder="500000"
                 className={inputClass}
               />
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Stay under this weekly amount to earn a massive Discipline Point bonus.</p>
+            <p className="text-[10px] text-slate-500 mt-1">Stay under this amount each week to earn a 250 DP bonus.</p>
           </div>
           <button
             onClick={submit}
