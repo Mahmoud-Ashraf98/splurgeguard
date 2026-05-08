@@ -12,21 +12,21 @@
 
 <br>
 
-[![Try It Live](https://img.shields.io/badge/%F0%9F%9A%80%20OPEN%20THE%20APP-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![Try It Live](https://img.shields.io/badge/OPEN%20THE%20APP-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
 
 <br>
 
-[![No Server](https://img.shields.io/badge/%F0%9F%94%92%20No%20Server-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
-[![No Account](https://img.shields.io/badge/%F0%9F%91%A4%20No%20Account-Required-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
-[![No Analytics](https://img.shields.io/badge/%F0%9F%9A%AB%20No%20Analytics-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
-[![PWA](https://img.shields.io/badge/%F0%9F%93%B1%20Installs%20on-iOS%20%26%20Android-00d4ff?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
-[![Built With](https://img.shields.io/badge/%E2%9A%A1%20Built%20with-React%2018-61DAFB?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![No Server](https://img.shields.io/badge/No%20Server-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![No Account](https://img.shields.io/badge/No%20Account-Required-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![No Analytics](https://img.shields.io/badge/No%20Analytics-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![PWA](https://img.shields.io/badge/Installs%20on-iOS%20%26%20Android-00d4ff?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![Built With](https://img.shields.io/badge/Built%20with-React%2018-61DAFB?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
 
 </div>
 
 ---
 
-## ðŸ˜¤ You know this feeling.
+## 😤 You know this feeling.
 
 It is 11pm. You are tired. You open your phone and suddenly you *need* those sneakers. Or that food delivery. Or that thing you have been trying to stop buying.
 
@@ -36,23 +36,23 @@ Two minutes later, the money is gone. The dopamine fades in 20 seconds. And you 
 
 ---
 
-## ðŸ“¸ See it in action
+## 📸 See it in action
 
 <div align="center">
 
-| ðŸ  Dashboard | ðŸ“Š Spending Breakdown | âš™ï¸ Settings |
+| 🏠 Dashboard | 📊 Spending Breakdown | ⚙️ Settings |
 |:---:|:---:|:---:|
-| <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg" width="210"/> |
+| <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg)" width="210"/> | <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg)" width="210"/> | <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg)" width="210"/> |
 
 </div>
 
 ---
 
-## ðŸ”§ Four systems. One mission: stop you from wasting money.
+## 🔧 Four systems. One mission: stop you from wasting money.
 
 <br>
 
-### ðŸ”’ The Vault
+### 🔒 The Vault
 #### *"Sleep on it" - but mandatory.*
 
 [![What it does](https://img.shields.io/badge/What%20it%20does-Locks%20purchases%20behind%20a%20countdown%20timer-0a0e1a?style=flat-square)](.)
@@ -63,13 +63,13 @@ When the urge hits, you **lock the purchase in the Vault** instead of buying it.
 
 The clever part: **the app pays you Discipline Points to wait.** The longer you hold out, the more you earn. When the Vault opens, if you still want the item, buy it guilt-free. If you have forgotten about it - that is exactly the point.
 
-> ðŸ’¡ *Most Vault items never get purchased. Your future self is very grateful for this.*
+> 💡 *Most Vault items never get purchased. Your future self is very grateful for this.*
 
 <br>
 
 ---
 
-### ðŸ“Š Smart Daily Limit
+### 📊 Smart Daily Limit
 #### *A budget that thinks for itself, every single day.*
 
 [![Formula](https://img.shields.io/badge/Formula-Balance%20divided%20by%20days%20left%20x%20cycle%20weight-0a0e1a?style=flat-square)](.)
@@ -80,10 +80,10 @@ You tell the app your available budget and your payday date. Every day it calcul
 
 | Where you are in the cycle | What happens to your limit |
 |:---|:---|
-| ðŸŸ¢ Just got paid | Conservative - do not blow it on day one |
-| ðŸŸ¡ Mid-cycle | Steady and measured |
-| ðŸ”µ Approaching payday | Loosens slightly - you have proven yourself |
-| ðŸ”´ Over the limit | Streak dies, points docked, breach alert fires |
+| 🟢 Just got paid | Conservative - do not blow it on day one |
+| 🟡 Mid-cycle | Steady and measured |
+| 🔵 Approaching payday | Loosens slightly - you have proven yourself |
+| 🔴 Over the limit | Streak dies, points docked, breach alert fires |
 
 A large glowing ring on your dashboard tracks every penny in real time. Green to yellow to red. No hiding from it.
 
@@ -91,7 +91,7 @@ A large glowing ring on your dashboard tracks every penny in real time. Green to
 
 ---
 
-### ðŸŽ¯ The Vice Engine
+### 🎯 The Vice Engine
 #### *Isolate and crush the one habit costing you the most.*
 
 [![Customizable](https://img.shields.io/badge/Habit-Fully%20customizable%20to%20your%20weakness-a855f7?style=flat-square&labelColor=0a0e1a)](.)
@@ -112,7 +112,7 @@ Not about judgment. About making your weak spot genuinely harder to act on impul
 
 ---
 
-### âš¡ Discipline Points
+### ⚡ Discipline Points
 #### *Making "no" feel as rewarding as "yes."*
 
 The hardest part of financial discipline is that restraint is invisible. You say no, nothing happens, and your brain registers it as a loss. No reward. No feedback. No dopamine.
@@ -123,16 +123,16 @@ SplurgeGuard fixes this with a full points economy:
 
 | Action | Points |
 |:---|:---:|
-| âœ… Stay under your daily limit | **+50 DP** |
-| ðŸ“ Log any expense (friction matters) | **+1 to +5 DP** |
-| ðŸ”¥ 3-day streak | **+100 DP bonus** |
-| ðŸ”¥ðŸ”¥ 7-day streak | **+300 DP bonus** |
-| ðŸ† 14-day streak | **+750 DP bonus** |
-| ðŸ”’ Vault a vice purchase | **+15 DP per 24h waited** |
-| ðŸ—‘ï¸ Discard a Vault item (decided not to buy) | **+10 DP** |
-| ðŸ’ª Beat your weekly vice limit | **+250 DP** |
-| âŒ Exceed your daily limit | **-25 DP + full streak reset** |
-| ðŸ˜´ Miss a day entirely | **-10 DP per day missed** |
+| ✅ Stay under your daily limit | **+50 DP** |
+| 📝 Log any expense (friction matters) | **+1 to +5 DP** |
+| 🔥 3-day streak | **+100 DP bonus** |
+| 🔥🔥 7-day streak | **+300 DP bonus** |
+| 🏆 14-day streak | **+750 DP bonus** |
+| 🔒 Vault a vice purchase | **+15 DP per 24h waited** |
+| 🗑️ Discard a Vault item (decided not to buy) | **+10 DP** |
+| 💪 Beat your weekly vice limit | **+250 DP** |
+| ❌ Exceed your daily limit | **-25 DP + full streak reset** |
+| 😴 Miss a day entirely | **-10 DP per day missed** |
 
 </div>
 
@@ -140,7 +140,7 @@ Cash in your points for real-life rewards - you define what those are. The syste
 
 ---
 
-## ðŸ“‰ Bonus: Expense Amortization
+## 📉 Bonus: Expense Amortization
 
 [![Use case](https://img.shields.io/badge/Use%20case-Annual%20subscriptions%20%26%20bulk%20purchases-00d4ff?style=flat-square&labelColor=0a0e1a)](.)
 [![Method](https://img.shields.io/badge/Method-Stateless%20daily%20projection%2C%20no%20stored%20state-00ff87?style=flat-square&labelColor=0a0e1a)](.)
@@ -149,7 +149,7 @@ A 12-month software subscription should not crater your daily limit on day one. 
 
 ---
 
-## ðŸ›¡ï¸ Your data never leaves your phone
+## 🛡️ Your data never leaves your phone
 
 <div align="center">
 
@@ -168,7 +168,7 @@ Export a full JSON backup at any time and restore it on any device. That is your
 
 ---
 
-## ðŸ“± Install it like a native app
+## 📱 Install it like a native app
 
 No app store. No approval. No waiting.
 
@@ -188,7 +188,7 @@ Works fully offline after the first load. Instant launch. No updates to sit thro
 
 ---
 
-## ðŸ› ï¸ For developers
+## 🛠️ For developers
 
 ```bash
 git clone https://github.com/Mahmoud-Ashraf98/splurgeguard.git
@@ -215,7 +215,7 @@ npm run dev
 
 ---
 
-## ðŸ¤ Contributing
+## 🤝 Contributing
 
 Built for real personal use. If you find a bug or have an idea that fits the core philosophy:
 
@@ -233,7 +233,7 @@ Open an issue or a PR - both are welcome.
 
 <br>
 
-[![Open SplurgeGuard](https://img.shields.io/badge/%E2%9C%A8%20Open%20the%20App-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![Open SplurgeGuard](https://img.shields.io/badge/Open%20the%20App-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
 
 <br>
 
