@@ -10,7 +10,7 @@ import {
   BarChart3,
   TrendingDown,
   List,
-  Leaf,
+  Target,
   CreditCard,
   Beef,
   ShoppingBasket,
@@ -51,7 +51,7 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
-  "Weed": Leaf,
+  
   "Dining Out & Street Food": UtensilsCrossed,
   "Software & Digital Subscriptions": CreditCard,
   "Tech & Hardware Upgrades": Cpu,
@@ -71,7 +71,10 @@ function StatsPage() {
       .forEach((t) => {
         map[t.category] = (map[t.category] || 0) + t.amountVND;
       });
-    return DISCRETIONARY_CATEGORIES.map((c, i) => ({
+    const cats = Array.from(
+      new Set([...DISCRETIONARY_CATEGORIES, ...(us.targetHabit ? [us.targetHabit] : [])])
+    );
+    return cats.map((c, i) => ({
       cat: c,
       amt: map[c] || 0,
       color: COLORS[i % COLORS.length],
