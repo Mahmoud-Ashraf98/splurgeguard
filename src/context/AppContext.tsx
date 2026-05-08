@@ -82,14 +82,14 @@ const defaultData: AppData = {
   userState: null,
   transactions: [],
   vaultItems: [],
-  rewardsStore: [],
+  rewards: [],
 };
 
 const Ctx = createContext<AppContextValue | null>(null);
 
 const migrate = (parsed: AppData): AppData => {
   const data: AppData = { ...defaultData, ...parsed };
-  if (!Array.isArray(data.rewardsStore)) data.rewardsStore = [];
+  if (!Array.isArray(data.rewards)) data.rewards = [];
   if (data.userState) {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
