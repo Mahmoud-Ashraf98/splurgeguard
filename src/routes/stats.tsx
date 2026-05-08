@@ -241,11 +241,12 @@ function StatsPage() {
         ) : (
           <div>
             {app.data.transactions.map((t) => {
-              const Icon = CATEGORY_ICON[t.category] ?? Package;
+              const isHabit = !!us.targetHabit && t.category.toLowerCase().trim() === us.targetHabit.toLowerCase().trim();
+              const Icon = isHabit ? Target : (CATEGORY_ICON[t.category] ?? Package);
               const iconColor = t.isEssential
                 ? "text-emerald-400"
-                : t.category === "Weed"
-                  ? "text-rose-500"
+                : isHabit
+                  ? "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]"
                   : "text-amber-400";
               return (
                 <div
