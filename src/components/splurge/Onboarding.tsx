@@ -101,19 +101,34 @@ export function Onboarding() {
           </div>
           <div>
             <label className="mb-2 block text-sm text-slate-300">
-              Weekly Weed Target (VND)
+              What habit do you want to control/reduce?
             </label>
             <div className="relative">
-              <Leaf className={iconClass} />
+              <Target className={iconClass} />
+              <input
+                value={targetHabit}
+                onChange={(e) => setTargetHabit(e.target.value)}
+                placeholder="e.g., Fast food, In-app purchases, Vaping"
+                className={inputClass}
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">We will track this specifically and reward you for resisting it.</p>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm text-slate-300">
+              Weekly Limit for this habit (VND)
+            </label>
+            <div className="relative">
+              <Target className={iconClass} />
               <input
                 inputMode="numeric"
-                value={weed}
-                onChange={(e) => setWeed(e.target.value.replace(/\D/g, ""))}
+                value={habitLimit}
+                onChange={(e) => setHabitLimit(e.target.value.replace(/\D/g, ""))}
                 placeholder="500000"
                 className={inputClass}
               />
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Stay under this weekly amount to earn a massive Discipline Point bonus.</p>
+            <p className="text-[10px] text-slate-500 mt-1">Stay under this amount each week to earn a 250 DP bonus.</p>
           </div>
           <button
             onClick={submit}
