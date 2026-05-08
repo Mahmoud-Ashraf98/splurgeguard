@@ -18,6 +18,7 @@ export function BottomNav() {
       <div className="mx-auto flex max-w-md items-stretch justify-around">
         {items.map(({ to, label, Icon }) => {
           const active = loc.pathname === to;
+          const showBadge = to === "/vault" && app.data.vaultItems.some((v) => v.status === "ready");
           return (
             <Link
               key={to}
@@ -26,9 +27,14 @@ export function BottomNav() {
                 active ? "-translate-y-1 text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              <Icon
-                className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
-              />
+              <span className="relative">
+                <Icon
+                  className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
+                />
+                {showBadge && (
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
+                )}
+              </span>
               <span className="font-mono">{label}</span>
             </Link>
           );
