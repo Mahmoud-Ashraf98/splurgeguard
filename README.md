@@ -48,13 +48,11 @@ SplurgeGuard is engineered as a 100% offline Progressive Web App (PWA). There ar
 
 ---
 
-## Interface Telemetry
+## A Peek Inside
 
-*(Replace these placeholder links with actual screenshots of your app)*
-
-| Operational Dashboard | Cycle Telemetry | Control Panel |
+| Your Dashboard | Your Spending Habits | Settings & Setup |
 | :---: | :---: | :---: |
-| `<img src="path/to/home-screenshot.png" width="250"/>` | `<img src="path/to/stats-screenshot.png" width="250"/>` | `<img src="path/to/settings-screenshot.png" width="250"/>` |
+| <img src="PASTE_LINK_1_HERE" width="250"/> | <img src="PASTE_LINK_2_HERE" width="250"/> | <img src="PASTE_LINK_3_HERE" width="250"/> |
 
 ---
 
