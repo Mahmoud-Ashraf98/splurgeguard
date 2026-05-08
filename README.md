@@ -52,7 +52,7 @@ SplurgeGuard is engineered as a 100% offline Progressive Web App (PWA). There ar
 
 | Your Dashboard | Your Spending Habits | Settings & Setup |
 | :---: | :---: | :---: |
-| <img src="PASTE_LINK_1_HERE" width="250"/> | <img src="PASTE_LINK_2_HERE" width="250"/> | <img src="PASTE_LINK_3_HERE" width="250"/> |
+| <img https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg" width="250"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg" width="250"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg" width="250"/> |
 
 ---
 
