@@ -314,7 +314,7 @@ function Stepper({
           onContextMenu={preventCtx}
           disabled={costDP <= 50}
           style={noSelectStyle}
-          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
+          className="select-none touch-none flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="h-5 w-5" />
         </button>
@@ -331,7 +331,7 @@ function Stepper({
           {...incHandlers}
           onContextMenu={preventCtx}
           style={noSelectStyle}
-          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
+          className="select-none touch-none flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
         >
           <Plus className="h-5 w-5" />
         </button>
