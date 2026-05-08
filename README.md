@@ -1,76 +1,79 @@
 <div align="center">
   <img src="public/logo-192.png" alt="SplurgeGuard Logo" width="120" />
 
-  # 🛡️ SplurgeGuard
+  # SplurgeGuard
   
-  **Your Gamified, 100% Offline Financial Bodyguard.**
+  **Personal finance, engineered for human psychology.**
 
   [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
   [![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
-  [![Offline First](https://img.shields.io/badge/100%25-Offline-00ff87?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+  [![Zero Knowledge](https://img.shields.io/badge/Privacy-100%25_On--Device-00ff87?style=for-the-badge)](#-zero-knowledge-architecture)
 </div>
 
 ---
 
-## 🛑 The Problem
-Traditional budgeting apps are passive. They just show you pie charts of money you've already lost. They do nothing to stop you in the heat of the moment when you're about to make an impulse purchase.
+## The Paradigm Shift
 
-## 🟢 The Solution
-**SplurgeGuard** is an active defense system against your own psychology. Built as a PWA with a premium "Cyberpunk Terminal" aesthetic, it acts as a strict financial bodyguard. It forces you to pause, rewards you for discipline, and safely amortizes large purchases so your daily budget doesn't spontaneously combust.
+Most financial tools are built like rear-view mirrors. They passively log your transactions, generating charts of money you have already lost. They rely on guilt after the fact.
 
----
-
-## ✨ Core Mechanics
-
-### 🎯 Dynamic Habit Tracking (The "Vice" Engine)
-Choose one specific habit you want to control (e.g., Vaping, In-App Purchases, Fast Food). SplurgeGuard tracks this specific category independently and rewards you with massive Discipline Point (DP) bonuses if you stay under your customized weekly limit.
-
-### 🔒 The Vault (Delayed Gratification)
-Got an urge to buy something you don't strictly need? Lock it in the Vault. You choose a cooling-off period (1 hour to 30 days). You earn DP just for waiting. If you still want it when the timer hits zero, you can buy it guilt-free. 
-
-### 🔥 Discipline Points (DP) & Streaks
-Gamification is baked into the math. 
-- Stay under your Smart Daily Limit? **+50 DP**. 
-- Hit a 3, 7, or 14-day streak? **Massive multiplier bonuses**.
-- Blow past your daily limit? **-25 DP and a streak reset**. 
-
-### 📉 The Amortization Engine
-Bought a 1-year software subscription or a 3-month gym membership? SplurgeGuard won't punish you by draining your daily limit all at once. The Amortization Engine smoothly depreciates bulk expenses day-by-day statelessly, keeping your gamification fair and accurate.
+**SplurgeGuard is an active intercept system.** We didn't set out to build another expense tracker; we built a financial bodyguard. SplurgeGuard introduces a premium, gamified architecture designed to intervene at the exact moment of an impulse decision. It introduces calculated friction, aligns dopamine with discipline, and completely reimagines how you interact with your capital.
 
 ---
 
-## 🛡️ 100% Offline & Private
-Your financial data, your justifications, and your habits are no one's business. 
-SplurgeGuard operates completely offline using local device storage. **No databases, no cloud syncing, no tracking.** Your data never leaves your phone. You can export and import your state manually via the Settings control panel if you need to switch devices.
+## Core Infrastructure
+
+### 🎯 The Vice Engine (Dynamic Habit Targeting)
+Not all spending is equal. The Vice Engine allows you to isolate and target your specific behavioral vulnerabilities—whether that's fast food delivery, in-app purchases, or daily coffee runs. By establishing a custom perimeter around a single habit, the system rewards you for targeted restraint.
+
+### 🔒 The Vault (Asynchronous Gratification)
+Impulse thrives on speed. The Vault neutralizes it with time. When the urge to make an unplanned purchase strikes, you lock the request inside the Vault. You define the cooling-off period (1 hour to 30 days). The system actively rewards you with Discipline Points (DP) while the timer counts down. If the item still holds value when the Vault opens, the purchase is cleared. 
+
+### ⚡ Incentive Architecture (DP & Streaks)
+Discipline should be immediately rewarding. SplurgeGuard runs on a strictly calibrated gamification engine:
+- **Daily Adherence:** +50 DP for operating within your algorithmic daily limit.
+- **Milestone Multipliers:** Exponential bonuses for maintaining 3, 7, and 14-day operational streaks.
+- **Consequence Protocols:** Breaching the daily limit results in an immediate -25 DP penalty and a total streak reset.
+
+### 📉 Stateless Amortization
+A 12-month software subscription shouldn't destroy today's daily limit. Our Amortization Engine mathematically depreciates large, bulk expenses day-by-day. This stateless projection maintains the integrity of your daily gamification without complex accounting overhead.
 
 ---
 
-## 📸 Interface Sneak Peek
+## 🛡️ Zero-Knowledge Architecture
 
-*(Replace these placeholder links with actual screenshots of your app once uploaded to your repo)*
+Your financial data is yours. Period.
 
-| The Dashboard | The Stats Telemetry | The Control Panel |
+SplurgeGuard is engineered as a 100% offline Progressive Web App (PWA). There are no backend databases, no telemetry, no cloud syncing, and no analytics harvesting. Every calculation, transaction, and state change occurs entirely within the sandboxed local storage of your device. We cannot see your data, and neither can anyone else.
+
+---
+
+## Interface Telemetry
+
+*(Replace these placeholder links with actual screenshots of your app)*
+
+| Operational Dashboard | Cycle Telemetry | Control Panel |
 | :---: | :---: | :---: |
 | `<img src="path/to/home-screenshot.png" width="250"/>` | `<img src="path/to/stats-screenshot.png" width="250"/>` | `<img src="path/to/settings-screenshot.png" width="250"/>` |
 
 ---
 
-## 🚀 Tech Stack & Architecture
+## 🛠️ Tech Stack
 
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS (Heavy use of Glassmorphism & Custom Radial Gradients)
-- **Icons:** Lucide-React
-- **State Management:** Custom React Hooks tied to `localStorage`
-- **PWA Ready:** Configured with `manifest.json` for native-like installation on iOS and Android.
+Built on modern, performant web primitives to deliver a native-tier experience:
+- **Core:** React 18
+- **Build System:** Vite
+- **Interface & Styling:** Tailwind CSS (Custom glassmorphism & deep radial gradients)
+- **Iconography:** Lucide-React
+- **State Management:** Custom React Hooks leveraging isolated `localStorage`
+- **Deployment:** Full PWA spec with custom manifest for iOS/Android native installation
 
 ---
 
-## 💻 Local Development Setup
+## 💻 Developer Initialization
 
-Want to run SplurgeGuard locally or tweak the gamification math?
+To deploy SplurgeGuard locally or audit the gamification algorithms:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/yourusername/SplurgeGuard.git](https://github.com/yourusername/SplurgeGuard.git)
+   git clone [https://github.com/Mahmoud-Ashraf98/SplurgeGuard.git](https://github.com/Mahmoud-Ashraf98/SplurgeGuard.git)
