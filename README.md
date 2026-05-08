@@ -42,7 +42,7 @@ Two minutes later, the money is gone. The dopamine fades in 20 seconds. And you 
 
 | 🏠 Dashboard | 📊 Spending Breakdown | ⚙️ Settings |
 |:---:|:---:|:---:|
-| <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg)" width="210"/> | <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg)" width="210"/> | <img src="[https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg](https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg)" width="210"/> |
+| <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg" width="210"/> |
 
 </div>
 
