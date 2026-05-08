@@ -10,7 +10,8 @@ export interface UserState {
   totalDP: number;
   currentStreakDays: number;
   lastLoginDate: string;
-  weeklyWeedLimitVND: number;
+  weeklyHabitLimitVND: number;
+  targetHabit: string;
   usdExchangeRate: number;
   displayCurrency: Currency;
 }
@@ -60,7 +61,6 @@ export const DISCRETIONARY_CATEGORIES = [
   "Diet soda and bottled cold tea soft drinks",
   "Clothes",
   "Travelling",
-  "Weed",
   "Dining Out & Street Food",
   "Software & Digital Subscriptions",
   "Tech & Hardware Upgrades",
