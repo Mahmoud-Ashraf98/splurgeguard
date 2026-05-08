@@ -1,11 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, BarChart3, Lock, Settings as SettingsIcon } from "lucide-react";
+import { Home, BarChart3, Lock, Settings as SettingsIcon, Store } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 const items = [
   { to: "/", label: "Home", Icon: Home },
   { to: "/stats", label: "Stats", Icon: BarChart3 },
   { to: "/vault", label: "Vault", Icon: Lock },
+  { to: "/exchange", label: "Exchange", Icon: Store },
   { to: "/settings", label: "Settings", Icon: SettingsIcon },
 ];
 

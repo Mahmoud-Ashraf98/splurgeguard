@@ -6,6 +6,7 @@ import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
+import { getLevelDef } from "@/lib/splurge-types";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -42,12 +43,27 @@ function Index() {
       <header className="mb-8 flex items-center justify-between">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
-          <h1
-            className="mt-1 text-2xl font-bold tracking-tight text-white"
-            style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
-          >
-            {us.userName || "Operator"}
-          </h1>
+          <div className="mt-1 flex items-center gap-2">
+            <h1
+              className="text-2xl font-bold tracking-tight text-white"
+              style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
+            >
+              {us.userName || "Operator"}
+            </h1>
+            {(() => {
+              const def = getLevelDef(us.currentLevel);
+              return (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-emerald-300"
+                  style={{ boxShadow: "0 0 12px -4px rgba(0,255,135,0.7)" }}
+                  title={`Lifetime DP: ${us.lifetimeDP}`}
+                >
+                  <span className="text-cyan-300">LV{def.level}</span>
+                  <span className="text-emerald-200">{def.title}</span>
+                </span>
+              );
+            })()}
+          </div>
         </div>
         <button
           onClick={app.toggleCurrency}
