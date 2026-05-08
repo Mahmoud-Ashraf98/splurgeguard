@@ -150,15 +150,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       messages.push({ msg: `⚠️ Missed ${missed} day(s). −${penalty} DP. Streak reset.`, type: "warning" });
     }
 
-    // BR-008: Weekly weed check on Monday
+    // BR-008: Weekly habit check on Monday
     if (today.getDay() === 1) {
+      const habit = us.targetHabit;
+      const habitLower = habit?.toLowerCase().trim();
       const weekAgo = new Date(today.getTime() - 7 * 86400000);
-      const weedSpent = data.transactions
-        .filter((t) => t.category === "Weed" && new Date(t.timestamp) >= weekAgo)
+      const habitSpent = data.transactions
+        .filter((t) => habitLower && t.category.toLowerCase().trim() === habitLower && new Date(t.timestamp) >= weekAgo)
         .reduce((s, t) => s + t.amountVND, 0);
-      if (weedSpent < us.weeklyWeedLimitVND) {
+      if (us.weeklyHabitLimitVND > 0 && habitSpent < us.weeklyHabitLimitVND) {
         newDP += 250;
-        messages.push({ msg: `🌿 Weekly Weed limit respected! +250 DP`, type: "success" });
+        messages.push({ msg: `🎯 Weekly ${habit} limit respected! +250 DP`, type: "success" });
       }
     }
 
@@ -184,8 +186,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const todayDiscretionary = useMemo(
-    () => discretionarySpentOn(data.transactions, dayKey(new Date())),
-    [data.transactions]
+    () => discretionarySpentOn(data.transactions, dayKey(new Date()), data.userState?.targetHabit),
+    [data.transactions, data.userState?.targetHabit]
   );
 
   const initUser: AppContextValue["initUser"] = (input) => {
@@ -199,7 +201,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       totalDP: 0,
       currentStreakDays: 0,
       lastLoginDate: dayKey(today),
-      weeklyWeedLimitVND: input.weeklyWeedLimitVND ?? 0,
+      weeklyHabitLimitVND: input.weeklyHabitLimitVND ?? 0,
+      targetHabit: (input.targetHabit ?? "").trim(),
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
     };
@@ -207,7 +210,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
-    mutate((d) => ({ ...d, userState: d.userState ? { ...d.userState, ...patch } : d.userState }));
+    mutate((d) => {
+      if (!d.userState) return d;
+      const oldHabit = d.userState.targetHabit;
+      const newHabit = patch.targetHabit;
+      const newUS = { ...d.userState, ...patch };
+      // Mid-cycle migration: rename historical transactions matching the old habit
+      let txs = d.transactions;
+      if (
+        typeof newHabit === "string" &&
+        oldHabit &&
+        newHabit.trim() &&
+        oldHabit.toLowerCase().trim() !== newHabit.toLowerCase().trim()
+      ) {
+        const oldLower = oldHabit.toLowerCase().trim();
+        txs = d.transactions.map((t) =>
+          t.category.toLowerCase().trim() === oldLower ? { ...t, category: newHabit.trim() } : t
+        );
+      }
+      return { ...d, userState: newUS, transactions: txs };
+    });
   };
 
   const logExpense: AppContextValue["logExpense"] = (input) => {
