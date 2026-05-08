@@ -30,7 +30,7 @@ function ExchangePage() {
   useEffect(() => {
     if (search.new) {
       setView("archetype-grid");
-      navigate({ search: (prev: ExchangeSearch) => ({ ...prev, new: undefined }), replace: true });
+      navigate({ to: "/exchange", search: { new: undefined } as ExchangeSearch, replace: true });
     }
   }, [search.new, navigate]);
 
