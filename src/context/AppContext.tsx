@@ -236,7 +236,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!data.userState) return false;
     const isEss = isEssentialCategory(input.category);
     const amortDays = input.amortizationDays && input.amortizationDays > 1 ? Math.floor(input.amortizationDays) : undefined;
-    const countsTowardDaily = !isEss && input.category !== "Weed" && !amortDays;
+    const habit = data.userState.targetHabit;
+    const habitLower = habit?.toLowerCase().trim();
+    const isHabit = !!habitLower && input.category.toLowerCase().trim() === habitLower;
+    const countsTowardDaily = !isEss && !isHabit && !amortDays;
 
     // BR-004 check first (only for non-amortized discretionary)
     if (countsTowardDaily) {
