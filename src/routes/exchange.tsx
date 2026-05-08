@@ -264,8 +264,14 @@ function Stepper({
   setCustomTitle: (s: string) => void;
   onLockIn: () => void;
 }) {
-  const decCb = useCallback(() => setCostDP((prev) => Math.max(50, prev - 50)), [setCostDP]);
-  const incCb = useCallback(() => setCostDP((prev) => prev + 50), [setCostDP]);
+  const decCb = useCallback(
+    (multiplier: number) => setCostDP((prev) => Math.max(50, prev - 50 * multiplier)),
+    [setCostDP]
+  );
+  const incCb = useCallback(
+    (multiplier: number) => setCostDP((prev) => prev + 50 * multiplier),
+    [setCostDP]
+  );
   const decHandlers = useLongPress(decCb);
   const incHandlers = useLongPress(incCb);
   const vnd = Math.floor(costDP * 100).toLocaleString("vi-VN");
