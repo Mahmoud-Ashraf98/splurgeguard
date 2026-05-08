@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Terminal, User, Wallet, Calendar, Leaf } from "lucide-react";
+import { Terminal, User, Wallet, Calendar, Target } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export function Onboarding() {
@@ -7,9 +7,15 @@ export function Onboarding() {
   const [userName, setUserName] = useState("Mahmoud");
   const [balance, setBalance] = useState("");
   const [payday, setPayday] = useState("");
-  const [weed, setWeed] = useState("");
+  const [targetHabit, setTargetHabit] = useState("");
+  const [habitLimit, setHabitLimit] = useState("");
 
-  const canSubmit = userName.trim().length > 0 && Number(balance) > 0 && payday && Number(weed) >= 0;
+  const canSubmit =
+    userName.trim().length > 0 &&
+    Number(balance) > 0 &&
+    payday &&
+    targetHabit.trim().length > 0 &&
+    Number(habitLimit) >= 0;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -17,7 +23,8 @@ export function Onboarding() {
       userName: userName.trim(),
       currentBalanceVND: Math.floor(Number(balance)),
       paydayDate: new Date(payday + "T23:59:59").toISOString(),
-      weeklyWeedLimitVND: Math.floor(Number(weed)),
+      targetHabit: targetHabit.trim(),
+      weeklyHabitLimitVND: Math.floor(Number(habitLimit)),
     });
   };
 
