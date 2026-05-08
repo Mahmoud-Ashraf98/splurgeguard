@@ -84,7 +84,14 @@ const load = (): AppData => {
 const save = (d: AppData) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-  } catch {}
+  } catch (error) {
+    try {
+      toast.error(
+        "Device storage full! App data cannot be saved. Please export your data in Settings and clear space.",
+        { duration: Infinity, id: "storage-quota-error" }
+      );
+    } catch {}
+  }
 };
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
