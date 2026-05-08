@@ -92,6 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
   const dailyCheckRan = useRef(false);
+  const notifiedReadyRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setData(load());
