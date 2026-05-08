@@ -304,9 +304,11 @@ function Stepper({
       </p>
       <div className="mb-2 flex items-center justify-center gap-4">
         <button
-          onClick={dec}
+          {...decHandlers}
+          onContextMenu={preventCtx}
           disabled={costDP <= 50}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
+          style={noSelectStyle}
+          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="h-5 w-5" />
         </button>
@@ -320,14 +322,16 @@ function Stepper({
           <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">DP</p>
         </div>
         <button
-          onClick={inc}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
+          {...incHandlers}
+          onContextMenu={preventCtx}
+          style={noSelectStyle}
+          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
         >
           <Plus className="h-5 w-5" />
         </button>
       </div>
       <p className="mb-6 text-center font-mono text-xs text-slate-500">
-        ≈ {vnd} VND
+        ≈ {vnd} ₫
       </p>
 
       <button
