@@ -11,6 +11,7 @@ import appCss from "../styles.css?url";
 import { AppProvider } from "@/context/AppContext";
 import { BottomNav } from "@/components/splurge/BottomNav";
 import { BreachModal } from "@/components/splurge/BreachModal";
+import { AscensionModal } from "@/components/splurge/AscensionModal";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
