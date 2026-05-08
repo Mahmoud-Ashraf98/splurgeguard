@@ -69,11 +69,9 @@ interface AppContextValue {
   todayDiscretionary: number;
   breach: BreachInfo | null;
   clearBreach: () => void;
-  // Rewards Store / Exchange
-  addReward: (r: { title: string; costDP: number; icon: RewardIcon }) => void;
-  updateReward: (id: string, patch: Partial<Omit<RewardItem, "id" | "timesRedeemed">>) => void;
-  deleteReward: (id: string) => void;
-  redeemReward: (id: string) => void;
+  // Rewards / Exchange
+  createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
+  redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
   // Ascension Modal
   ascension: { show: boolean; pendingLevel: number | null };
   acceptAscension: () => void;
