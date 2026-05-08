@@ -1,144 +1,194 @@
 <div align="center">
 
-<img src="public/logo-192.png" alt="SplurgeGuard" width="100" />
+<img src="public/logo-192.png" alt="SplurgeGuard" width="120" />
+
+<br>
 
 # SplurgeGuard
 
-### Your money. Your rules. Zero excuses.
+### Your money has a bodyguard now.
 
-**The app that fights back when your impulses try to win.**
+*The gamified, 100% offline app engineered to intercept impulse spending before it happens.*
 
-[![Live App](https://img.shields.io/badge/Try%20It%20Live-splurgeguard.lovable.app-00ff87?style=for-the-badge)](https://splurgeguard.lovable.app)
-[![Privacy](https://img.shields.io/badge/Privacy-100%25%20On--Device-0a0e1a?style=for-the-badge)](#your-data-never-leaves-your-phone)
-[![PWA](https://img.shields.io/badge/Install%20as%20App-iOS%20%26%20Android-00d4ff?style=for-the-badge)](#install-it-like-a-native-app)
+<br>
+
+[![Try It Live](https://img.shields.io/badge/%F0%9F%9A%80%20OPEN%20THE%20APP-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+
+<br>
+
+[![No Server](https://img.shields.io/badge/%F0%9F%94%92%20No%20Server-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![No Account](https://img.shields.io/badge/%F0%9F%91%A4%20No%20Account-Required-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![No Analytics](https://img.shields.io/badge/%F0%9F%9A%AB%20No%20Analytics-Ever-111827?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![PWA](https://img.shields.io/badge/%F0%9F%93%B1%20Installs%20on-iOS%20%26%20Android-00d4ff?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+[![Built With](https://img.shields.io/badge/%E2%9A%A1%20Built%20with-React%2018-61DAFB?style=flat-square&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
 
 </div>
 
 ---
 
-## You know the feeling.
+## ðŸ˜¤ You know this feeling.
 
-It's 11pm. You're tired. You open your phone and suddenly you *need* those sneakers. Or that food delivery. Or that thing you've been trying to stop buying.
+It is 11pm. You are tired. You open your phone and suddenly you *need* those sneakers. Or that food delivery. Or that thing you have been trying to stop buying.
 
-Two minutes later, the money is gone. The dopamine fades in 20 seconds. And you're left refreshing your bank balance wondering where the month went.
+Two minutes later, the money is gone. The dopamine fades in 20 seconds. And you are left refreshing your bank balance wondering where the month went.
 
-**SplurgeGuard was built for exactly that moment.**
+> **SplurgeGuard was built for exactly that moment.** Not to judge you after the fact, but to intercept you *before* you tap "confirm order."
 
 ---
 
-## What it actually does
+## ðŸ“¸ See it in action
 
 <div align="center">
 
-| Your Dashboard | Spending Breakdown | Settings |
+| ðŸ  Dashboard | ðŸ“Š Spending Breakdown | âš™ï¸ Settings |
 |:---:|:---:|:---:|
-| <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg" width="220"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg" width="220"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg" width="220"/> |
+| <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143007_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143018_Chrome.jpg" width="210"/> | <img src="https://raw.githubusercontent.com/Mahmoud-Ashraf98/splurgeguard/refs/heads/main/Screenshot_20260508_143048_Chrome.jpg" width="210"/> |
 
 </div>
 
-Instead of letting you spend freely and showing you the damage later, SplurgeGuard intervenes *before* the transaction. Every feature is designed around one uncomfortable truth: **your future self and your present self want completely different things.**
+---
+
+## ðŸ”§ Four systems. One mission: stop you from wasting money.
+
+<br>
+
+### ðŸ”’ The Vault
+#### *"Sleep on it" - but mandatory.*
+
+[![What it does](https://img.shields.io/badge/What%20it%20does-Locks%20purchases%20behind%20a%20countdown%20timer-0a0e1a?style=flat-square)](.)
+[![Timers](https://img.shields.io/badge/Timer%20range-1%20hour%20to%2030%20days-00d4ff?style=flat-square&labelColor=0a0e1a)](.)
+[![Reward](https://img.shields.io/badge/Reward-Earn%20points%20the%20entire%20time%20you%20wait-00ff87?style=flat-square&labelColor=0a0e1a)](.)
+
+When the urge hits, you **lock the purchase in the Vault** instead of buying it. You choose the timer. The app physically prevents you from buying it until that timer reaches zero.
+
+The clever part: **the app pays you Discipline Points to wait.** The longer you hold out, the more you earn. When the Vault opens, if you still want the item, buy it guilt-free. If you have forgotten about it - that is exactly the point.
+
+> ðŸ’¡ *Most Vault items never get purchased. Your future self is very grateful for this.*
+
+<br>
 
 ---
 
-## The four weapons
+### ðŸ“Š Smart Daily Limit
+#### *A budget that thinks for itself, every single day.*
 
-### The Vault - "Sleep on it" made mandatory
+[![Formula](https://img.shields.io/badge/Formula-Balance%20divided%20by%20days%20left%20x%20cycle%20weight-0a0e1a?style=flat-square)](.)
+[![Visual](https://img.shields.io/badge/Visual-Color--coded%20status%20ring%20on%20your%20home%20screen-fbbf24?style=flat-square&labelColor=0a0e1a)](.)
+[![Updates](https://img.shields.io/badge/Updates-Instantly%20after%20every%20transaction-00ff87?style=flat-square&labelColor=0a0e1a)](.)
 
-When you feel an impulse purchase coming, you lock it in the Vault instead of buying it immediately. You pick a cooling-off timer: 1 hour, 48 hours, a week - you decide. The app *physically prevents you from buying it* until the timer ends.
+You tell the app your available budget and your payday date. Every day it calculates exactly how much you can safely spend *today* on non-essentials. Not a fixed number. A dynamic, intelligent one.
 
-Here's the clever part: **the longer you wait, the more Discipline Points you earn.** The app pays you to resist. If the item still feels worth it when the Vault opens, you buy it guilt-free. If you forget about it entirely, that's the whole point.
+| Where you are in the cycle | What happens to your limit |
+|:---|:---|
+| ðŸŸ¢ Just got paid | Conservative - do not blow it on day one |
+| ðŸŸ¡ Mid-cycle | Steady and measured |
+| ðŸ”µ Approaching payday | Loosens slightly - you have proven yourself |
+| ðŸ”´ Over the limit | Streak dies, points docked, breach alert fires |
 
-> *Most Vault items never get purchased. And most of the time, you don't even miss them.*
+A large glowing ring on your dashboard tracks every penny in real time. Green to yellow to red. No hiding from it.
 
----
-
-### Smart Daily Limit - Your personal spending budget, calculated fresh every day
-
-Tell the app your available budget and your next payday. Every morning, it calculates exactly how much you can safely spend *today* on non-essentials - accounting for how many days are left in your cycle.
-
-The limit is not fixed. It's intelligent:
-
-- **Approaching payday?** Your limit loosens slightly (you've proven you can hold it together).
-- **Just got paid?** Your limit is conservative (don't blow it all on day one).
-- A big status ring on your home screen fills up as you spend. Green to Yellow to Red. Simple. Visceral.
+<br>
 
 ---
 
-### The Vice Engine - Target the one thing you actually overspend on
+### ðŸŽ¯ The Vice Engine
+#### *Isolate and crush the one habit costing you the most.*
 
-Most budgeting apps treat all spending the same. They don't. *You* don't.
+[![Customizable](https://img.shields.io/badge/Habit-Fully%20customizable%20to%20your%20weakness-a855f7?style=flat-square&labelColor=0a0e1a)](.)
+[![Weekly Limit](https://img.shields.io/badge/Weekly%20limit-Live%20progress%20bar%20on%20dashboard-ff4757?style=flat-square&labelColor=0a0e1a)](.)
+[![Vault Bonus](https://img.shields.io/badge/Vault%20bonus-Extra%20DP%20per%2024h%20waited-00ff87?style=flat-square&labelColor=0a0e1a)](.)
 
-You pick your specific weakness - delivery apps, clothes, supplements, whatever it is - and name it. The app then tracks that category separately with its own weekly limit, its own penalties for direct-buying, and bonus points if you run it through the Vault first.
+Most budgeting apps treat all spending the same. Your brain does not. Neither does SplurgeGuard.
 
-It's not about judging your choices. It's about making your specific pattern of overspending genuinely harder to repeat.
+You name your specific weakness - delivery apps, clothes, supplements, coffee, whatever it is. From that moment, the app applies a separate ruleset to that category entirely:
+
+- **Buy it directly?** Zero DP earned, and standard breach penalties still apply.
+- **Run it through the Vault first?** Bonus points for every 24 hours you waited.
+- **Stay under your weekly limit?** **+250 DP bonus** drops the following Monday.
+
+Not about judgment. About making your weak spot genuinely harder to act on impulsively.
+
+<br>
 
 ---
 
-### Discipline Points - Making restraint actually feel good
+### âš¡ Discipline Points
+#### *Making "no" feel as rewarding as "yes."*
 
-The hardest part of financial discipline is that saying "no" feels like nothing. No reward, no feedback, no dopamine. Just a quiet absence of spending.
+The hardest part of financial discipline is that restraint is invisible. You say no, nothing happens, and your brain registers it as a loss. No reward. No feedback. No dopamine.
 
-SplurgeGuard fixes this with a points economy:
+SplurgeGuard fixes this with a full points economy:
+
+<div align="center">
 
 | Action | Points |
-|---|---|
-| Stay under your daily limit | **+50 DP** |
-| Log any expense (friction matters) | **+1 to +5 DP** |
-| 3-day streak without breaking | **+100 DP bonus** |
-| 7-day streak | **+300 DP bonus** |
-| 14-day streak | **+750 DP bonus** |
-| Vault a purchase instead of buying direct | **Bonus DP while it cools** |
-| Discard a Vault item (chose not to buy) | **+10 DP** |
-| Break your daily limit | **-25 DP + streak reset** |
-| Miss a day entirely | **-10 DP per missed day** |
+|:---|:---:|
+| âœ… Stay under your daily limit | **+50 DP** |
+| ðŸ“ Log any expense (friction matters) | **+1 to +5 DP** |
+| ðŸ”¥ 3-day streak | **+100 DP bonus** |
+| ðŸ”¥ðŸ”¥ 7-day streak | **+300 DP bonus** |
+| ðŸ† 14-day streak | **+750 DP bonus** |
+| ðŸ”’ Vault a vice purchase | **+15 DP per 24h waited** |
+| ðŸ—‘ï¸ Discard a Vault item (decided not to buy) | **+10 DP** |
+| ðŸ’ª Beat your weekly vice limit | **+250 DP** |
+| âŒ Exceed your daily limit | **-25 DP + full streak reset** |
+| ðŸ˜´ Miss a day entirely | **-10 DP per day missed** |
 
-Spend your accumulated DP on real-life rewards you define for yourself. The points are yours to cash in however you want.
+</div>
 
----
-
-## Bonus: Amortization - for the big, smart purchases
-
-Bought a year of a software subscription? Stocked up on three months of something in bulk? Those shouldn't crater your daily limit for one day and then disappear.
-
-Toggle **"Spread Cost Over Time"** when logging an expense. Set the number of days. The cost is mathematically distributed across that window, so your daily limit takes a small, manageable hit each day instead of a single brutal deduction.
+Cash in your points for real-life rewards - you define what those are. The system just makes sure you earn them honestly.
 
 ---
 
-## Your data never leaves your phone
+## ðŸ“‰ Bonus: Expense Amortization
 
-This is not a cloud app with a privacy policy you'll never read.
+[![Use case](https://img.shields.io/badge/Use%20case-Annual%20subscriptions%20%26%20bulk%20purchases-00d4ff?style=flat-square&labelColor=0a0e1a)](.)
+[![Method](https://img.shields.io/badge/Method-Stateless%20daily%20projection%2C%20no%20stored%20state-00ff87?style=flat-square&labelColor=0a0e1a)](.)
 
-SplurgeGuard runs **100% inside your browser's local storage**. There is no server. There is no database. There is no account to create. No email address required. The app cannot phone home because it has no home to phone.
-
-Your financial habits, your justification notes, your vice category - none of it is ever transmitted anywhere. Not to us. Not to anyone.
-
-You can export your data as a JSON backup file at any time and restore it on any device. That's your escape hatch and your only sync mechanism, by design.
+A 12-month software subscription should not crater your daily limit on day one. Toggle **"Spread Cost Over Time"** when logging any large expense. Set the number of days. The cost drips out of your limit gradually - a small, manageable amount per day - instead of hitting all at once.
 
 ---
 
-## Install it like a native app
+## ðŸ›¡ï¸ Your data never leaves your phone
 
-SplurgeGuard is a Progressive Web App (PWA). No app store required.
+<div align="center">
+
+[![No Server](https://img.shields.io/badge/Server-None-00ff87?style=for-the-badge&labelColor=0a0e1a)](.)
+[![No Database](https://img.shields.io/badge/Database-None-00ff87?style=for-the-badge&labelColor=0a0e1a)](.)
+[![No Account](https://img.shields.io/badge/Account-Not%20Required-00ff87?style=for-the-badge&labelColor=0a0e1a)](.)
+[![No Analytics](https://img.shields.io/badge/Analytics-Zero-00ff87?style=for-the-badge&labelColor=0a0e1a)](.)
+
+</div>
+
+SplurgeGuard runs **100% inside your browser's local storage.** There is no backend. No cloud sync. No email address required. The app cannot transmit your data because it has nowhere to send it.
+
+Your financial habits, your justification notes, your vice category - none of it ever leaves your device. Not to us. Not to anyone.
+
+Export a full JSON backup at any time and restore it on any device. That is your only sync mechanism, and it is entirely in your control.
+
+---
+
+## ðŸ“± Install it like a native app
+
+No app store. No approval. No waiting.
 
 **On Android (Chrome):**
 1. Open [splurgeguard.lovable.app](https://splurgeguard.lovable.app) in Chrome
-2. Tap the three-dot menu in the top right
+2. Tap the three-dot menu in the top right corner
 3. Tap **"Add to Home Screen"**
-4. Done. It lives on your home screen like any other app.
+4. Done. It sits on your home screen like any native app.
 
 **On iPhone (Safari):**
 1. Open [splurgeguard.lovable.app](https://splurgeguard.lovable.app) in Safari
-2. Tap the **Share** button at the bottom
+2. Tap the Share button at the bottom of the screen
 3. Tap **"Add to Home Screen"**
 4. Done.
 
-Works offline. Loads instantly. No updates to approve.
+Works fully offline after the first load. Instant launch. No updates to sit through.
 
 ---
 
-## For developers
-
-Want to run it locally, audit the gamification logic, or fork it for your own use?
+## ðŸ› ï¸ For developers
 
 ```bash
 git clone https://github.com/Mahmoud-Ashraf98/splurgeguard.git
@@ -148,33 +198,43 @@ npm run dev
 ```
 
 **Stack:**
-- React 18 + Vite
-- Tailwind CSS (custom glassmorphism, deep radial gradients)
-- TanStack Router (file-based routing)
-- Sonner (toast notifications)
-- Lucide React (iconography)
-- Zero external dependencies at runtime - no APIs, no analytics, no tracking
 
-**Storage:** One `localStorage` key (`splurgeGuardData_v1`), fully typed, JSON-serialized on every write.
+[![React](https://img.shields.io/badge/React%2018-20232A?style=flat-square&logo=react&logoColor=61DAFB)](.)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?style=flat-square&logo=vite&logoColor=FFD62E)](.)
+[![Tailwind](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](.)
+[![TanStack](https://img.shields.io/badge/TanStack%20Router-FF4154?style=flat-square)](.)
+[![Zero Backend](https://img.shields.io/badge/Backend-Absolutely%20none-00ff87?style=flat-square&labelColor=0a0e1a)](.)
 
-**Architecture highlights:**
-- Smart Daily Limit uses proximity-weighted formula: `(balance / daysLeft) * proximityWeight` where weight scales 1.0 to 1.2 across the pay cycle
-- Vault timers use absolute `Date.now()` comparisons (not tick counting) - survives app backgrounding and sleep mode
-- Expense amortization runs as a stateless projection on every render - no stored daily state
-- Full gamification engine in `AppContext.tsx` covers 9 business rules across logging, streaks, vault behaviour, and missed-day penalties
+**Architecture notes worth reading:**
+
+- **Smart Daily Limit formula:** `(currentBalance / daysUntilPayday) * proximityWeight` where weight scales linearly from 1.0 to 1.2 across the pay cycle
+- **Vault timers:** Use absolute `Date.now()` comparison against stored `createdAt` timestamps. Survives sleep mode and app backgrounding. No tick counting.
+- **Amortization:** Stateless projection recalculated on every render. Zero stored daily state.
+- **Gamification engine:** `AppContext.tsx` implements 9 business rules covering logging rewards, streaks, vault bonuses, missed-day penalties, and the configurable vice protocol.
+- **Storage:** One `localStorage` key (`splurgeGuardData_v1`), fully TypeScript-typed, JSON-serialized on every mutation.
 
 ---
 
-## Contributing
+## ðŸ¤ Contributing
 
-This is a personal finance tool built for real use. If you find a bug or have a feature idea that fits the philosophy - **make friction, reward restraint, stay offline** - open an issue or a PR.
+Built for real personal use. If you find a bug or have an idea that fits the core philosophy:
+
+> **Make friction. Reward restraint. Stay offline.**
+
+Open an issue or a PR - both are welcome.
 
 ---
 
 <div align="center">
 
-**Built with React. Powered by stubbornness.**
+<br>
 
-[Try it now](https://splurgeguard.lovable.app)
+*Built with React. Powered by stubbornness.*
+
+<br>
+
+[![Open SplurgeGuard](https://img.shields.io/badge/%E2%9C%A8%20Open%20the%20App-splurgeguard.lovable.app-00ff87?style=for-the-badge&labelColor=0a0e1a)](https://splurgeguard.lovable.app)
+
+<br>
 
 </div>
