@@ -13,7 +13,7 @@ import {
   CupSoda,
   Shirt,
   Plane,
-  Leaf,
+  Target,
   Wifi,
   HeartPulse,
   Archive,
@@ -37,7 +37,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Diet soda and bottled cold tea soft drinks": CupSoda,
   "Clothes": Shirt,
   "Travelling": Plane,
-  "Weed": Leaf,
+  
   "Dining Out & Street Food": UtensilsCrossed,
   "Software & Digital Subscriptions": CreditCard,
   "Tech & Hardware Upgrades": Cpu,
@@ -45,7 +45,8 @@ const categoryIcons: Record<string, React.ElementType> = {
   "Other Splurges": Sparkles,
 };
 
-const CatIcon = ({ name, className }: { name: string; className?: string }) => {
+const CatIcon = ({ name, className, isHabit }: { name: string; className?: string; isHabit?: boolean }) => {
+  if (isHabit) return <Target className={className} />;
   const Icon = categoryIcons[name] ?? MoreHorizontal;
   return <Icon className={className} />;
 };
@@ -92,7 +93,15 @@ export function LogSheet({ open, onClose }: Props) {
     }
   }, [open]);
 
-  const isDiscretionarySelected = category && !isEssentialCategory(category) && category !== "Weed";
+  const targetHabit = data.userState?.targetHabit ?? "";
+  const habitLower = targetHabit.toLowerCase().trim();
+  const isHabitCategory = !!habitLower && category.toLowerCase().trim() === habitLower;
+  const isDiscretionarySelected = !!category && !isEssentialCategory(category) && !isHabitCategory;
+
+  const discretionaryWithHabit = useMemo(
+    () => Array.from(new Set([...DISCRETIONARY_CATEGORIES, ...(targetHabit ? [targetHabit] : [])])),
+    [targetHabit]
+  );
 
   useEffect(() => {
     if (!isDiscretionarySelected && amortize) setAmortize(false);
