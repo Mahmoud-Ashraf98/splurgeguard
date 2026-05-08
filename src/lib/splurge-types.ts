@@ -42,21 +42,22 @@ export interface VaultItem {
   status: VaultStatus;
 }
 
-export type RewardIcon = "Coffee" | "Gamepad2" | "Plane" | "ShoppingBag" | "Pizza" | "Music" | "Film" | "Gift";
-
-export interface RewardItem {
+export interface Reward {
   id: string;
+  archetypeId: string;
+  emoji: string;
   title: string;
   costDP: number;
-  timesRedeemed: number;
-  icon: RewardIcon;
+  createdAt: string;
+  redeemedAt?: string;
+  status: "active" | "redeemed";
 }
 
 export interface AppData {
   userState: UserState | null;
   transactions: Transaction[];
   vaultItems: VaultItem[];
-  rewardsStore: RewardItem[];
+  rewards: Reward[];
 }
 
 export const ESSENTIAL_CATEGORIES = [
