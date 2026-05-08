@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { REWARD_ARCHETYPES, RewardArchetype } from "@/lib/archetypes";
+import { useLongPress } from "@/hooks/useLongPress";
 
 type ExchangeSearch = { new?: boolean };
 
