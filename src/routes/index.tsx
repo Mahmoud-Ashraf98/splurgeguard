@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Flame, Coins, Lock } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
@@ -14,9 +14,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const app = useApp();
+  const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [dpModal, setDpModal] = useState(false);
-  const [dpAmt, setDpAmt] = useState("");
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
@@ -28,15 +27,6 @@ function Index() {
   const milestoneProgress = Math.min(1, us.currentStreakDays / next);
 
   const activeVault = app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").slice(0, 3);
-
-  const submitSpendDP = () => {
-    const n = Math.floor(Number(dpAmt));
-    if (n > 0 && n <= us.totalDP) {
-      app.spendDP(n);
-      setDpAmt("");
-      setDpModal(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
@@ -121,7 +111,7 @@ function Index() {
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Discipline Points</span>
           </div>
           <button
-            onClick={() => setDpModal(true)}
+            onClick={() => navigate({ to: "/exchange", search: { new: true } })}
             className="rounded-md border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-400/10 hover:shadow-[0_0_15px_-3px_#00d4ff]"
           >
             Spend DP
@@ -238,25 +228,6 @@ function Index() {
 
       <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
-      {dpModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setDpModal(false)}>
-          <div className="w-full max-w-sm rounded-2xl border border-cyan-400/40 bg-slate-900 p-5" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-3 font-mono text-sm uppercase tracking-wider text-cyan-400">Redeem DP</h3>
-            <p className="mb-3 text-xs text-slate-400">Available: {us.totalDP} DP</p>
-            <input
-              inputMode="numeric"
-              value={dpAmt}
-              onChange={(e) => setDpAmt(e.target.value.replace(/\D/g, ""))}
-              placeholder="0"
-              className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-right font-mono text-2xl text-cyan-400 outline-none focus:border-cyan-400"
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setDpModal(false)} className="flex-1 rounded-lg border border-slate-700 py-2.5 font-mono text-xs uppercase tracking-wider text-slate-400">Cancel</button>
-              <button onClick={submitSpendDP} className="flex-1 rounded-lg bg-cyan-400 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-slate-950">Redeem</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

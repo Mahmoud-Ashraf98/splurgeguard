@@ -14,8 +14,7 @@ import {
   Transaction,
   UserState,
   VaultItem,
-  RewardItem,
-  RewardIcon,
+  Reward,
   isEssentialCategory,
   levelForLifetimeDP,
   getLevelDef,
@@ -70,11 +69,9 @@ interface AppContextValue {
   todayDiscretionary: number;
   breach: BreachInfo | null;
   clearBreach: () => void;
-  // Rewards Store / Exchange
-  addReward: (r: { title: string; costDP: number; icon: RewardIcon }) => void;
-  updateReward: (id: string, patch: Partial<Omit<RewardItem, "id" | "timesRedeemed">>) => void;
-  deleteReward: (id: string) => void;
-  redeemReward: (id: string) => void;
+  // Rewards / Exchange
+  createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
+  redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
   // Ascension Modal
   ascension: { show: boolean; pendingLevel: number | null };
   acceptAscension: () => void;
@@ -85,14 +82,14 @@ const defaultData: AppData = {
   userState: null,
   transactions: [],
   vaultItems: [],
-  rewardsStore: [],
+  rewards: [],
 };
 
 const Ctx = createContext<AppContextValue | null>(null);
 
 const migrate = (parsed: AppData): AppData => {
   const data: AppData = { ...defaultData, ...parsed };
-  if (!Array.isArray(data.rewardsStore)) data.rewardsStore = [];
+  if (!Array.isArray(data.rewards)) data.rewards = [];
   if (data.userState) {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
@@ -309,7 +306,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
     };
-    setData({ userState: us, transactions: [], vaultItems: [], rewardsStore: [] });
+    setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
@@ -476,12 +473,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const spendDP: AppContextValue["spendDP"] = (amount) => {
+    if (!data.userState || amount > data.userState.totalDP) return;
     mutate((d) => {
       if (!d.userState) return d;
-      const newDP = Math.max(0, d.userState.totalDP - amount);
-      return { ...d, userState: { ...d.userState, totalDP: newDP } };
+      return { ...d, userState: { ...d.userState, totalDP: d.userState.totalDP - amount } };
     });
-    toast(`Redeemed ${amount} DP`);
   };
 
   const deleteTransaction = (id: string) => {
@@ -522,49 +518,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateUserState({ displayCurrency: data.userState.displayCurrency === "VND" ? "USD" : "VND" });
   };
 
-  // ===== Rewards Store =====
-  const addReward: AppContextValue["addReward"] = ({ title, costDP, icon }) => {
-    const reward: RewardItem = {
-      id: uuid(),
-      title: title.trim(),
-      costDP: Math.max(1, Math.floor(costDP)),
-      timesRedeemed: 0,
-      icon,
-    };
-    mutate((d) => ({ ...d, rewardsStore: [reward, ...d.rewardsStore] }));
-    toast.success(`🛒 Reward added: ${reward.title}`);
-  };
-
-  const updateReward: AppContextValue["updateReward"] = (id, patch) => {
+  // ===== Rewards / Exchange =====
+  const createReward: AppContextValue["createReward"] = (input) => {
     mutate((d) => ({
       ...d,
-      rewardsStore: d.rewardsStore.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+      rewards: [
+        {
+          ...input,
+          id: uuid(),
+          createdAt: new Date().toISOString(),
+          status: "active" as const,
+        },
+        ...d.rewards,
+      ],
     }));
+    toast.success(`Reward saved: ${input.title}`);
   };
 
-  const deleteReward: AppContextValue["deleteReward"] = (id) => {
-    mutate((d) => ({ ...d, rewardsStore: d.rewardsStore.filter((r) => r.id !== id) }));
-    toast("Reward removed");
-  };
+  const redeemReward: AppContextValue["redeemReward"] = (rewardId) => {
+    const reward = data.rewards.find((r) => r.id === rewardId && r.status === "active");
+    if (!reward) return "not_found";
+    if (!data.userState || reward.costDP > data.userState.totalDP) return "insufficient_dp";
 
-  const redeemReward: AppContextValue["redeemReward"] = (id) => {
-    const reward = data.rewardsStore.find((r) => r.id === id);
-    if (!reward || !data.userState) return;
-    if (data.userState.totalDP < reward.costDP) {
-      toast.error("Not enough DP yet. Earn more, Operator.");
-      return;
-    }
     mutate((d) => {
       if (!d.userState) return d;
       return {
         ...d,
         userState: { ...d.userState, totalDP: d.userState.totalDP - reward.costDP },
-        rewardsStore: d.rewardsStore.map((r) =>
-          r.id === id ? { ...r, timesRedeemed: r.timesRedeemed + 1 } : r
+        rewards: d.rewards.map((r) =>
+          r.id === rewardId
+            ? { ...r, status: "redeemed" as const, redeemedAt: new Date().toISOString() }
+            : r
         ),
       };
     });
-    toast.success(`✅ Reward Authorized: Enjoy your ${reward.title}. You earned this.`);
+    return "success";
   };
 
   // ===== Ascension =====
@@ -603,9 +591,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     todayDiscretionary,
     breach,
     clearBreach: () => setBreach(null),
-    addReward,
-    updateReward,
-    deleteReward,
+    createReward,
     redeemReward,
     ascension,
     acceptAscension,
