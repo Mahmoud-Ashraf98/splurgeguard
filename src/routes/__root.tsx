@@ -75,6 +75,7 @@ function RootComponent() {
         </div>
         <BottomNav />
         <BreachModal />
+        <AscensionModal />
         <Toaster
           theme="dark"
           position="top-center"
