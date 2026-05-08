@@ -69,7 +69,13 @@ const load = (): AppData => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultData;
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw) as AppData;
+    // Migration guard: legacy data without targetHabit -> wipe to force fresh onboarding
+    if (parsed.userState && !(parsed.userState as any).targetHabit) {
+      localStorage.removeItem(STORAGE_KEY);
+      return defaultData;
+    }
+    return parsed;
   } catch {
     return defaultData;
   }
