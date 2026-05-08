@@ -111,7 +111,7 @@ function Index() {
             <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Discipline Points</span>
           </div>
           <button
-            onClick={() => setDpModal(true)}
+            onClick={() => navigate({ to: "/exchange", search: { new: true } })}
             className="rounded-md border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-400/10 hover:shadow-[0_0_15px_-3px_#00d4ff]"
           >
             Spend DP
