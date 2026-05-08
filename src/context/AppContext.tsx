@@ -306,7 +306,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
     };
-    setData({ userState: us, transactions: [], vaultItems: [], rewardsStore: [] });
+    setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
