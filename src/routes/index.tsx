@@ -6,6 +6,7 @@ import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
+import { getLevelDef } from "@/lib/splurge-types";
 
 export const Route = createFileRoute("/")({
   component: Index,
