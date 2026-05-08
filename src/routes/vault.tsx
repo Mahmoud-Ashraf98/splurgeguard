@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Lock, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { fmtMoney } from "@/lib/splurge-utils";
-import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/vault")({
   component: VaultPage,
@@ -26,18 +26,7 @@ function VaultPage() {
     return () => clearInterval(i);
   }, []);
 
-  // Auto-promote cooling -> ready
-  useEffect(() => {
-    app.data.vaultItems.forEach((v) => {
-      if (v.status === "cooling") {
-        const due = new Date(v.createdAt).getTime() + v.delayHours * 3600000;
-        if (due <= now) {
-          app.markVaultReady(v.id);
-          toast(`🔓 Vault Item Ready: ${v.itemName}`, { duration: 8000 });
-        }
-      }
-    });
-  }, [now, app]);
+  // Vault cooling->ready transitions are handled globally in AppContext.
 
   const us = app.data.userState;
   if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;

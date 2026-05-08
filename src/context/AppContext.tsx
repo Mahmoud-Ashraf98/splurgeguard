@@ -92,6 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
   const dailyCheckRan = useRef(false);
+  const notifiedReadyRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     setData(load());
@@ -179,6 +180,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
     }, 400);
   }, [hydrated, data.userState, data.transactions, mutate]);
+
+  // Global vault cooling -> ready check (battery-friendly: 60s + visibility sync)
+  useEffect(() => {
+    if (!hydrated) return;
+    const check = () => {
+      const now = Date.now();
+      const transitions: { id: string; name: string }[] = [];
+      setData((prev) => {
+        let changed = false;
+        const vaultItems = prev.vaultItems.map((v) => {
+          if (v.status === "cooling") {
+            const due = new Date(v.createdAt).getTime() + v.delayHours * 3600000;
+            if (due <= now) {
+              changed = true;
+              if (!notifiedReadyRef.current.has(v.id)) {
+                notifiedReadyRef.current.add(v.id);
+                transitions.push({ id: v.id, name: v.itemName });
+              }
+              return { ...v, status: "ready" as const };
+            }
+          }
+          return v;
+        });
+        return changed ? { ...prev, vaultItems } : prev;
+      });
+      transitions.forEach((t) =>
+        toast.success(`🔓 Vault Item Ready: ${t.name}`, { duration: 8000 })
+      );
+    };
+    check();
+    const interval = setInterval(check, 60000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [hydrated]);
 
   const smartDailyLimit = useMemo(
     () => (data.userState ? calcSmartDailyLimit(data.userState, new Date(), data.transactions) : 0),
