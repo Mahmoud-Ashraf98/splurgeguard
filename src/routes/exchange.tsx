@@ -259,16 +259,20 @@ function Stepper({
 }: {
   archetype: RewardArchetype;
   costDP: number;
-  setCostDP: (n: number) => void;
+  setCostDP: React.Dispatch<React.SetStateAction<number>>;
   customTitle: string;
   setCustomTitle: (s: string) => void;
   onLockIn: () => void;
 }) {
-  const dec = () => setCostDP(Math.max(50, costDP - 10));
-  const inc = () => setCostDP(costDP + 10);
-  const vnd = (costDP * 1000).toLocaleString("vi-VN");
+  const decCb = useCallback(() => setCostDP((prev) => Math.max(50, prev - 50)), [setCostDP]);
+  const incCb = useCallback(() => setCostDP((prev) => prev + 50), [setCostDP]);
+  const decHandlers = useLongPress(decCb);
+  const incHandlers = useLongPress(incCb);
+  const vnd = Math.floor(costDP * 100).toLocaleString("vi-VN");
   const isCustom = archetype.id === "custom";
   const valid = isCustom ? customTitle.trim().length > 0 : true;
+  const noSelectStyle = { WebkitUserSelect: "none" as const, WebkitTouchCallout: "none" as const };
+  const preventCtx = (e: React.SyntheticEvent) => e.preventDefault();
 
   return (
     <div
