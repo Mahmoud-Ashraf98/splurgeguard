@@ -518,49 +518,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateUserState({ displayCurrency: data.userState.displayCurrency === "VND" ? "USD" : "VND" });
   };
 
-  // ===== Rewards Store =====
-  const addReward: AppContextValue["addReward"] = ({ title, costDP, icon }) => {
-    const reward: RewardItem = {
-      id: uuid(),
-      title: title.trim(),
-      costDP: Math.max(1, Math.floor(costDP)),
-      timesRedeemed: 0,
-      icon,
-    };
-    mutate((d) => ({ ...d, rewardsStore: [reward, ...d.rewardsStore] }));
-    toast.success(`🛒 Reward added: ${reward.title}`);
-  };
-
-  const updateReward: AppContextValue["updateReward"] = (id, patch) => {
+  // ===== Rewards / Exchange =====
+  const createReward: AppContextValue["createReward"] = (input) => {
     mutate((d) => ({
       ...d,
-      rewardsStore: d.rewardsStore.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+      rewards: [
+        {
+          ...input,
+          id: uuid(),
+          createdAt: new Date().toISOString(),
+          status: "active" as const,
+        },
+        ...d.rewards,
+      ],
     }));
+    toast.success(`Reward saved: ${input.title}`);
   };
 
-  const deleteReward: AppContextValue["deleteReward"] = (id) => {
-    mutate((d) => ({ ...d, rewardsStore: d.rewardsStore.filter((r) => r.id !== id) }));
-    toast("Reward removed");
-  };
+  const redeemReward: AppContextValue["redeemReward"] = (rewardId) => {
+    const reward = data.rewards.find((r) => r.id === rewardId && r.status === "active");
+    if (!reward) return "not_found";
+    if (!data.userState || reward.costDP > data.userState.totalDP) return "insufficient_dp";
 
-  const redeemReward: AppContextValue["redeemReward"] = (id) => {
-    const reward = data.rewardsStore.find((r) => r.id === id);
-    if (!reward || !data.userState) return;
-    if (data.userState.totalDP < reward.costDP) {
-      toast.error("Not enough DP yet. Earn more, Operator.");
-      return;
-    }
     mutate((d) => {
       if (!d.userState) return d;
       return {
         ...d,
         userState: { ...d.userState, totalDP: d.userState.totalDP - reward.costDP },
-        rewardsStore: d.rewardsStore.map((r) =>
-          r.id === id ? { ...r, timesRedeemed: r.timesRedeemed + 1 } : r
+        rewards: d.rewards.map((r) =>
+          r.id === rewardId
+            ? { ...r, status: "redeemed" as const, redeemedAt: new Date().toISOString() }
+            : r
         ),
       };
     });
-    toast.success(`✅ Reward Authorized: Enjoy your ${reward.title}. You earned this.`);
+    return "success";
   };
 
   // ===== Ascension =====
