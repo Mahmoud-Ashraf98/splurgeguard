@@ -473,12 +473,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const spendDP: AppContextValue["spendDP"] = (amount) => {
+    if (!data.userState || amount > data.userState.totalDP) return;
     mutate((d) => {
       if (!d.userState) return d;
-      const newDP = Math.max(0, d.userState.totalDP - amount);
-      return { ...d, userState: { ...d.userState, totalDP: newDP } };
+      return { ...d, userState: { ...d.userState, totalDP: d.userState.totalDP - amount } };
     });
-    toast(`Redeemed ${amount} DP`);
   };
 
   const deleteTransaction = (id: string) => {
