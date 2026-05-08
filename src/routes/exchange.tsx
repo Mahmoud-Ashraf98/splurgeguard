@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { REWARD_ARCHETYPES, RewardArchetype } from "@/lib/archetypes";
+import { useLongPress } from "@/hooks/useLongPress";
 
 type ExchangeSearch = { new?: boolean };
 
@@ -258,16 +259,20 @@ function Stepper({
 }: {
   archetype: RewardArchetype;
   costDP: number;
-  setCostDP: (n: number) => void;
+  setCostDP: React.Dispatch<React.SetStateAction<number>>;
   customTitle: string;
   setCustomTitle: (s: string) => void;
   onLockIn: () => void;
 }) {
-  const dec = () => setCostDP(Math.max(50, costDP - 10));
-  const inc = () => setCostDP(costDP + 10);
-  const vnd = (costDP * 1000).toLocaleString("vi-VN");
+  const decCb = useCallback(() => setCostDP((prev) => Math.max(50, prev - 50)), [setCostDP]);
+  const incCb = useCallback(() => setCostDP((prev) => prev + 50), [setCostDP]);
+  const decHandlers = useLongPress(decCb);
+  const incHandlers = useLongPress(incCb);
+  const vnd = Math.floor(costDP * 100).toLocaleString("vi-VN");
   const isCustom = archetype.id === "custom";
   const valid = isCustom ? customTitle.trim().length > 0 : true;
+  const noSelectStyle = { WebkitUserSelect: "none" as const, WebkitTouchCallout: "none" as const };
+  const preventCtx = (e: React.SyntheticEvent) => e.preventDefault();
 
   return (
     <div
@@ -299,9 +304,11 @@ function Stepper({
       </p>
       <div className="mb-2 flex items-center justify-center gap-4">
         <button
-          onClick={dec}
+          {...decHandlers}
+          onContextMenu={preventCtx}
           disabled={costDP <= 50}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
+          style={noSelectStyle}
+          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="h-5 w-5" />
         </button>
@@ -315,14 +322,16 @@ function Stepper({
           <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">DP</p>
         </div>
         <button
-          onClick={inc}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
+          {...incHandlers}
+          onContextMenu={preventCtx}
+          style={noSelectStyle}
+          className="select-none touch-manipulation flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
         >
           <Plus className="h-5 w-5" />
         </button>
       </div>
       <p className="mb-6 text-center font-mono text-xs text-slate-500">
-        ≈ {vnd} VND
+        ≈ {vnd} ₫
       </p>
 
       <button
