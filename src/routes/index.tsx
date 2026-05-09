@@ -7,7 +7,7 @@ import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
-import { getLevelDef } from "@/lib/splurge-types";
+
 import { RANKS, getNextRank } from "@/lib/ranks";
 
 
@@ -109,19 +109,6 @@ function Index() {
                 LV{currentRank.level} {currentRank.title}
               </span>
             </h1>
-            {(() => {
-              const def = getLevelDef(us.currentLevel);
-              return (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-emerald-300"
-                  style={{ boxShadow: "0 0 12px -4px rgba(0,255,135,0.7)" }}
-                  title={`Lifetime DP: ${us.lifetimeDP}`}
-                >
-                  <span className="text-cyan-300">LV{def.level}</span>
-                  <span className="text-emerald-200">{def.title}</span>
-                </span>
-              );
-            })()}
           </div>
         </div>
         <button
