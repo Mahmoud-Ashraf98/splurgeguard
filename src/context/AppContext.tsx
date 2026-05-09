@@ -72,10 +72,9 @@ interface AppContextValue {
   // Rewards / Exchange
   createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
   redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
-  // Ascension Modal
-  ascension: { show: boolean; pendingLevel: number | null };
-  acceptAscension: () => void;
-  dismissAscension: () => void;
+  // Ascension Protocol
+  pendingAscension: number | null;
+  clearPendingAscension: () => void;
 }
 
 const defaultData: AppData = {
