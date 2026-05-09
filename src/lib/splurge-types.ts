@@ -59,6 +59,7 @@ export interface AppData {
   transactions: Transaction[];
   vaultItems: VaultItem[];
   rewards: Reward[];
+  _isMigrationLoad?: boolean;
 }
 
 export const ESSENTIAL_CATEGORIES = [
