@@ -98,13 +98,15 @@ function Index() {
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
           <div className="mt-1 flex items-center gap-2">
             <h1
-              className="mt-1 flex items-center gap-3 text-2xl font-black text-white min-w-0"
-              style={{ textShadow: "0 0 18px rgba(255,255,255,0.2)" }}
+              className="mt-1 flex items-center gap-3 text-2xl font-black text-white min-w-0 drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
             >
               <span className="truncate">{us.userName || "Operator"}</span>
               <span
-                className={`whitespace-nowrap flex-shrink-0 rounded-full border border-white/10 bg-slate-900/50 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest ${currentRank.color}`}
-                style={{ boxShadow: `0 0 10px -2px ${currentRank.glowColor}` }}
+                className={`whitespace-nowrap flex-shrink-0 rounded-full border bg-slate-950/60 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest ${currentRank.color} backdrop-blur-md`}
+                style={{
+                  borderColor: currentRank.glowColor,
+                  boxShadow: `0 0 15px -3px ${currentRank.glowColor}, inset 0 0 8px -4px ${currentRank.glowColor}`,
+                }}
               >
                 LV{currentRank.level} {currentRank.title}
               </span>
