@@ -394,7 +394,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           };
           // -25 penalty (does NOT subtract from lifetime), then add the small dpForAmount gain
           const gain = dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
-          let us = { ...d.userState, totalDP: d.userState.totalDP - 25 };
+          let us = {
+            ...d.userState,
+            totalDP: d.userState.totalDP - 25,
+            ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) - 25),
+          };
           us = applyDPGain(us, gain);
           us = {
             ...us,
