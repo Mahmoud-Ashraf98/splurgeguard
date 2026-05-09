@@ -274,14 +274,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hydrated]);
 
-  // Ascension detector
+  // Ascension Protocol monitor — drives level up/down based on ascensionXP
   useEffect(() => {
     if (!hydrated || !data.userState) return;
-    const earned = levelForLifetimeDP(data.userState.lifetimeDP);
-    if (earned.level > data.userState.currentLevel && !ascension.show) {
-      setAscension({ show: true, pendingLevel: earned.level });
+    const us = data.userState;
+    const actualLevel = getRankForXP(us.ascensionXP ?? 0).level;
+
+    if (data._isMigrationLoad) {
+      if (actualLevel !== us.currentLevel) {
+        mutate((d) => ({
+          ...d,
+          userState: d.userState ? { ...d.userState, currentLevel: actualLevel } : d.userState,
+          _isMigrationLoad: undefined,
+        }));
+      } else {
+        mutate((d) => ({ ...d, _isMigrationLoad: undefined }));
+      }
+      return;
     }
-  }, [hydrated, data.userState, ascension.show]);
+
+    if (actualLevel > us.currentLevel) {
+      const nextStepLevel = us.currentLevel + 1;
+      if (pendingAscension !== nextStepLevel) setPendingAscension(nextStepLevel);
+    } else if (actualLevel < us.currentLevel) {
+      mutate((d) => ({
+        ...d,
+        userState: d.userState ? { ...d.userState, currentLevel: actualLevel } : d.userState,
+      }));
+      const demotedRank = RANKS.find((r) => r.level === actualLevel);
+      if (demotedRank) toast.error(`DEMOTION: You have fallen to ${demotedRank.title}. Discipline compromised.`);
+    }
+  }, [data.userState?.ascensionXP, data.userState?.currentLevel, data._isMigrationLoad, hydrated, pendingAscension, mutate, data.userState]);
 
   const smartDailyLimit = useMemo(
     () => (data.userState ? calcSmartDailyLimit(data.userState, new Date(), data.transactions) : 0),
