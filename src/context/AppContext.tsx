@@ -17,7 +17,6 @@ import {
   Reward,
   isEssentialCategory,
   levelForLifetimeDP,
-  getLevelDef,
 } from "@/lib/splurge-types";
 import {
   calcSmartDailyLimit,
@@ -28,6 +27,7 @@ import {
   milestoneBonus,
   uuid,
 } from "@/lib/splurge-utils";
+import { RANKS, getRankForXP } from "@/lib/ranks";
 
 interface BreachInfo {
   amountVND: number;
