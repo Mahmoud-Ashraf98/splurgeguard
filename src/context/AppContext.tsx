@@ -17,7 +17,6 @@ import {
   Reward,
   isEssentialCategory,
   levelForLifetimeDP,
-  getLevelDef,
 } from "@/lib/splurge-types";
 import {
   calcSmartDailyLimit,
@@ -28,6 +27,7 @@ import {
   milestoneBonus,
   uuid,
 } from "@/lib/splurge-utils";
+import { RANKS, getRankForXP } from "@/lib/ranks";
 
 interface BreachInfo {
   amountVND: number;
@@ -72,10 +72,9 @@ interface AppContextValue {
   // Rewards / Exchange
   createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
   redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
-  // Ascension Modal
-  ascension: { show: boolean; pendingLevel: number | null };
-  acceptAscension: () => void;
-  dismissAscension: () => void;
+  // Ascension Protocol
+  pendingAscension: number | null;
+  clearPendingAscension: () => void;
 }
 
 const defaultData: AppData = {
@@ -94,6 +93,14 @@ const migrate = (parsed: AppData): AppData => {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
     if (typeof us.currentLevel !== "number") us.currentLevel = levelForLifetimeDP(us.lifetimeDP).level;
+    // Ascension Protocol migration
+    if (typeof us.ascensionXP !== "number") {
+      const seededXP = us.totalDP ?? 0;
+      const actualLevel = [...RANKS].reverse().find((r) => seededXP >= r.threshold)?.level ?? 1;
+      us.ascensionXP = seededXP;
+      us.currentLevel = actualLevel;
+      data._isMigrationLoad = true;
+    }
     data.userState = us;
   }
   return data;
@@ -128,21 +135,19 @@ const save = (d: AppData) => {
   }
 };
 
-// Apply DP gain to BOTH totalDP and lifetimeDP (lifetime only counts gains).
+// Apply DP gain to totalDP, lifetimeDP, and ascensionXP (only positive gains accumulate).
 const applyDPGain = (us: UserState, gain: number): UserState => ({
   ...us,
   totalDP: us.totalDP + gain,
   lifetimeDP: us.lifetimeDP + Math.max(0, gain),
+  ascensionXP: (us.ascensionXP ?? 0) + Math.max(0, gain),
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(defaultData);
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
-  const [ascension, setAscension] = useState<{ show: boolean; pendingLevel: number | null }>({
-    show: false,
-    pendingLevel: null,
-  });
+  const [pendingAscension, setPendingAscension] = useState<number | null>(null);
   const dailyCheckRan = useRef(false);
   const notifiedReadyRef = useRef<Set<string>>(new Set());
 
@@ -216,7 +221,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     mutate((d) => {
       if (!d.userState) return d;
       let us2 = applyDPGain(d.userState, dpGain);
-      us2 = { ...us2, totalDP: us2.totalDP - dpLoss, currentStreakDays: newStreak, lastLoginDate: todayKey };
+      us2 = {
+        ...us2,
+        totalDP: us2.totalDP - dpLoss,
+        ascensionXP: Math.max(0, (us2.ascensionXP ?? 0) - dpLoss),
+        currentStreakDays: newStreak,
+        lastLoginDate: todayKey,
+      };
       return { ...d, userState: us2 };
     });
 
@@ -269,14 +280,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hydrated]);
 
-  // Ascension detector
+  // Ascension Protocol monitor — drives level up/down based on ascensionXP
   useEffect(() => {
     if (!hydrated || !data.userState) return;
-    const earned = levelForLifetimeDP(data.userState.lifetimeDP);
-    if (earned.level > data.userState.currentLevel && !ascension.show) {
-      setAscension({ show: true, pendingLevel: earned.level });
+    const us = data.userState;
+    const actualLevel = getRankForXP(us.ascensionXP ?? 0).level;
+
+    if (data._isMigrationLoad) {
+      if (actualLevel !== us.currentLevel) {
+        mutate((d) => ({
+          ...d,
+          userState: d.userState ? { ...d.userState, currentLevel: actualLevel } : d.userState,
+          _isMigrationLoad: undefined,
+        }));
+      } else {
+        mutate((d) => ({ ...d, _isMigrationLoad: undefined }));
+      }
+      return;
     }
-  }, [hydrated, data.userState, ascension.show]);
+
+    if (actualLevel > us.currentLevel) {
+      const nextStepLevel = us.currentLevel + 1;
+      if (pendingAscension !== nextStepLevel) setPendingAscension(nextStepLevel);
+    } else if (actualLevel < us.currentLevel) {
+      mutate((d) => ({
+        ...d,
+        userState: d.userState ? { ...d.userState, currentLevel: actualLevel } : d.userState,
+      }));
+      const demotedRank = RANKS.find((r) => r.level === actualLevel);
+      if (demotedRank) toast.error(`DEMOTION: You have fallen to ${demotedRank.title}. Discipline compromised.`);
+    }
+  }, [data.userState?.ascensionXP, data.userState?.currentLevel, data._isMigrationLoad, hydrated, pendingAscension, mutate, data.userState]);
 
   const smartDailyLimit = useMemo(
     () => (data.userState ? calcSmartDailyLimit(data.userState, new Date(), data.transactions) : 0),
@@ -299,6 +333,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       totalDP: 0,
       lifetimeDP: 0,
       currentLevel: 1,
+      ascensionXP: 0,
       currentStreakDays: 0,
       lastLoginDate: dayKey(today),
       weeklyHabitLimitVND: input.weeklyHabitLimitVND ?? 0,
@@ -359,7 +394,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           };
           // -25 penalty (does NOT subtract from lifetime), then add the small dpForAmount gain
           const gain = dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
-          let us = { ...d.userState, totalDP: d.userState.totalDP - 25 };
+          let us = {
+            ...d.userState,
+            totalDP: d.userState.totalDP - 25,
+            ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) - 25),
+          };
           us = applyDPGain(us, gain);
           us = {
             ...us,
@@ -555,23 +594,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return "success";
   };
 
-  // ===== Ascension =====
-  const acceptAscension = () => {
-    const lvl = ascension.pendingLevel;
-    if (!lvl) {
-      setAscension({ show: false, pendingLevel: null });
-      return;
-    }
-    mutate((d) => {
-      if (!d.userState) return d;
-      return { ...d, userState: { ...d.userState, currentLevel: lvl } };
-    });
-    setAscension({ show: false, pendingLevel: null });
-    const def = getLevelDef(lvl);
-    toast.success(`⚡ Ascended to LV ${lvl}: ${def.title}`);
+  // ===== Ascension Protocol =====
+  const clearPendingAscension = () => {
+    if (pendingAscension === null) return;
+    const lvl = pendingAscension;
+    mutate((d) => ({
+      ...d,
+      userState: d.userState ? { ...d.userState, currentLevel: lvl } : d.userState,
+    }));
+    setPendingAscension(null);
   };
-
-  const dismissAscension = () => setAscension({ show: false, pendingLevel: null });
 
   const value: AppContextValue = {
     data,
@@ -593,9 +625,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearBreach: () => setBreach(null),
     createReward,
     redeemReward,
-    ascension,
-    acceptAscension,
-    dismissAscension,
+    pendingAscension,
+    clearPendingAscension,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

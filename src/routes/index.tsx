@@ -5,17 +5,78 @@ import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
+import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 import { getLevelDef } from "@/lib/splurge-types";
+import { RANKS, getNextRank } from "@/lib/ranks";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
+function MainQuestCard({ onOpenGuide }: { onOpenGuide: () => void }) {
+  const { data } = useApp();
+  const us = data.userState!;
+  const currentRank = RANKS.find((r) => r.level === us.currentLevel) ?? RANKS[0];
+  const nextRank = getNextRank(currentRank.level);
+  const xpForNext = nextRank ? nextRank.threshold : currentRank.threshold;
+  const xpProgress = nextRank
+    ? Math.min(1, Math.max(0, (us.ascensionXP - currentRank.threshold) / (xpForNext - currentRank.threshold)))
+    : 1;
+  const isDangerZone = us.currentLevel > 1 && us.ascensionXP - currentRank.threshold <= 100;
+
+  return (
+    <div className="mb-6">
+      {isDangerZone && (
+        <div className="mb-2 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-2 text-center animate-pulse">
+          <p className="font-mono text-xs font-bold uppercase tracking-widest text-red-400">
+            DANGER: Demotion Imminent
+          </p>
+        </div>
+      )}
+      <button
+        onClick={onOpenGuide}
+        className="w-full text-left rounded-2xl border border-white/5 bg-slate-900/40 p-4 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)] transition-all hover:border-white/10 active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 flex-shrink-0" style={{ filter: `drop-shadow(0 0 12px ${currentRank.glowColor})` }}>
+            {currentRank.renderAvatar()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-0.5">
+              Level {currentRank.level} — Current Rank
+            </p>
+            <p className={`font-bold text-lg ${currentRank.color}`}>{currentRank.title}</p>
+            <p className="font-mono text-[10px] text-slate-400 italic mt-0.5 truncate">{currentRank.quote}</p>
+          </div>
+          <span className="font-mono text-[10px] text-slate-600">Guide ›</span>
+        </div>
+        <div className="mt-3">
+          <div className="mb-1 flex justify-between font-mono text-[9px] uppercase tracking-widest text-slate-600">
+            <span>{us.ascensionXP.toLocaleString()} XP</span>
+            <span>{nextRank ? `${nextRank.threshold.toLocaleString()} to ${nextRank.title}` : "MAX RANK"}</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/60">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${xpProgress * 100}%`,
+                background: `linear-gradient(90deg, ${currentRank.glowColor}, white)`,
+                boxShadow: `0 0 8px ${currentRank.glowColor}`,
+              }}
+            />
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
 function Index() {
   const app = useApp();
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
@@ -62,6 +123,9 @@ function Index() {
           {cur}
         </button>
       </header>
+
+      <MainQuestCard onOpenGuide={() => setGuideOpen(true)} />
+      {guideOpen && <LevelGuideModal onClose={() => setGuideOpen(false)} />}
 
       <div className="mb-8 flex flex-col items-center">
         <StatusRing

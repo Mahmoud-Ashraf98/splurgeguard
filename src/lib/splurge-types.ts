@@ -10,6 +10,7 @@ export interface UserState {
   totalDP: number;
   lifetimeDP: number;
   currentLevel: number;
+  ascensionXP: number;
   currentStreakDays: number;
   lastLoginDate: string;
   weeklyHabitLimitVND: number;
@@ -58,6 +59,7 @@ export interface AppData {
   transactions: Transaction[];
   vaultItems: VaultItem[];
   rewards: Reward[];
+  _isMigrationLoad?: boolean;
 }
 
 export const ESSENTIAL_CATEGORIES = [
