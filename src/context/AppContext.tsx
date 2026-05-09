@@ -584,23 +584,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return "success";
   };
 
-  // ===== Ascension =====
-  const acceptAscension = () => {
-    const lvl = ascension.pendingLevel;
-    if (!lvl) {
-      setAscension({ show: false, pendingLevel: null });
-      return;
-    }
-    mutate((d) => {
-      if (!d.userState) return d;
-      return { ...d, userState: { ...d.userState, currentLevel: lvl } };
-    });
-    setAscension({ show: false, pendingLevel: null });
-    const def = getLevelDef(lvl);
-    toast.success(`⚡ Ascended to LV ${lvl}: ${def.title}`);
+  // ===== Ascension Protocol =====
+  const clearPendingAscension = () => {
+    if (pendingAscension === null) return;
+    const lvl = pendingAscension;
+    mutate((d) => ({
+      ...d,
+      userState: d.userState ? { ...d.userState, currentLevel: lvl } : d.userState,
+    }));
+    setPendingAscension(null);
   };
-
-  const dismissAscension = () => setAscension({ show: false, pendingLevel: null });
 
   const value: AppContextValue = {
     data,
@@ -622,9 +615,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearBreach: () => setBreach(null),
     createReward,
     redeemReward,
-    ascension,
-    acceptAscension,
-    dismissAscension,
+    pendingAscension,
+    clearPendingAscension,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
