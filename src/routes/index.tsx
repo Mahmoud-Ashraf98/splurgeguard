@@ -10,6 +10,7 @@ import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 import { getLevelDef } from "@/lib/splurge-types";
 import { RANKS, getNextRank } from "@/lib/ranks";
 
+
 export const Route = createFileRoute("/")({
   component: Index,
 });
