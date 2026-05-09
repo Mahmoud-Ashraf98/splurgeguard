@@ -7,7 +7,7 @@ import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
-import { getLevelDef } from "@/lib/splurge-types";
+
 import { RANKS, getNextRank } from "@/lib/ranks";
 
 
