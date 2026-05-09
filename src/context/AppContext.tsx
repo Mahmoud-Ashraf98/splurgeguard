@@ -147,10 +147,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(defaultData);
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
-  const [ascension, setAscension] = useState<{ show: boolean; pendingLevel: number | null }>({
-    show: false,
-    pendingLevel: null,
-  });
+  const [pendingAscension, setPendingAscension] = useState<number | null>(null);
   const dailyCheckRan = useRef(false);
   const notifiedReadyRef = useRef<Set<string>>(new Set());
 
