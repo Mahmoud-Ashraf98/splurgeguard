@@ -221,7 +221,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     mutate((d) => {
       if (!d.userState) return d;
       let us2 = applyDPGain(d.userState, dpGain);
-      us2 = { ...us2, totalDP: us2.totalDP - dpLoss, currentStreakDays: newStreak, lastLoginDate: todayKey };
+      us2 = {
+        ...us2,
+        totalDP: us2.totalDP - dpLoss,
+        ascensionXP: Math.max(0, (us2.ascensionXP ?? 0) - dpLoss),
+        currentStreakDays: newStreak,
+        lastLoginDate: todayKey,
+      };
       return { ...d, userState: us2 };
     });
 
