@@ -93,6 +93,14 @@ const migrate = (parsed: AppData): AppData => {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
     if (typeof us.currentLevel !== "number") us.currentLevel = levelForLifetimeDP(us.lifetimeDP).level;
+    // Ascension Protocol migration
+    if (typeof us.ascensionXP !== "number") {
+      const seededXP = us.totalDP ?? 0;
+      const actualLevel = [...RANKS].reverse().find((r) => seededXP >= r.threshold)?.level ?? 1;
+      us.ascensionXP = seededXP;
+      us.currentLevel = actualLevel;
+      data._isMigrationLoad = true;
+    }
     data.userState = us;
   }
   return data;
