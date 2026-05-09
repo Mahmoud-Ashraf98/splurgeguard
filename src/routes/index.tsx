@@ -89,6 +89,7 @@ function Index() {
   const milestoneProgress = Math.min(1, us.currentStreakDays / next);
 
   const activeVault = app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").slice(0, 3);
+  const currentRank = RANKS.find(r => r.level === us.currentLevel) ?? RANKS[0];
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
