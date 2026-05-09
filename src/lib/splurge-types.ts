@@ -10,6 +10,7 @@ export interface UserState {
   totalDP: number;
   lifetimeDP: number;
   currentLevel: number;
+  ascensionXP: number;
   currentStreakDays: number;
   lastLoginDate: string;
   weeklyHabitLimitVND: number;
