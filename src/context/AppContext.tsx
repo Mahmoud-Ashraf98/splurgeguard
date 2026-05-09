@@ -135,11 +135,12 @@ const save = (d: AppData) => {
   }
 };
 
-// Apply DP gain to BOTH totalDP and lifetimeDP (lifetime only counts gains).
+// Apply DP gain to totalDP, lifetimeDP, and ascensionXP (only positive gains accumulate).
 const applyDPGain = (us: UserState, gain: number): UserState => ({
   ...us,
   totalDP: us.totalDP + gain,
   lifetimeDP: us.lifetimeDP + Math.max(0, gain),
+  ascensionXP: (us.ascensionXP ?? 0) + Math.max(0, gain),
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
