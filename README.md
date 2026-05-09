@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/logo-192.png" alt="SplurgeGuard" width="120" />
+<img src="public/logo-512.png" alt="SplurgeGuard" width="120" />
 
 <br>
 
