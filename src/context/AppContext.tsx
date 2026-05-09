@@ -327,6 +327,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       totalDP: 0,
       lifetimeDP: 0,
       currentLevel: 1,
+      ascensionXP: 0,
       currentStreakDays: 0,
       lastLoginDate: dayKey(today),
       weeklyHabitLimitVND: input.weeklyHabitLimitVND ?? 0,
