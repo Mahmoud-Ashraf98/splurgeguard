@@ -98,10 +98,16 @@ function Index() {
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
           <div className="mt-1 flex items-center gap-2">
             <h1
-              className="text-2xl font-bold tracking-tight text-white"
-              style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
+              className="mt-1 flex items-center gap-3 text-2xl font-black text-white min-w-0"
+              style={{ textShadow: "0 0 18px rgba(255,255,255,0.2)" }}
             >
-              {us.userName || "Operator"}
+              <span className="truncate">{us.userName || "Operator"}</span>
+              <span
+                className={`whitespace-nowrap flex-shrink-0 rounded-full border border-white/10 bg-slate-900/50 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest ${currentRank.color}`}
+                style={{ boxShadow: `0 0 10px -2px ${currentRank.glowColor}` }}
+              >
+                LV{currentRank.level} {currentRank.title}
+              </span>
             </h1>
             {(() => {
               const def = getLevelDef(us.currentLevel);
