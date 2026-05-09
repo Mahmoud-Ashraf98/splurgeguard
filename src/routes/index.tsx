@@ -10,6 +10,7 @@ import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 import { getLevelDef } from "@/lib/splurge-types";
 import { RANKS, getNextRank } from "@/lib/ranks";
 
+
 export const Route = createFileRoute("/")({
   component: Index,
 });
@@ -88,6 +89,7 @@ function Index() {
   const milestoneProgress = Math.min(1, us.currentStreakDays / next);
 
   const activeVault = app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").slice(0, 3);
+  const currentRank = RANKS.find(r => r.level === us.currentLevel) ?? RANKS[0];
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
@@ -96,10 +98,16 @@ function Index() {
           <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
           <div className="mt-1 flex items-center gap-2">
             <h1
-              className="text-2xl font-bold tracking-tight text-white"
-              style={{ textShadow: "0 0 18px rgba(0,255,135,0.55), 0 0 30px rgba(0,212,255,0.25)" }}
+              className="mt-1 flex items-center gap-3 text-2xl font-black text-white min-w-0"
+              style={{ textShadow: "0 0 18px rgba(255,255,255,0.2)" }}
             >
-              {us.userName || "Operator"}
+              <span className="truncate">{us.userName || "Operator"}</span>
+              <span
+                className={`whitespace-nowrap flex-shrink-0 rounded-full border border-white/10 bg-slate-900/50 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest ${currentRank.color}`}
+                style={{ boxShadow: `0 0 10px -2px ${currentRank.glowColor}` }}
+              >
+                LV{currentRank.level} {currentRank.title}
+              </span>
             </h1>
             {(() => {
               const def = getLevelDef(us.currentLevel);
