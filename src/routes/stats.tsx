@@ -489,30 +489,54 @@ function StatsPage() {
           </div>
           <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
           <div className="space-y-2">
-            {activeAmortizations.map(({ tx, remaining, pct }) => (
-              <div
-                key={tx.id}
-                className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
-              >
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate w-full text-sm text-white">{tx.justification || tx.category}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                      {tx.category} · {tx.amortizationDays}d
+            {activeAmortizations.map(({ tx }) => {
+              const progressPct =
+                tx.amortizationDays && tx.amortizationDays > 0
+                  ? Math.min(100, (daysElapsedInCycle / tx.amortizationDays) * 100)
+                  : 100;
+              const remainingPct = 100 - progressPct;
+              const dailyDrain =
+                tx.amortizationDays && tx.amortizationDays > 0
+                  ? tx.amountVND / tx.amortizationDays
+                  : 0;
+              return (
+                <div
+                  key={tx.id}
+                  className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
+                >
+                  <div className="flex justify-between items-baseline mb-1 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-white truncate">
+                        {tx.justification || tx.category}
+                      </p>
+                      <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
+                        {tx.category} · {tx.amortizationDays}d
+                      </p>
+                    </div>
+                    <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
+                      {fmtMoney(tx.amountVND, cur, rate)}
                     </p>
                   </div>
-                  <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)]">
-                    {fmtMoney(Math.round(remaining), cur, rate)}
+
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
+                    {tx.amortizationDays && tx.amortizationDays > 0
+                      ? `[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`
+                      : '[DRAIN: COMPLETE]'}
                   </p>
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
+                    <div
+                      className="h-full bg-slate-600/60"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                    <div
+                      className="payload-decay-bar h-full"
+                      style={{ width: `${remainingPct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="h-full bg-cyan-500 shadow-[0_0_10px_#00d4ff] transition-all"
-                    style={{ width: `${pct * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
