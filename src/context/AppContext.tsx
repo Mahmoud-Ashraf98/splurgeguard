@@ -641,6 +641,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearBreach: () => setBreach(null),
     createReward,
     redeemReward,
+    deleteReward,
     pendingAscension,
     clearPendingAscension,
   };
