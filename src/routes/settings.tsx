@@ -223,6 +223,36 @@ function SettingsPage() {
 
         <section className={sectionClass}>
           <h2 className={headerClass}>
+            <Bell className="h-4 w-4" /> Notifications
+          </h2>
+          {notifPermission === "unsupported" ? (
+            <p className="text-xs text-slate-400">
+              Notifications are not supported in this browser.
+            </p>
+          ) : notifPermission === "granted" ? (
+            <p className="text-xs text-emerald-400">
+              ✓ Notifications enabled. The grind will remind you.
+            </p>
+          ) : notifPermission === "denied" ? (
+            <p className="text-xs text-rose-400">
+              Notifications blocked. Enable them in your browser settings to receive reminders.
+            </p>
+          ) : (
+            <button
+              onClick={async () => {
+                const { requestNotificationPermission } = await import("@/lib/notifications");
+                const granted = await requestNotificationPermission();
+                setNotifPermission(granted ? "granted" : "denied");
+              }}
+              className="w-full rounded-xl bg-cyan-400/10 border border-cyan-400/20 py-3 font-mono text-xs font-bold uppercase tracking-widest text-cyan-400 hover:bg-cyan-400/20 transition-all touch-none select-none"
+            >
+              Enable Reminders
+            </button>
+          )}
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headerClass}>
             <ShieldCheck className="h-4 w-4" /> Backup & Security
           </h2>
           <p className="text-xs text-slate-400 mb-4">
