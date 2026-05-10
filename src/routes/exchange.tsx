@@ -198,6 +198,16 @@ function ListView({
                     </p>
                   </div>
                   <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(r);
+                    }}
+                    className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                    aria-label="Delete reward"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
                     onClick={() => onRedeem(r.id)}
                     className={`shrink-0 rounded-xl px-4 py-2.5 font-mono text-[11px] font-black uppercase tracking-widest transition-all ${
                       can
