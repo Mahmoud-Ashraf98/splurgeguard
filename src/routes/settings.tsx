@@ -33,6 +33,11 @@ function SettingsPage() {
   const us = app.data.userState;
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotifPermissionState>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported"
+  );
 
   if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
 
