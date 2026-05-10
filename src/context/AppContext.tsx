@@ -595,6 +595,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return "success";
   };
 
+  const deleteReward = (rewardId: string) => {
+    const reward = data.rewards.find((r) => r.id === rewardId);
+    if (!reward) return;
+    const progressDP = (reward as any).currentDP ?? 0;
+    mutate((d) => ({
+      ...d,
+      rewards: d.rewards.filter((r) => r.id !== rewardId),
+    }));
+    toast.success(
+      progressDP > 0
+        ? `Reward deleted. ${progressDP} DP progress forfeited.`
+        : "Reward deleted."
+    );
+  };
+
   // ===== Ascension Protocol =====
   const clearPendingAscension = () => {
     if (pendingAscension === null) return;
