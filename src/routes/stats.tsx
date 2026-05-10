@@ -564,24 +564,57 @@ function StatsPage() {
               return (
                 <div
                   key={t.id}
-                  className="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3 mb-2 flex justify-between items-center"
+                  className="flex items-start gap-3 min-w-0 rounded-xl border border-white/5 bg-slate-900/20 p-3 sm:p-4 mb-2 transition-colors hover:bg-slate-900/40"
                 >
-                  <Icon className={`w-5 h-5 mr-3 shrink-0 ${iconColor}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm text-white">{t.category}</p>
-                    <p className="truncate font-mono text-[10px] text-slate-500">
-                      {new Date(t.timestamp).toLocaleString()} {t.fromVault && "· vault"}
-                    </p>
-                  </div>
-                  <p className={`font-mono text-sm mx-3 ${t.isEssential ? "text-slate-300" : "text-emerald-400"}`}>
-                    {fmtMoney(t.amountVND, cur, rate)}
-                  </p>
-                  <button
-                    onClick={() => app.deleteTransaction(t.id)}
-                    className="text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-colors cursor-pointer"
+                  <div
+                    className={`flex-shrink-0 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border ${
+                      t.isEssential
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                        : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                    }`}
                   >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                    <Icon className="w-4 h-4" />
+                  </div>
+
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="font-bold text-slate-200 truncate">{t.category}</p>
+                    <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-slate-500 truncate mt-0.5">
+                      {(() => {
+                        const d = new Date(t.timestamp);
+                        const hasTime = t.timestamp && String(t.timestamp).includes("T");
+                        return d.toLocaleString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          ...(hasTime ? { hour: "2-digit", minute: "2-digit" } : {}),
+                        });
+                      })()}
+                      <span className="mx-1.5 opacity-50">|</span>
+                      [{t.fromVault ? "VAULT" : "DIRECT"}]
+                    </p>
+                    {t.justification && (
+                      <p className="text-[10px] italic text-slate-400 truncate mt-1 border-l border-slate-700 pl-2">
+                        &gt; &ldquo;{t.justification}&rdquo;
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-end justify-start gap-2 flex-shrink-0 ml-2">
+                    <p className={`font-mono text-xs sm:text-sm font-bold tabular-nums ${
+                      t.isEssential ? "text-emerald-400/80" : "text-rose-400"
+                    }`}>
+                      {fmtMoney(Math.abs(t.amountVND ?? 0), cur, rate)}
+                    </p>
+                    <button
+                      onClick={() => app.deleteTransaction(t.id)}
+                      className="group flex items-center gap-1.5 px-2 py-1 rounded border border-transparent hover:border-rose-500/30 hover:bg-rose-500/10 transition-all active:scale-95 touch-none select-none"
+                      aria-label="Revert transaction"
+                    >
+                      <RotateCcw className="h-3 w-3 text-slate-600 group-hover:text-rose-400 transition-colors" />
+                      <span className="hidden sm:inline font-mono text-[9px] uppercase tracking-widest text-slate-600 group-hover:text-rose-400 transition-colors">
+                        Revert
+                      </span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
