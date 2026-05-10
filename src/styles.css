@@ -41,3 +41,20 @@
   0%, 100% { box-shadow: 0 0 10px rgba(52, 211, 153, 0.2); }
   50%      { box-shadow: 0 0 30px rgba(52, 211, 153, 0.5); }
 }
+
+@keyframes payload-drain {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.payload-decay-bar {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(0, 212, 255, 0.4),
+    rgba(0, 212, 255, 0.4) 10px,
+    rgba(0, 212, 255, 0.8) 10px,
+    rgba(0, 212, 255, 0.8) 20px
+  );
+  background-size: 200% 100%;
+  animation: payload-drain 3s linear infinite;
+}

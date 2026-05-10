@@ -161,6 +161,49 @@ function StatsPage() {
   const radius = 60;
   const circ = 2 * Math.PI * radius;
 
+  // ── PHASE 2: VICE FIREWALL MATRIX ────────────────────────────────────────
+  const FIREWALL_DAYS = 14;
+
+  const firewallDays = Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
+    return d;
+  });
+
+  const todayTs = (() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t.getTime();
+  })();
+
+  const dailyLimit = app.smartDailyLimit ?? 0;
+
+  const matrixData = firewallDays.map((day) => {
+    const dayTs = day.getTime();
+    const spentThatDay = (app.data.transactions ?? [])
+      .filter((t) => {
+        const txDate = new Date(t.timestamp);
+        txDate.setHours(0, 0, 0, 0);
+        return txDate.getTime() === dayTs && t.isEssential === false;
+      })
+      .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
+
+    let status: 'perfect' | 'controlled' | 'breach' = 'perfect';
+    if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = 'controlled';
+    if (spentThatDay > dailyLimit) status = 'breach';
+
+    return { date: day, dayTs, spent: spentThatDay, status };
+  });
+
+  // Days elapsed since cycle start, for Payload Decay progress
+  const cycleStartMs = new Date(us.cycleStartDate).setHours(0, 0, 0, 0);
+  const todayMidnightMs = new Date().setHours(0, 0, 0, 0);
+  const daysElapsedInCycle = Math.max(
+    0,
+    Math.round((todayMidnightMs - cycleStartMs) / MS_PER_DAY)
+  );
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-24 pt-6">
       <header className="mb-6">
@@ -368,6 +411,76 @@ function StatsPage() {
         )}
       </div>
 
+      {/* ── Vice Firewall Matrix ─────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 mt-4 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="h-4 w-4 text-slate-400" />
+          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+            Vice Firewall — Last 14 Days
+          </p>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-3">
+          {matrixData.map((cell, idx) => {
+            let boxClasses =
+              'w-full aspect-square rounded border transition-all duration-300 ';
+            if (cell.dayTs > todayTs) {
+              boxClasses += 'bg-slate-800/30 border-slate-700/30';
+            } else if (cell.status === 'perfect') {
+              boxClasses +=
+                'bg-emerald-500/20 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+            } else if (cell.status === 'controlled') {
+              boxClasses += 'bg-cyan-500/20 border-cyan-500/40';
+            } else {
+              boxClasses +=
+                'bg-rose-500/30 border-rose-500/60 shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse';
+            }
+
+            const tooltipAlign =
+              idx <= 1
+                ? 'left-0 translate-x-0'
+                : idx >= FIREWALL_DAYS - 2
+                  ? 'right-0 translate-x-0'
+                  : 'left-1/2 -translate-x-1/2';
+
+            return (
+              <div key={cell.dayTs} className="relative group">
+                <div className={boxClasses} />
+                <div
+                  className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap rounded bg-slate-950 border border-slate-700 px-2 py-1 font-mono text-[9px] text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity ${tooltipAlign}`}
+                >
+                  {cell.date.toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                  {': '}
+                  {fmtMoney(cell.spent, cur, rate)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
+          <span>Older</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-emerald-500/40 border border-emerald-500/50" />
+              Zero
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-cyan-500/40 border border-cyan-500/40" />
+              Controlled
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-rose-500/40 border border-rose-500/60" />
+              Breach
+            </span>
+          </div>
+          <span>Today</span>
+        </div>
+      </div>
+
       {activeAmortizations.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
           <div className="mb-1">
@@ -376,30 +489,54 @@ function StatsPage() {
           </div>
           <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
           <div className="space-y-2">
-            {activeAmortizations.map(({ tx, remaining, pct }) => (
-              <div
-                key={tx.id}
-                className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
-              >
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate w-full text-sm text-white">{tx.justification || tx.category}</p>
-                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                      {tx.category} · {tx.amortizationDays}d
+            {activeAmortizations.map(({ tx }) => {
+              const progressPct =
+                tx.amortizationDays && tx.amortizationDays > 0
+                  ? Math.min(100, (daysElapsedInCycle / tx.amortizationDays) * 100)
+                  : 100;
+              const remainingPct = 100 - progressPct;
+              const dailyDrain =
+                tx.amortizationDays && tx.amortizationDays > 0
+                  ? tx.amountVND / tx.amortizationDays
+                  : 0;
+              return (
+                <div
+                  key={tx.id}
+                  className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
+                >
+                  <div className="flex justify-between items-baseline mb-1 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-sm text-white truncate">
+                        {tx.justification || tx.category}
+                      </p>
+                      <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
+                        {tx.category} · {tx.amortizationDays}d
+                      </p>
+                    </div>
+                    <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
+                      {fmtMoney(tx.amountVND, cur, rate)}
                     </p>
                   </div>
-                  <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)]">
-                    {fmtMoney(Math.round(remaining), cur, rate)}
+
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
+                    {tx.amortizationDays && tx.amortizationDays > 0
+                      ? `[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`
+                      : '[DRAIN: COMPLETE]'}
                   </p>
+
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
+                    <div
+                      className="h-full bg-slate-600/60"
+                      style={{ width: `${progressPct}%` }}
+                    />
+                    <div
+                      className="payload-decay-bar h-full"
+                      style={{ width: `${remainingPct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1 overflow-hidden rounded-full bg-slate-800">
-                  <div
-                    className="h-full bg-cyan-500 shadow-[0_0_10px_#00d4ff] transition-all"
-                    style={{ width: `${pct * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
