@@ -28,6 +28,7 @@ import {
   uuid,
 } from "@/lib/splurge-utils";
 import { RANKS, getRankForXP } from "@/lib/ranks";
+import { generateDailyContracts } from "@/lib/contracts";
 
 interface BreachInfo {
   amountVND: number;
