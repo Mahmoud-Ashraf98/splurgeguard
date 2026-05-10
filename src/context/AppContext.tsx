@@ -62,6 +62,7 @@ interface AppContextValue {
   approveVault: (id: string) => void;
   discardVault: (id: string) => void;
   spendDP: (amount: number) => void;
+  deleteVaultItem: (id: string) => void;
   deleteTransaction: (id: string) => void;
   importData: (json: string) => boolean;
   clearData: () => void;
@@ -683,6 +684,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const deleteVaultItem = (id: string) => {
+    mutate((d) => ({
+      ...d,
+      vaultItems: d.vaultItems.filter((v) => v.id !== id),
+    }));
+    toast('Item removed from Vault.');
+  };
+
   // ===== Ascension Protocol =====
   const clearPendingAscension = () => {
     if (pendingAscension === null) return;
@@ -704,6 +713,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     approveVault,
     discardVault,
     spendDP,
+    deleteVaultItem,
     deleteTransaction,
     importData,
     clearData,
