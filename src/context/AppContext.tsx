@@ -523,14 +523,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const discardVault = (id: string) => {
     mutate((d) => {
       if (!d.userState) return d;
-      const us = applyDPGain(d.userState, 10);
+      const us = applyDPGain(d.userState, 50);
       return {
         ...d,
         vaultItems: d.vaultItems.map((v) => (v.id === id ? { ...v, status: "discarded" } : v)),
         userState: us,
       };
     });
-    toast.success("🗑️ Discarded. +10 DP for discipline.");
+    toast.success("🏆 Impulse defeated. +50 DP — Total Victory.");
   };
 
   const spendDP: AppContextValue["spendDP"] = (amount) => {
