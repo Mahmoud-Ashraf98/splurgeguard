@@ -88,10 +88,64 @@ function StatsPage() {
   const rate = us.usdExchangeRate;
 
   const discretionaryTotal = app.data.transactions.filter((t) => !t.isEssential).reduce((s, t) => s + t.amountVND, 0);
-  const startingBalance = us.currentBalanceVND + discretionaryTotal;
-  const usedPct = startingBalance > 0 ? (discretionaryTotal / startingBalance) * 100 : 0;
-  const discardedCount = app.data.vaultItems.filter((v) => v.status === "discarded").length;
   const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
+
+  // === Freedom Engine: Total Preserved Capital ===
+  const totalPreservedCapital: number = (app.data.vaultItems ?? [])
+    .filter((v) => v.status === "discarded")
+    .reduce((sum, v) => sum + (v.estimatedAmountVND ?? 0), 0);
+
+  const currentMilestone: FreedomMilestone | null =
+    [...MILESTONES].reverse().find((m) => totalPreservedCapital >= m.threshold) ?? null;
+
+  const nextMilestone: FreedomMilestone | null =
+    MILESTONES.find((m) => m.threshold > totalPreservedCapital) ?? null;
+
+  const milestoneProgress: number = (() => {
+    if (!nextMilestone) return 100;
+    const floor = currentMilestone?.threshold ?? 0;
+    const ceiling = nextMilestone.threshold;
+    const range = ceiling - floor;
+    if (range <= 0) return 100;
+    return Math.min(100, ((totalPreservedCapital - floor) / range) * 100);
+  })();
+
+  // === Tactical Burn Rate ===
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const cycleStart = new Date(us.cycleStartDate);
+  cycleStart.setHours(0, 0, 0, 0);
+
+  const payday = new Date(us.paydayDate);
+  payday.setHours(0, 0, 0, 0);
+
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+  const totalCycleDays = Math.max(
+    1,
+    Math.round((payday.getTime() - cycleStart.getTime()) / MS_PER_DAY)
+  );
+  const daysElapsed = Math.min(
+    totalCycleDays,
+    Math.max(0, Math.round((today.getTime() - cycleStart.getTime()) / MS_PER_DAY))
+  );
+  const timePercent = Math.min(100, (daysElapsed / totalCycleDays) * 100);
+
+  const totalFunSpent: number = (app.data.transactions ?? [])
+    .filter((t) => {
+      const txDate = new Date(t.timestamp);
+      txDate.setHours(0, 0, 0, 0);
+      return txDate >= cycleStart && t.isEssential === false;
+    })
+    .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
+
+  const startingBalance = (us.currentBalanceVND ?? 0) + totalFunSpent;
+  const burnPercent = startingBalance > 0
+    ? Math.min(100, (totalFunSpent / startingBalance) * 100)
+    : 0;
+
+  const isBurnWarning = burnPercent > timePercent;
 
   const now = Date.now();
   const activeAmortizations = app.data.transactions
