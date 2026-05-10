@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Trash2,
   RotateCcw,
   Activity,
   Shield,
