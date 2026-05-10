@@ -219,7 +219,7 @@ function ListView({
                     }`}
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <Zap className="h-3 w-3" /> Redeem
+                      <Zap className="h-3 w-3" /> Claim Spoil
                     </span>
                   </button>
                 </div>
