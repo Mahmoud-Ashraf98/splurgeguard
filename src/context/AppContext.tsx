@@ -102,6 +102,9 @@ const migrate = (parsed: AppData): AppData => {
       us.currentLevel = actualLevel;
       data._isMigrationLoad = true;
     }
+    // Daily Protocol migration
+    if (!Array.isArray(us.dailyContracts)) us.dailyContracts = [];
+    if (typeof us.lastContractRefreshDate !== "string") us.lastContractRefreshDate = "";
     data.userState = us;
   }
   return data;
