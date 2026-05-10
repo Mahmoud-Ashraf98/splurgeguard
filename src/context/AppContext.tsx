@@ -344,6 +344,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       targetHabit: (input.targetHabit ?? "").trim(),
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
+      dailyContracts: [],
+      lastContractRefreshDate: "",
     };
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
   };
