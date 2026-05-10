@@ -713,6 +713,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     approveVault,
     discardVault,
     spendDP,
+    deleteVaultItem,
     deleteTransaction,
     importData,
     clearData,
