@@ -110,6 +110,15 @@ function ExchangePage() {
           rewards={activeRewards}
           dp={dp}
           onRedeem={handleRedeem}
+          onDelete={(reward) => {
+            const progressDP = (reward as any).currentDP ?? 0;
+            const message =
+              progressDP > 0
+                ? `Delete "${reward.title}"? Your ${progressDP} DP progress will be lost. This cannot be undone.`
+                : `Delete "${reward.title}"? This cannot be undone.`;
+            if (!window.confirm(message)) return;
+            app.deleteReward(reward.id);
+          }}
           onNew={() => setView("archetype-grid")}
         />
       )}
