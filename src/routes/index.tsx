@@ -125,6 +125,8 @@ function Index() {
       <MainQuestCard onOpenGuide={() => setGuideOpen(true)} />
       {guideOpen && <LevelGuideModal onClose={() => setGuideOpen(false)} />}
 
+      <DailyContractsBoard />
+
       <div className="mb-8 flex flex-col items-center">
         <StatusRing
           used={app.todayDiscretionary}
