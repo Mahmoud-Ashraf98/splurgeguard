@@ -90,8 +90,11 @@ function ExchangePage() {
               className="text-2xl font-black tracking-tight text-white"
               style={{ textShadow: "0 0 18px rgba(168,85,247,0.55)" }}
             >
-              The Exchange
+              THE SPOILS
             </h1>
+            <p className="mt-1 text-[11px] leading-snug text-slate-400 max-w-xs">
+              REAP YOUR BOUNTY. You endured the grind. A true Sovereign enjoys the spoils without guilt.
+            </p>
           </div>
         </div>
         <div className="rounded-xl border border-cyan-400/30 bg-slate-900/60 px-3 py-2 text-right backdrop-blur-xl">
