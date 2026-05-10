@@ -189,21 +189,142 @@ function StatsPage() {
           </p>
           <p className="mt-1 text-amber-400 font-mono text-xl font-bold">{fmtMoney(discretionaryTotal, cur, rate)}</p>
         </div>
-        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
-          <p className="text-[10px] tracking-widest uppercase text-slate-400">
-            <PieChart className="w-4 h-4 inline-block mr-1 text-cyan-500" />
-            Budget Used
-          </p>
-          <p className="mt-1 text-cyan-400 font-mono text-xl font-bold">{usedPct.toFixed(1)}%</p>
+      </div>
+
+      {/* Tactical Burn Rate Gauge — full width, below the grid */}
+      <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 mt-4">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2">
+            <Activity className={`h-4 w-4 ${isBurnWarning ? 'text-rose-500' : 'text-emerald-400'}`} />
+            <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+              Tactical Burn Rate
+            </p>
+          </div>
+          <span
+            className={`font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-sm ${
+              isBurnWarning
+                ? 'bg-rose-500/10 text-rose-500'
+                : 'bg-emerald-400/10 text-emerald-400'
+            }`}
+          >
+            {isBurnWarning ? 'WARNING: PACING EXCEEDED' : 'OPTIMAL ACCUMULATION'}
+          </span>
         </div>
-        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-lg">
-          <p className="text-[10px] tracking-widest uppercase text-slate-400">
-            <Lock className="w-4 h-4 inline-block mr-1 text-purple-500" />
-            Impulses Crushed
-          </p>
-          <p className="mt-1 text-purple-400 font-mono text-xl font-bold">{discardedCount}</p>
+
+        <div className="mb-3">
+          <div className="flex justify-between font-mono text-[9px] text-slate-500 mb-1">
+            <span>Cycle Time Elapsed</span>
+            <span>{Math.floor(timePercent)}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-blue-500/50"
+              style={{ width: `${timePercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between font-mono text-[9px] text-slate-500 mb-1">
+            <span>Budget Spent</span>
+            <span className={isBurnWarning ? 'text-rose-400' : 'text-emerald-400'}>
+              {Math.floor(burnPercent)}%
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-slate-800">
+            <div
+              className={`h-full rounded-full ${
+                isBurnWarning
+                  ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'
+                  : 'bg-emerald-400'
+              }`}
+              style={{ width: `${burnPercent}%` }}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Freedom Engine — full width, below the gauge */}
+      <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/60 p-5 mt-4 mb-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-cyan-500/5 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy className="h-4 w-4 text-cyan-400" />
+            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/80">
+              Capital Preserved
+            </p>
+          </div>
+
+          <h2 className="text-3xl font-black text-white tracking-widest tabular-nums mb-4 drop-shadow-[0_0_12px_rgba(0,212,255,0.3)]">
+            {fmtMoney(totalPreservedCapital, cur, rate)}
+          </h2>
+
+          {currentMilestone && (
+            <div className="mb-4 p-3 rounded-lg border border-cyan-400/20 bg-cyan-400/10">
+              <p className="font-mono text-[8px] uppercase tracking-widest text-cyan-400 mb-1">
+                Secured Milestone
+              </p>
+              <p className="font-bold text-sm text-cyan-50">{currentMilestone.title}</p>
+            </div>
+          )}
+
+          {nextMilestone && (
+            <div className="mb-4">
+              <div className="flex justify-between font-mono text-[9px] text-slate-400 mb-1">
+                <span className="truncate mr-2">Next: {nextMilestone.title}</span>
+                <span className="flex-shrink-0">{fmtMoney(nextMilestone.threshold, cur, rate)}</span>
+              </div>
+              <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-cyan-400 transition-all duration-1000"
+                  style={{
+                    width: `${milestoneProgress}%`,
+                    boxShadow: '0 0 10px rgba(0,212,255,0.6)',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {!nextMilestone && currentMilestone && (
+            <div className="mb-4 p-3 rounded-lg border border-cyan-400/40 bg-cyan-400/10">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400">
+                Maximum milestone reached. You have beaten the game.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-2 pt-4 border-t border-white/5">
+            <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500 mb-2">
+              Neutralized Impulses
+            </p>
+            <div
+              className="max-h-24 overflow-y-auto space-y-1 pr-2"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+            >
+              {(app.data.vaultItems ?? [])
+                .filter((v) => v.status === 'discarded')
+                .slice()
+                .reverse()
+                .map((v) => (
+                  <div key={v.id} className="flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-slate-500 line-through truncate mr-2">{v.itemName}</span>
+                    <span className="text-cyan-500/50 tabular-nums flex-shrink-0">
+                      +{fmtMoney(v.estimatedAmountVND, cur, rate)}
+                    </span>
+                  </div>
+                ))}
+              {(app.data.vaultItems ?? []).filter((v) => v.status === 'discarded').length === 0 && (
+                <p className="font-mono text-[9px] text-slate-700 italic">
+                  No impulses neutralized yet.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
         <div className="mb-4">
