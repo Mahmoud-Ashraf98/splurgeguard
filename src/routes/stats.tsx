@@ -161,6 +161,49 @@ function StatsPage() {
   const radius = 60;
   const circ = 2 * Math.PI * radius;
 
+  // ── PHASE 2: VICE FIREWALL MATRIX ────────────────────────────────────────
+  const FIREWALL_DAYS = 14;
+
+  const firewallDays = Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
+    return d;
+  });
+
+  const todayTs = (() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t.getTime();
+  })();
+
+  const dailyLimit = app.smartDailyLimit ?? 0;
+
+  const matrixData = firewallDays.map((day) => {
+    const dayTs = day.getTime();
+    const spentThatDay = (app.data.transactions ?? [])
+      .filter((t) => {
+        const txDate = new Date(t.timestamp);
+        txDate.setHours(0, 0, 0, 0);
+        return txDate.getTime() === dayTs && t.isEssential === false;
+      })
+      .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
+
+    let status: 'perfect' | 'controlled' | 'breach' = 'perfect';
+    if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = 'controlled';
+    if (spentThatDay > dailyLimit) status = 'breach';
+
+    return { date: day, dayTs, spent: spentThatDay, status };
+  });
+
+  // Days elapsed since cycle start, for Payload Decay progress
+  const cycleStartMs = new Date(us.cycleStartDate).setHours(0, 0, 0, 0);
+  const todayMidnightMs = new Date().setHours(0, 0, 0, 0);
+  const daysElapsedInCycle = Math.max(
+    0,
+    Math.round((todayMidnightMs - cycleStartMs) / MS_PER_DAY)
+  );
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-24 pt-6">
       <header className="mb-6">
