@@ -684,6 +684,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const deleteVaultItem = (id: string) => {
+    mutate((d) => ({
+      ...d,
+      vaultItems: d.vaultItems.filter((v) => v.id !== id),
+    }));
+    toast('Item removed from Vault.');
+  };
+
   // ===== Ascension Protocol =====
   const clearPendingAscension = () => {
     if (pendingAscension === null) return;
