@@ -182,12 +182,17 @@ function Index() {
           </button>
         </div>
         <div className="mb-4 flex items-end justify-between">
-          <p
-            className="font-mono text-5xl font-black tabular-nums text-cyan-400"
-            style={{ filter: "drop-shadow(0 0 12px rgba(0,212,255,0.6))" }}
-          >
-            {us.totalDP}
-          </p>
+          <div>
+            <p
+              className="font-mono text-5xl font-black tabular-nums text-cyan-400"
+              style={{ filter: "drop-shadow(0 0 12px rgba(0,212,255,0.6))" }}
+            >
+              {us.totalDP}
+            </p>
+            <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-600 mt-1">
+              Discipline Yield — Every action compounds
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             {[3, 7, 14].includes(us.currentStreakDays) && (
               <div

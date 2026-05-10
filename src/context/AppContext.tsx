@@ -300,6 +300,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
   }, [hydrated]);
 
+  // Foreground notification engine — fires only while app is open
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    let cleanup: (() => void) | undefined;
+
+    import('@/lib/notifications').then(({ notifyWelcomeBack, notifyViceCheck, notifyEndOfDay }) => {
+      let hiddenAt: number | null = null;
+      const ONE_HOUR_MS = 60 * 60 * 1000;
+
+      const handleVisibility = () => {
+        if (document.hidden) {
+          hiddenAt = Date.now();
+        } else {
+          if (hiddenAt !== null && Date.now() - hiddenAt > ONE_HOUR_MS) {
+            notifyWelcomeBack();
+          }
+          hiddenAt = null;
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+
+      const viceInterval = setInterval(() => {
+        notifyViceCheck();
+      }, 4 * 60 * 60 * 1000);
+
+      const EOD_STORAGE_KEY = 'sg_eod_notif_sent';
+      const eodInterval = setInterval(() => {
+        const now = new Date();
+        if (now.getHours() === 20) {
+          const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+          const alreadySent = localStorage.getItem(EOD_STORAGE_KEY);
+          if (alreadySent !== todayKey) {
+            localStorage.setItem(EOD_STORAGE_KEY, todayKey);
+            notifyEndOfDay();
+          }
+        }
+      }, 60 * 1000);
+
+      cleanup = () => {
+        document.removeEventListener('visibilitychange', handleVisibility);
+        clearInterval(viceInterval);
+        clearInterval(eodInterval);
+      };
+    });
+
+    return () => {
+      cleanup?.();
+    };
+  }, [hydrated]);
+
   // Ascension Protocol monitor — drives level up/down based on ascensionXP
   useEffect(() => {
     if (!hydrated || !data.userState) return;
@@ -523,14 +575,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const discardVault = (id: string) => {
     mutate((d) => {
       if (!d.userState) return d;
-      const us = applyDPGain(d.userState, 10);
+      const us = applyDPGain(d.userState, 50);
       return {
         ...d,
         vaultItems: d.vaultItems.map((v) => (v.id === id ? { ...v, status: "discarded" } : v)),
         userState: us,
       };
     });
-    toast.success("🗑️ Discarded. +10 DP for discipline.");
+    toast.success("🏆 Impulse defeated. +50 DP — Total Victory.");
   };
 
   const spendDP: AppContextValue["spendDP"] = (amount) => {

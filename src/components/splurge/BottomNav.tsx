@@ -6,7 +6,7 @@ const items = [
   { to: "/", label: "Home", Icon: Home },
   { to: "/stats", label: "Stats", Icon: BarChart3 },
   { to: "/vault", label: "Vault", Icon: Lock },
-  { to: "/exchange", label: "Exchange", Icon: ShoppingBag },
+  { to: "/exchange", label: "Spoils", Icon: ShoppingBag },
   { to: "/settings", label: "Settings", Icon: SettingsIcon },
 ];
 

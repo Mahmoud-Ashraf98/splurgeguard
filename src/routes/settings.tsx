@@ -17,9 +17,12 @@ import {
   Flame,
   AlertTriangle,
   Lock,
+  Bell,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { STORAGE_KEY } from "@/lib/splurge-types";
+
+type NotifPermissionState = NotificationPermission | "unsupported";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -30,6 +33,11 @@ function SettingsPage() {
   const us = app.data.userState;
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotifPermissionState>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported"
+  );
 
   if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
 
@@ -211,6 +219,36 @@ function SettingsPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className={sectionClass}>
+          <h2 className={headerClass}>
+            <Bell className="h-4 w-4" /> Notifications
+          </h2>
+          {notifPermission === "unsupported" ? (
+            <p className="text-xs text-slate-400">
+              Notifications are not supported in this browser.
+            </p>
+          ) : notifPermission === "granted" ? (
+            <p className="text-xs text-emerald-400">
+              ✓ Notifications enabled. The grind will remind you.
+            </p>
+          ) : notifPermission === "denied" ? (
+            <p className="text-xs text-rose-400">
+              Notifications blocked. Enable them in your browser settings to receive reminders.
+            </p>
+          ) : (
+            <button
+              onClick={async () => {
+                const { requestNotificationPermission } = await import("@/lib/notifications");
+                const granted = await requestNotificationPermission();
+                setNotifPermission(granted ? "granted" : "denied");
+              }}
+              className="w-full rounded-xl bg-cyan-400/10 border border-cyan-400/20 py-3 font-mono text-xs font-bold uppercase tracking-widest text-cyan-400 hover:bg-cyan-400/20 transition-all touch-none select-none"
+            >
+              Enable Reminders
+            </button>
+          )}
         </section>
 
         <section className={sectionClass}>

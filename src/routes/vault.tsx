@@ -52,7 +52,9 @@ function VaultPage() {
             />
           </div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Vault is empty</p>
-          <p className="mt-2 text-xs text-slate-600">Resist an impulse → lock it here.</p>
+          <p className="mt-2 text-xs text-slate-500 italic px-4">
+            "The gap between stimulus and response is where your power lies. Lock it away."
+          </p>
         </div>
       )}
 
@@ -99,20 +101,54 @@ function VaultPage() {
                 </div>
               )}
 
+              {isCooling && (() => {
+                const totalMs = v.delayHours * 3600000;
+                const elapsed = Math.max(0, now - new Date(v.createdAt).getTime());
+                const pct = Math.min(100, (elapsed / totalMs) * 100);
+                return (
+                  <div className="mt-3">
+                    <div className="mb-1 flex justify-between font-mono text-[9px] uppercase tracking-widest text-slate-600">
+                      <span>Time Endured</span>
+                      <span>{Math.floor(pct)}%</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/60">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{
+                          width: `${pct}%`,
+                          background: 'linear-gradient(90deg, rgba(0,212,255,0.6), #00d4ff)',
+                          boxShadow: '0 0 8px rgba(0,212,255,0.5)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+
               {isReady && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => app.approveVault(v.id)}
-                    className="rounded-lg bg-emerald-400 py-2.5 font-mono text-xs font-bold uppercase text-slate-950 hover:bg-emerald-300"
-                  >
-                    ✅ Purchase
-                  </button>
-                  <button
-                    onClick={() => app.discardVault(v.id)}
-                    className="rounded-lg border border-slate-700 py-2.5 font-mono text-xs font-bold uppercase text-slate-300 hover:border-rose-500 hover:text-rose-400"
-                  >
-                    🗑️ Discard
-                  </button>
+                <div className="space-y-3">
+                  <div>
+                    <button
+                      onClick={() => app.approveVault(v.id)}
+                      className="touch-none select-none w-full rounded-lg bg-emerald-400 py-2.5 font-mono text-xs font-bold uppercase text-slate-950 hover:bg-emerald-300"
+                    >
+                      ⚔️ Claim Item (Endurance Win)
+                    </button>
+                    <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-widest text-emerald-400/80">
+                      +15 DP · logged guilt-free
+                    </p>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => app.discardVault(v.id)}
+                      className="touch-none select-none w-full rounded-lg border border-slate-700 py-2.5 font-mono text-xs font-bold uppercase text-slate-300 hover:border-amber-400 hover:text-amber-300"
+                    >
+                      🏆 Discard Impulse (Total Victory)
+                    </button>
+                    <p className="mt-1 text-center font-mono text-[10px] uppercase tracking-widest text-amber-400/80">
+                      +50 DP · impulse defeated
+                    </p>
+                  </div>
                 </div>
               )}
 
