@@ -72,6 +72,7 @@ interface AppContextValue {
   // Rewards / Exchange
   createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
   redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
+  deleteReward: (rewardId: string) => void;
   // Ascension Protocol
   pendingAscension: number | null;
   clearPendingAscension: () => void;
