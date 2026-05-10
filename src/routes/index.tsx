@@ -6,6 +6,7 @@ import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
+import { DailyContractsBoard } from "@/components/splurge/DailyContractsBoard";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 
 import { RANKS, getNextRank } from "@/lib/ranks";
