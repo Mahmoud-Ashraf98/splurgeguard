@@ -145,11 +145,13 @@ function ListView({
   rewards,
   dp,
   onRedeem,
+  onDelete,
   onNew,
 }: {
   rewards: ReturnType<typeof useApp>["data"]["rewards"];
   dp: number;
   onRedeem: (id: string) => void;
+  onDelete: (reward: ReturnType<typeof useApp>["data"]["rewards"][number]) => void;
   onNew: () => void;
 }) {
   return (
