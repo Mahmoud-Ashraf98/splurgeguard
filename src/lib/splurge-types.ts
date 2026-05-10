@@ -1,6 +1,16 @@
 export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
 
+export interface DailyContract {
+  id: string;
+  title: string;
+  subtitle: string;
+  reward: number;
+  penalty: number;
+  status: 'available' | 'secured' | 'yielded';
+  iconType: string;
+}
+
 export interface UserState {
   userName: string;
   currentBalanceVND: number;
@@ -17,6 +27,8 @@ export interface UserState {
   targetHabit: string;
   usdExchangeRate: number;
   displayCurrency: Currency;
+  dailyContracts: DailyContract[];
+  lastContractRefreshDate: string;
 }
 
 export interface Transaction {

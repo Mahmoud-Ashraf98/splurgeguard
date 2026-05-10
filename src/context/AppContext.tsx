@@ -28,6 +28,7 @@ import {
   uuid,
 } from "@/lib/splurge-utils";
 import { RANKS, getRankForXP } from "@/lib/ranks";
+import { generateDailyContracts } from "@/lib/contracts";
 
 interface BreachInfo {
   amountVND: number;
@@ -102,6 +103,9 @@ const migrate = (parsed: AppData): AppData => {
       us.currentLevel = actualLevel;
       data._isMigrationLoad = true;
     }
+    // Daily Protocol migration
+    if (!Array.isArray(us.dailyContracts)) us.dailyContracts = [];
+    if (typeof us.lastContractRefreshDate !== "string") us.lastContractRefreshDate = "";
     data.userState = us;
   }
   return data;
@@ -241,6 +245,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, 400);
   }, [hydrated, data.userState, data.transactions, mutate]);
 
+  // Daily Protocol contracts refresh
+  useEffect(() => {
+    if (!hydrated || !data.userState) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (data.userState.lastContractRefreshDate === todayStr) return;
+    const newContracts = generateDailyContracts();
+    mutate((d) => ({
+      ...d,
+      userState: d.userState
+        ? { ...d.userState, dailyContracts: newContracts, lastContractRefreshDate: todayStr }
+        : d.userState,
+    }));
+    setTimeout(() => toast.success('New daily contracts available.'), 500);
+  }, [hydrated, data.userState?.lastContractRefreshDate, mutate, data.userState]);
+
   // Vault cooling -> ready (global, battery friendly)
   useEffect(() => {
     if (!hydrated) return;
@@ -341,6 +360,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       targetHabit: (input.targetHabit ?? "").trim(),
       usdExchangeRate: input.usdExchangeRate ?? 26310,
       displayCurrency: input.displayCurrency ?? "VND",
+      dailyContracts: [],
+      lastContractRefreshDate: "",
     };
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
   };
