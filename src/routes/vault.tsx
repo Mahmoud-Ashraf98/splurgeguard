@@ -52,7 +52,9 @@ function VaultPage() {
             />
           </div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-500">Vault is empty</p>
-          <p className="mt-2 text-xs text-slate-600">Resist an impulse → lock it here.</p>
+          <p className="mt-2 text-xs text-slate-500 italic px-4">
+            "The gap between stimulus and response is where your power lies. Lock it away."
+          </p>
         </div>
       )}
 
