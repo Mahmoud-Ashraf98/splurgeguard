@@ -62,6 +62,7 @@ interface AppContextValue {
   approveVault: (id: string) => void;
   discardVault: (id: string) => void;
   spendDP: (amount: number) => void;
+  deleteVaultItem: (id: string) => void;
   deleteTransaction: (id: string) => void;
   importData: (json: string) => boolean;
   clearData: () => void;
