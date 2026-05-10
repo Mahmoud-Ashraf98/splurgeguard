@@ -27,11 +27,13 @@ import {
   Cpu,
   Dumbbell,
   Sparkles,
+  Trophy,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { fmtMoney } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
+import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
 
 export const Route = createFileRoute("/stats")({
   component: StatsPage,
