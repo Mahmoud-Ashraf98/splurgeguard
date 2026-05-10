@@ -5,8 +5,6 @@ import {
   Activity,
   Shield,
   Wallet,
-  PieChart,
-  Lock,
   BarChart3,
   TrendingDown,
   List,
