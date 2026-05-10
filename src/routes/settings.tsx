@@ -17,9 +17,12 @@ import {
   Flame,
   AlertTriangle,
   Lock,
+  Bell,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { STORAGE_KEY } from "@/lib/splurge-types";
+
+type NotifPermissionState = NotificationPermission | "unsupported";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
