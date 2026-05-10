@@ -245,6 +245,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }, 400);
   }, [hydrated, data.userState, data.transactions, mutate]);
 
+  // Daily Protocol contracts refresh
+  useEffect(() => {
+    if (!hydrated || !data.userState) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (data.userState.lastContractRefreshDate === todayStr) return;
+    const newContracts = generateDailyContracts();
+    mutate((d) => ({
+      ...d,
+      userState: d.userState
+        ? { ...d.userState, dailyContracts: newContracts, lastContractRefreshDate: todayStr }
+        : d.userState,
+    }));
+    setTimeout(() => toast.success('New daily contracts available.'), 500);
+  }, [hydrated, data.userState?.lastContractRefreshDate, mutate, data.userState]);
+
   // Vault cooling -> ready (global, battery friendly)
   useEffect(() => {
     if (!hydrated) return;
