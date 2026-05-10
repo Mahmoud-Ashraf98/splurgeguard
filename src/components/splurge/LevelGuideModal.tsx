@@ -64,7 +64,7 @@ export function LevelGuideModal({ onClose }: { onClose: () => void }) {
                   <p className={`font-bold text-sm ${isLocked ? 'text-slate-600' : rank.color}`}>
                     {rank.title}
                   </p>
-                  <p className="font-mono text-[9px] text-slate-500 italic truncate">{rank.quote}</p>
+                  <p className="font-mono text-[9px] text-slate-500 italic leading-relaxed whitespace-normal break-words mt-0.5">{rank.quote}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="font-mono text-[9px] text-slate-600 uppercase">
