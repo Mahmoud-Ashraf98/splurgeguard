@@ -72,6 +72,7 @@ interface AppContextValue {
   // Rewards / Exchange
   createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
   redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
+  deleteReward: (rewardId: string) => void;
   // Ascension Protocol
   pendingAscension: number | null;
   clearPendingAscension: () => void;
@@ -594,6 +595,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return "success";
   };
 
+  const deleteReward = (rewardId: string) => {
+    const reward = data.rewards.find((r) => r.id === rewardId);
+    if (!reward) return;
+    const progressDP = (reward as any).currentDP ?? 0;
+    mutate((d) => ({
+      ...d,
+      rewards: d.rewards.filter((r) => r.id !== rewardId),
+    }));
+    toast.success(
+      progressDP > 0
+        ? `Reward deleted. ${progressDP} DP progress forfeited.`
+        : "Reward deleted."
+    );
+  };
+
   // ===== Ascension Protocol =====
   const clearPendingAscension = () => {
     if (pendingAscension === null) return;
@@ -625,6 +641,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearBreach: () => setBreach(null),
     createReward,
     redeemReward,
+    deleteReward,
     pendingAscension,
     clearPendingAscension,
   };

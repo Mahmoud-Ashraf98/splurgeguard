@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag, Trash2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { REWARD_ARCHETYPES, RewardArchetype } from "@/lib/archetypes";
 import { useLongPress } from "@/hooks/useLongPress";
@@ -110,6 +110,15 @@ function ExchangePage() {
           rewards={activeRewards}
           dp={dp}
           onRedeem={handleRedeem}
+          onDelete={(reward) => {
+            const progressDP = (reward as any).currentDP ?? 0;
+            const message =
+              progressDP > 0
+                ? `Delete "${reward.title}"? Your ${progressDP} DP progress will be lost. This cannot be undone.`
+                : `Delete "${reward.title}"? This cannot be undone.`;
+            if (!window.confirm(message)) return;
+            app.deleteReward(reward.id);
+          }}
           onNew={() => setView("archetype-grid")}
         />
       )}
@@ -136,11 +145,13 @@ function ListView({
   rewards,
   dp,
   onRedeem,
+  onDelete,
   onNew,
 }: {
   rewards: ReturnType<typeof useApp>["data"]["rewards"];
   dp: number;
   onRedeem: (id: string) => void;
+  onDelete: (reward: ReturnType<typeof useApp>["data"]["rewards"][number]) => void;
   onNew: () => void;
 }) {
   return (
@@ -186,6 +197,16 @@ function ListView({
                       {r.costDP} DP
                     </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(r);
+                    }}
+                    className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                    aria-label="Delete reward"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                   <button
                     onClick={() => onRedeem(r.id)}
                     className={`shrink-0 rounded-xl px-4 py-2.5 font-mono text-[11px] font-black uppercase tracking-widest transition-all ${
