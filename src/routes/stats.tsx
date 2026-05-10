@@ -411,6 +411,76 @@ function StatsPage() {
         )}
       </div>
 
+      {/* ── Vice Firewall Matrix ─────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 mt-4 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="h-4 w-4 text-slate-400" />
+          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+            Vice Firewall — Last 14 Days
+          </p>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-3">
+          {matrixData.map((cell, idx) => {
+            let boxClasses =
+              'w-full aspect-square rounded border transition-all duration-300 ';
+            if (cell.dayTs > todayTs) {
+              boxClasses += 'bg-slate-800/30 border-slate-700/30';
+            } else if (cell.status === 'perfect') {
+              boxClasses +=
+                'bg-emerald-500/20 border-emerald-500/50 shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+            } else if (cell.status === 'controlled') {
+              boxClasses += 'bg-cyan-500/20 border-cyan-500/40';
+            } else {
+              boxClasses +=
+                'bg-rose-500/30 border-rose-500/60 shadow-[0_0_10px_rgba(244,63,94,0.4)] animate-pulse';
+            }
+
+            const tooltipAlign =
+              idx <= 1
+                ? 'left-0 translate-x-0'
+                : idx >= FIREWALL_DAYS - 2
+                  ? 'right-0 translate-x-0'
+                  : 'left-1/2 -translate-x-1/2';
+
+            return (
+              <div key={cell.dayTs} className="relative group">
+                <div className={boxClasses} />
+                <div
+                  className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap rounded bg-slate-950 border border-slate-700 px-2 py-1 font-mono text-[9px] text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity ${tooltipAlign}`}
+                >
+                  {cell.date.toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                  {': '}
+                  {fmtMoney(cell.spent, cur, rate)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
+          <span>Older</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-emerald-500/40 border border-emerald-500/50" />
+              Zero
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-cyan-500/40 border border-cyan-500/40" />
+              Controlled
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded bg-rose-500/40 border border-rose-500/60" />
+              Breach
+            </span>
+          </div>
+          <span>Today</span>
+        </div>
+      </div>
+
       {activeAmortizations.length > 0 && (
         <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
           <div className="mb-1">
