@@ -30,6 +30,7 @@ function Index() {
   const app = useApp();
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [showLevelGuide, setShowLevelGuide] = useState(false);
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
