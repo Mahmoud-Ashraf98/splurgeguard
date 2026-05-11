@@ -159,7 +159,30 @@ function Index() {
         </div>
       </div>
 
-      {/* ── 2. LIVE CONTRACTS (READ-ONLY BOUNTY BOARD) ───────────────── */}
+      {/* ── 2. THE CORE REACTOR (DAILY LIMIT) ──────────────────────────── */}
+      <div className="px-5">
+        <div className="mb-10 flex flex-col items-center">
+          <StatusRing
+            used={app.todayDiscretionary}
+            limit={app.smartDailyLimit}
+            remainingLabel={fmtMoney(remaining, cur, rate)}
+          />
+          <div className="mt-6 flex w-full items-center justify-around">
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
+              <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.todayDiscretionary, cur, rate)}</span>
+            </div>
+            <div className="h-8 w-px bg-white/5" />
+            <div className="flex flex-col items-center">
+              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
+              <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.smartDailyLimit, cur, rate)}</span>
+              <span className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-500/50">Includes Active Amortizations</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. ACTIVE CONTRACTS (HORIZONTAL BOUNTY BOARD) ──────────────── */}
       <div className="mb-10">
         <div className="px-5 flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -170,50 +193,54 @@ function Index() {
               Active Contracts
             </h2>
           </div>
+          <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
+            {dailyContracts.filter((c) => c.status !== 'available').length}/{dailyContracts.length}
+          </span>
         </div>
 
-        {/* Horizontal Swipe Container */}
+        {dailyContracts.length === 0 ? (
+          <p className="px-5 font-mono text-[10px] uppercase tracking-widest text-slate-600">
+            No contracts. Refresh at midnight.
+          </p>
+        ) : (
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-5 pb-4 custom-scrollbar-hide">
-          {liveContracts.map((contract, index) => {
-            const Icon = contract.icon;
+          {dailyContracts.map((p, index) => {
+            const Icon = CONTRACT_ICON_MAP[p.iconType] ?? Coffee;
+            const isCompleted = p.status === 'secured';
+            const isForfeited = p.status === 'yielded';
             let cardClasses =
               "relative w-[85vw] max-w-[320px] flex-none snap-center flex flex-col justify-between rounded-[1.25rem] border p-5 transition-all duration-500 overflow-hidden ";
-            if (contract.isCompleted) {
-              cardClasses +=
-                "bg-emerald-950/20 border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]";
-            } else if (contract.isForfeited) {
+            if (isCompleted) {
+              cardClasses += "bg-emerald-950/20 border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]";
+            } else if (isForfeited) {
               cardClasses += "bg-rose-950/20 border-rose-500/20 opacity-60";
             } else {
-              cardClasses +=
-                "bg-slate-900/80 border-slate-700/50 backdrop-blur-xl shadow-2xl scanline-effect hover:border-cyan-500/30";
+              cardClasses += "bg-slate-900/80 border-slate-700/50 backdrop-blur-xl shadow-2xl scanline-effect hover:border-cyan-500/30";
             }
             return (
-              <div key={contract.id} className={cardClasses}>
-                {/* Tactical Header Overlay */}
+              <div key={p.id} className={cardClasses}>
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-                {!contract.isCompleted && !contract.isForfeited && (
+                {!isCompleted && !isForfeited && (
                   <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-500/30"></div>
                 )}
 
-                {/* Serial Number & Yield */}
                 <div className="flex justify-between items-center mb-3">
                   <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest">
                     // DIRECTIVE 0{index + 1}
                   </p>
-                  {!contract.isCompleted && !contract.isForfeited && (
+                  {!isCompleted && !isForfeited && (
                     <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded">
-                      YIELD: +{contract.dp} DP
+                      YIELD: +{p.reward} DP
                     </p>
                   )}
                 </div>
 
-                {/* Main Content */}
                 <div className="flex items-start gap-4 mb-4">
                   <div
                     className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border shadow-inner ${
-                      contract.isCompleted
+                      isCompleted
                         ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                        : contract.isForfeited
+                        : isForfeited
                         ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
                         : "bg-slate-950 border-slate-800 text-cyan-400"
                     }`}
@@ -221,44 +248,42 @@ function Index() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0 mt-0.5">
-                    <h3
-                      className={`font-bold text-base truncate ${
-                        contract.isCompleted
-                          ? "text-emerald-50"
-                          : contract.isForfeited
-                          ? "text-slate-500"
-                          : "text-white"
-                      }`}
-                    >
-                      {contract.title}
+                    <h3 className={`font-bold text-base ${isCompleted ? "text-emerald-50" : isForfeited ? "text-slate-500 line-through" : "text-white"}`}>
+                      {p.title}
                     </h3>
-                    <p
-                      className={`text-[11px] leading-relaxed line-clamp-2 mt-1 ${
-                        contract.isCompleted || contract.isForfeited ? "text-slate-500" : "text-slate-400"
-                      }`}
-                    >
-                      {contract.description}
+                    <p className={`text-[11px] leading-relaxed line-clamp-2 mt-1 ${isCompleted || isForfeited ? "text-slate-500" : "text-slate-400"}`}>
+                      {p.subtitle}
                     </p>
                   </div>
                 </div>
 
-                {/* Read-Only Status Footer */}
                 <div className="mt-auto pt-4 border-t border-white/5">
-                  {!contract.isCompleted && !contract.isForfeited && (
-                    <div className="flex items-center justify-center py-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                      Tracking Progress...
+                  {!isCompleted && !isForfeited && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onPointerDown={() => secureProtocol(p.id)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 touch-none"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Secure
+                      </button>
+                      <button
+                        onPointerDown={() => forfeitProtocol(p.id)}
+                        className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-400 active:scale-95 touch-none"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   )}
-                  {contract.isCompleted && (
+                  {isCompleted && (
                     <div className="flex items-center justify-center py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                       <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                      Directive Secured
+                      Secured [+{p.reward} DP]
                     </div>
                   )}
-                  {contract.isForfeited && (
-                    <div className="flex items-center justify-center py-3 rounded-xl bg-rose-500/5 border border-rose-500/10 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-500/50">
+                  {isForfeited && (
+                    <div className="flex items-center justify-center py-3 rounded-xl bg-rose-500/5 border border-rose-500/10 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-500/70">
                       <XCircle className="h-3.5 w-3.5 mr-2" />
-                      Breach Detected
+                      Forfeited [{p.penalty} DP]
                     </div>
                   )}
                 </div>
@@ -266,30 +291,11 @@ function Index() {
             );
           })}
         </div>
+        )}
       </div>
 
+      {/* ── 4. EVERYTHING ELSE ─────────────────────────────────────────── */}
       <div className="px-5">
-      <DailyContractsBoard />
-
-      <div className="mb-8 flex flex-col items-center">
-        <StatusRing
-          used={app.todayDiscretionary}
-          limit={app.smartDailyLimit}
-          remainingLabel={fmtMoney(remaining, cur, rate)}
-        />
-        <div className="mt-6 flex w-full items-center justify-around">
-          <div className="flex flex-col items-center">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
-            <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.todayDiscretionary, cur, rate)}</span>
-          </div>
-          <div className="h-8 w-px bg-white/5" />
-          <div className="flex flex-col items-center">
-            <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
-            <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.smartDailyLimit, cur, rate)}</span>
-            <span className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-500/50">Includes Active Amortizations</span>
-          </div>
-        </div>
-      </div>
 
       {(() => {
         const daysUntilPayday = Math.max(0, Math.ceil((new Date(us.paydayDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
