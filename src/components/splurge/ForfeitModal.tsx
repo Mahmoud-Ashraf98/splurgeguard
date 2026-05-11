@@ -78,11 +78,11 @@ export function ForfeitModal({ open, contractName, penalty, onCancel, onConfirm,
               </div>
               <div className="min-w-0">
                 <h2 id="forfeit-title" className="font-mono text-sm font-black uppercase tracking-widest text-rose-300">
-                  Confirm Forfeit
+                  Giving In
                 </h2>
                 <p className="mt-1.5 text-[12px] leading-relaxed text-rose-100/80">
-                  Forfeiting <span className="font-bold text-white">{contractName}</span> cannot be undone.
-                  You will lose the DP yield ({penalty} DP). Are you sure?
+                  Giving in to <span className="font-bold text-white">{contractName}</span> cannot be undone.
+                  You will lose the DP reward ({penalty} DP). Are you sure?
                 </p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export function ForfeitModal({ open, contractName, penalty, onCancel, onConfirm,
                 onClick={onCancel}
                 className="flex-1 py-3 rounded-xl bg-slate-800 border border-slate-700 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-200 hover:bg-slate-700 active:scale-95 transition-all"
               >
-                Cancel
+                Stay Strong
               </button>
               <button
                 disabled={!armed}
@@ -103,7 +103,7 @@ export function ForfeitModal({ open, contractName, penalty, onCancel, onConfirm,
                     : "bg-rose-950/60 border-rose-900 text-rose-300/40 cursor-not-allowed"
                 }`}
               >
-                {armed ? "Forfeit Anyway" : `Forfeit Anyway (${seconds})`}
+                {armed ? "Give In Anyway" : `Give In Anyway (${seconds})`}
               </button>
             </div>
           </motion.div>
