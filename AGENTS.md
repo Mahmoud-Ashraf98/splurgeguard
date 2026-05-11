@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Project context
+
+For full architectural context, data model, algorithms, copy rules, and contribution cheat sheet, see [`SplurgeGuard_AI_Context.md`](./SplurgeGuard_AI_Context.md). That document is slightly outdated but remains the authoritative deep reference for AI assistants working on this codebase.
+
 ## Cursor Cloud specific instructions
 
 ### Overview
