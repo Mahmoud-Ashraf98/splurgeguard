@@ -1,14 +1,24 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Flame, Coins, Lock, Target, Shield, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Plus, Flame, Coins, Lock, Target, CheckCircle2, XCircle,
+  ExternalLink, Check, X,
+  Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+  type LucideIcon,
+} from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
-import { DailyContractsBoard } from "@/components/splurge/DailyContractsBoard";
+import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
+import type { DailyContract } from "@/lib/splurge-types";
 
 import { getRankForXP, getNextRank } from "@/lib/ranks";
+
+const CONTRACT_ICON_MAP: Record<string, LucideIcon> = {
+  Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+};
 
 
 export const Route = createFileRoute("/")({
