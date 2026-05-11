@@ -41,6 +41,9 @@ export interface Transaction {
   isEssential: boolean;
   justification: string;
   fromVault: boolean;
+  /** Canonical lifespan field. New transactions write this. */
+  amortizeDays?: number;
+  /** Legacy field (older entries) — readers fall back to this. */
   amortizationDays?: number;
 }
 

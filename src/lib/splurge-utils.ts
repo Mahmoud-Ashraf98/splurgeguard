@@ -1,4 +1,5 @@
 import type { UserState, Transaction } from "./splurge-types";
+import { getDaysSinceFrom } from "./dateUtils";
 
 export const fmtVND = (v: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
@@ -24,16 +25,23 @@ export const daysBetween = (a: Date | string, b: Date | string) => {
   return Math.round((kb - ka) / 86400000);
 };
 
+/** Resolve a transaction's amortization lifespan in days, defaulting to 1. */
+export const txLifespan = (tx: Transaction): number =>
+  Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
+
+const dateFromKey = (k: string) => new Date(`${k}T12:00:00`);
+
 export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Transaction[] = []) => {
   const daysUntilPayday = Math.max(1, daysBetween(today, us.paydayDate));
   const totalCycleDays = Math.max(1, daysBetween(us.cycleStartDate, us.paydayDate));
   const daysPassed = Math.max(0, daysBetween(us.cycleStartDate, today));
   const proximityWeighting = Math.min(1.2, 1.0 + 0.2 * (daysPassed / totalCycleDays));
   const totalUnAmortized = txs.reduce((sum, tx) => {
-    if (!tx.amortizationDays || tx.amortizationDays <= 1) return sum;
+    const lifespan = txLifespan(tx);
+    if (lifespan <= 1) return sum;
     const daysSince = (today.getTime() - new Date(tx.timestamp).getTime()) / 86400000;
-    if (daysSince >= tx.amortizationDays || daysSince < 0) return sum;
-    return sum + tx.amountVND * (1 - daysSince / tx.amortizationDays);
+    if (daysSince >= lifespan || daysSince < 0) return sum;
+    return sum + tx.amountVND * (1 - daysSince / lifespan);
   }, 0);
   const virtualBalance = us.currentBalanceVND + totalUnAmortized;
   return Math.floor((virtualBalance / daysUntilPayday) * proximityWeighting);
@@ -42,25 +50,40 @@ export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Tran
 const matchesHabit = (cat: string, habit?: string) =>
   !!habit && cat.toLowerCase().trim() === habit.toLowerCase().trim();
 
-export const discretionarySpentOn = (txs: Transaction[], dKey: string, targetHabit?: string) =>
-  txs
-    .filter(
-      (t) =>
-        !t.isEssential &&
-        !matchesHabit(t.category, targetHabit) &&
-        (!t.amortizationDays || t.amortizationDays <= 1) &&
-        dayKey(t.timestamp) === dKey
-    )
-    .reduce((s, t) => s + t.amountVND, 0);
+/**
+ * Discretionary "spent on a given day" — counts the per-day slice of every
+ * active amortization that overlaps that day. Habits and essentials excluded.
+ */
+export const discretionarySpentOn = (txs: Transaction[], dKey: string, targetHabit?: string) => {
+  const anchor = dateFromKey(dKey);
+  return txs.reduce((total, tx) => {
+    if (tx.isEssential) return total;
+    if (matchesHabit(tx.category, targetHabit)) return total;
+    const lifespan = txLifespan(tx);
+    const daysSince = getDaysSinceFrom(tx.timestamp, anchor);
+    if (daysSince < 0 || daysSince >= lifespan) return total;
+    return total + tx.amountVND / lifespan;
+  }, 0);
+};
 
+/**
+ * Habit spend over a sliding 7-day window ending today. Counts the per-day
+ * slice for each of the last 7 days (inclusive) the transaction was active.
+ */
 export const weeklyHabitSpent = (txs: Transaction[], targetHabit: string, today = new Date()) => {
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const dow = d.getDay();
-  const diffToMonday = (dow + 6) % 7;
-  const monday = new Date(d.getTime() - diffToMonday * 86400000);
-  return txs
-    .filter((t) => matchesHabit(t.category, targetHabit) && new Date(t.timestamp) >= monday)
-    .reduce((s, t) => s + t.amountVND, 0);
+  const anchor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return txs.reduce((total, tx) => {
+    if (!matchesHabit(tx.category, targetHabit)) return total;
+    const lifespan = txLifespan(tx);
+    const dailySlice = tx.amountVND / lifespan;
+    const daysSince = getDaysSinceFrom(tx.timestamp, anchor);
+    if (daysSince < 0) return total;
+    let overlappingDays = 0;
+    for (let d = 0; d <= 6; d++) {
+      if (d >= daysSince && d < daysSince + lifespan) overlappingDays++;
+    }
+    return total + dailySlice * overlappingDays;
+  }, 0);
 };
 
 export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, days = 7, today = new Date()) => {

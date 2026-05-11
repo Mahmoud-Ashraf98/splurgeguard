@@ -56,7 +56,7 @@ import {
   ESSENTIAL_CATEGORIES,
   isEssentialCategory,
 } from "@/lib/splurge-types";
-import { fmtVND } from "@/lib/splurge-utils";
+import { fmtVND, fmtMoney } from "@/lib/splurge-utils";
 
 interface Props {
   open: boolean;
@@ -74,9 +74,8 @@ export function LogSheet({ open, onClose }: Props) {
   // vault
   const [itemName, setItemName] = useState("");
   const [delayHours, setDelayHours] = useState(24);
-  // amortization
-  const [amortize, setAmortize] = useState(false);
-  const [amortDays, setAmortDays] = useState("30");
+  // amortization (Consumption Lifespan): 1 = today only
+  const [amortizeDays, setAmortizeDays] = useState<number>(1);
 
   useEffect(() => {
     if (!open) {
@@ -88,8 +87,7 @@ export function LogSheet({ open, onClose }: Props) {
       setDelayHours(24);
       setMode("log");
       setCatOpen(false);
-      setAmortize(false);
-      setAmortDays("30");
+      setAmortizeDays(1);
     }
   }, [open]);
 
@@ -104,11 +102,12 @@ export function LogSheet({ open, onClose }: Props) {
   );
 
   useEffect(() => {
-    if (!isDiscretionarySelected && amortize) setAmortize(false);
-  }, [isDiscretionarySelected, amortize]);
+    if (!isDiscretionarySelected && amortizeDays !== 1) setAmortizeDays(1);
+  }, [isDiscretionarySelected, amortizeDays]);
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
   const rate = data.userState?.usdExchangeRate ?? 26310;
+  const cur = data.userState?.displayCurrency ?? "VND";
 
   const amountVND = useMemo(() => {
     const n = Number(amount);
@@ -125,7 +124,7 @@ export function LogSheet({ open, onClose }: Props) {
 
   const submitLog = () => {
     if (!canLog) return;
-    const parsedAmort = amortize && isDiscretionarySelected ? Math.max(2, parseInt(amortDays, 10) || 2) : undefined;
+    const parsedAmort = isDiscretionarySelected && amortizeDays > 1 ? amortizeDays : undefined;
     logExpense({
       amountVND,
       originalAmount: showCurrency && currency === "USD" ? Number(amount) : undefined,
@@ -352,51 +351,41 @@ export function LogSheet({ open, onClose }: Props) {
         </div>
 
         {mode === "log" && isDiscretionarySelected && (
-          <div className="mb-5 rounded-xl border border-slate-700/60 bg-slate-950/50 p-4">
-            <button
-              type="button"
-              onClick={() => setAmortize((v) => !v)}
-              className="flex w-full items-center justify-between"
-            >
-              <div className="text-left">
-                <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400">
-                  Spread Cost Over Time
-                </p>
-                <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
-                  Subscriptions / Bulk
-                </p>
-              </div>
-              <span
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${
-                  amortize ? "bg-cyan-400 shadow-[0_0_15px_-3px_#00d4ff]" : "bg-slate-700"
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-slate-950 transition-transform ${
-                    amortize ? "translate-x-5" : "translate-x-0.5"
+          <div className="mb-6">
+            <div className="flex justify-between items-baseline mb-2">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+                Consumption Lifespan
+              </p>
+              <p className="font-mono text-[9px] text-cyan-400">
+                {amountVND > 0
+                  ? `Impact: ${fmtMoney(amountVND / amortizeDays, cur, rate)} / Day`
+                  : "Enter amount above"}
+              </p>
+            </div>
+            <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+              {[1, 3, 7, 14, 30].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setAmortizeDays(days)}
+                  className={`py-2 rounded-lg font-mono text-[10px] font-bold transition-all duration-150 ${
+                    amortizeDays === days
+                      ? "bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 shadow-[0_0_10px_rgba(0,212,255,0.2)]"
+                      : "bg-transparent border border-transparent text-slate-500 hover:text-slate-300 active:text-slate-100"
                   }`}
-                />
-              </span>
-            </button>
-            {amortize && (
-              <div className="mt-3">
-                <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
-                  Duration in Days
-                </label>
-                <input
-                  type="number"
-                  min={2}
-                  inputMode="numeric"
-                  value={amortDays}
-                  onChange={(e) => setAmortDays(e.target.value.replace(/\D/g, ""))}
-                  className="w-full rounded-lg border border-cyan-400/40 bg-slate-950 px-4 py-2.5 text-right font-mono text-lg tabular-nums text-cyan-400 outline-none focus:border-cyan-400"
-                />
-                {amountVND > 0 && parseInt(amortDays || "0", 10) >= 2 && (
-                  <p className="mt-1.5 text-right font-mono text-[10px] tracking-widest text-slate-500">
-                    ≈ {fmtVND(Math.floor(amountVND / parseInt(amortDays, 10)))} / day
-                  </p>
-                )}
-              </div>
+                >
+                  {days === 1 ? "TODAY" : `${days}D`}
+                </button>
+              ))}
+            </div>
+            {amortizeDays > 1 && amountVND > 0 && (
+              <p className="mt-2 text-[9px] italic text-slate-500 text-center leading-relaxed">
+                Bulk protection active. Only{" "}
+                <span className="text-cyan-500/80">
+                  {fmtMoney(amountVND / amortizeDays, cur, rate)}/day
+                </span>{" "}
+                will count against your daily limit for {amortizeDays} days.
+              </p>
             )}
           </div>
         )}

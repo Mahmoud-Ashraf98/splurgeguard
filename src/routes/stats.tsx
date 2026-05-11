@@ -148,14 +148,15 @@ function StatsPage() {
   const now = Date.now();
   const activeAmortizations = app.data.transactions
     .map((t) => {
-      if (!t.amortizationDays || t.amortizationDays <= 1) return null;
+      const lifespan = t.amortizeDays ?? t.amortizationDays ?? 1;
+      if (lifespan <= 1) return null;
       const daysSince = (now - new Date(t.timestamp).getTime()) / 86400000;
-      if (daysSince >= t.amortizationDays || daysSince < 0) return null;
-      const remaining = t.amountVND * (1 - daysSince / t.amortizationDays);
-      const pct = Math.min(1, daysSince / t.amortizationDays);
-      return { tx: t, remaining, pct };
+      if (daysSince >= lifespan || daysSince < 0) return null;
+      const remaining = t.amountVND * (1 - daysSince / lifespan);
+      const pct = Math.min(1, daysSince / lifespan);
+      return { tx: t, lifespan, remaining, pct };
     })
-    .filter((x): x is { tx: typeof app.data.transactions[number]; remaining: number; pct: number } => !!x);
+    .filter((x): x is { tx: typeof app.data.transactions[number]; lifespan: number; remaining: number; pct: number } => !!x);
 
   let cumulative = 0;
   const radius = 60;
@@ -489,16 +490,10 @@ function StatsPage() {
           </div>
           <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
           <div className="space-y-2">
-            {activeAmortizations.map(({ tx }) => {
-              const progressPct =
-                tx.amortizationDays && tx.amortizationDays > 0
-                  ? Math.min(100, (daysElapsedInCycle / tx.amortizationDays) * 100)
-                  : 100;
+            {activeAmortizations.map(({ tx, lifespan }) => {
+              const progressPct = Math.min(100, (daysElapsedInCycle / lifespan) * 100);
               const remainingPct = 100 - progressPct;
-              const dailyDrain =
-                tx.amortizationDays && tx.amortizationDays > 0
-                  ? tx.amountVND / tx.amortizationDays
-                  : 0;
+              const dailyDrain = tx.amountVND / lifespan;
               return (
                 <div
                   key={tx.id}
@@ -510,7 +505,7 @@ function StatsPage() {
                         {tx.justification || tx.category}
                       </p>
                       <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
-                        {tx.category} · {tx.amortizationDays}d
+                        {tx.category} · {lifespan}d
                       </p>
                     </div>
                     <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
@@ -519,9 +514,7 @@ function StatsPage() {
                   </div>
 
                   <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
-                    {tx.amortizationDays && tx.amortizationDays > 0
-                      ? `[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`
-                      : '[DRAIN: COMPLETE]'}
+                    {`[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`}
                   </p>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
@@ -602,6 +595,11 @@ function StatsPage() {
                       t.isEssential ? "text-emerald-400/80" : "text-rose-400"
                     }`}>
                       {fmtMoney(Math.abs(t.amountVND ?? 0), cur, rate)}
+                      {(t.amortizeDays ?? t.amortizationDays ?? 1) > 1 && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded font-mono text-[8px] font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-500/70 whitespace-nowrap">
+                          📅 {t.amortizeDays ?? t.amortizationDays}D
+                        </span>
+                      )}
                     </p>
                     <button
                       onClick={() => app.deleteTransaction(t.id)}
