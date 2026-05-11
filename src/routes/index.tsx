@@ -181,7 +181,16 @@ function Index() {
                   ></span>
                   System Online
                 </p>
-                <h1 className="text-2xl font-black uppercase tracking-widest text-white truncate drop-shadow-md">
+                <h1
+                  className="text-2xl font-black uppercase tracking-widest truncate"
+                  style={{
+                    background: "linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.15))",
+                  }}
+                >
                   {us.userName || "Operator"}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
