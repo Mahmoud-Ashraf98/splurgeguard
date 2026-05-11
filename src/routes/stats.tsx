@@ -811,7 +811,7 @@ function StatsPage() {
               {trophies.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] min-w-0"
+                  className="flex flex-col gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] min-w-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                 >
                   {/* Left: name */}
                   <div className="flex flex-col gap-1 min-w-0 flex-1">
@@ -831,7 +831,7 @@ function StatsPage() {
                   </div>
 
                   {/* Right: amount saved */}
-                  <div className="shrink-0 text-right">
+                  <div className="shrink-0 text-left sm:text-right">
                     <p className="text-cyan-400 font-mono text-sm font-bold">
                       {`${Number(item.estimatedAmountVND).toLocaleString()} VND`}
                     </p>
