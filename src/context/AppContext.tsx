@@ -258,7 +258,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ? { ...d.userState, dailyContracts: newContracts, lastContractRefreshDate: todayStr }
         : d.userState,
     }));
-    setTimeout(() => toast.success('New daily contracts available.'), 500);
+    setTimeout(() => toast.success('New daily challenges available.'), 500);
   }, [hydrated, data.userState?.lastContractRefreshDate, mutate, data.userState]);
 
   // Vault cooling -> ready (global, battery friendly)
