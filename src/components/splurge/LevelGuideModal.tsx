@@ -30,56 +30,72 @@ export function LevelGuideModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Scrollable List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-6 flex flex-col gap-4">
+        <div className="flex-1 flex flex-col gap-4 w-full overflow-y-auto pb-4 px-4">
           {RANKS.map(rank => {
             const isCurrentRank = rank.level === currentRank.level;
-            const isUnlocked = us.ascensionXP >= rank.threshold;
-            const isLocked = !isUnlocked;
+            const isPast = rank.level < currentRank.level;
+            const isLocked = rank.level > currentRank.level;
             const roman = ROMAN_NUMERALS[rank.level - 1] || String(rank.level);
 
             const cardClasses = isCurrentRank
-              ? 'bg-gradient-to-br from-cyan-900/40 to-blue-900/10 border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/20 rounded-2xl'
-              : 'bg-white/[0.02] hover:bg-white/[0.04] transition-colors border border-white/5 rounded-2xl';
+              ? 'relative flex flex-col md:flex-row items-start gap-5 p-5 md:p-6 w-full bg-gradient-to-br from-cyan-900/40 to-blue-900/10 border border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/20 rounded-2xl'
+              : isLocked
+                ? 'relative flex flex-col md:flex-row items-start gap-5 p-5 md:p-6 w-full bg-white/[0.02] hover:bg-white/[0.04] transition-colors border border-white/5 rounded-2xl'
+                : 'relative flex flex-col md:flex-row items-start gap-5 p-5 md:p-6 w-full bg-white/[0.015] border border-white/[0.04] rounded-2xl opacity-70';
 
             const iconWrapClasses = isCurrentRank
-              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.2)] p-3 rounded-full flex items-center justify-center shrink-0'
-              : 'bg-white/5 p-3 rounded-full border border-white/10 text-slate-400 flex items-center justify-center shrink-0';
+              ? 'flex items-center justify-center shrink-0 w-16 h-16 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.2)] p-3 rounded-full overflow-hidden'
+              : isLocked
+                ? 'flex items-center justify-center shrink-0 w-16 h-16 bg-white/5 p-3 rounded-full border border-white/10 text-slate-400 overflow-hidden'
+                : 'flex items-center justify-center shrink-0 w-16 h-16 bg-white/5 p-3 rounded-full border border-white/[0.06] text-slate-500 overflow-hidden';
+
+            const titleClasses = isCurrentRank
+              ? 'text-white font-bold text-xl leading-tight'
+              : isLocked
+                ? 'text-slate-200 font-semibold text-lg leading-tight'
+                : 'text-slate-400 font-semibold text-lg leading-tight';
+
+            const loreClasses = isCurrentRank
+              ? 'text-slate-300 leading-relaxed italic text-sm mt-1'
+              : isLocked
+                ? 'text-slate-400 leading-relaxed italic text-sm mt-1'
+                : 'text-slate-500 leading-relaxed italic text-sm mt-1';
 
             return (
-              <div key={rank.level} className={`relative overflow-hidden flex items-center gap-4 p-4 ${cardClasses}`}>
-
+              <div key={rank.level} className={cardClasses}>
                 <div className={iconWrapClasses}>
-                  <div className="relative z-10 h-14 w-14 flex-shrink-0" style={{ filter: isLocked ? 'grayscale(0.6)' : `drop-shadow(0 0 12px ${rank.glowColor})` }}>
+                  <div className="w-full h-full flex items-center justify-center" style={{ filter: isLocked ? 'grayscale(0.6)' : `drop-shadow(0 0 12px ${rank.glowColor})` }}>
                     {rank.renderAvatar()}
                   </div>
                 </div>
 
-                <div className="relative z-10 flex-1 min-w-0 py-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-slate-500 font-black tracking-widest text-sm mb-1">
+                <div className="flex flex-col flex-1 gap-1.5 min-w-0 w-full pr-20 md:pr-24">
+                  <div className="flex flex-wrap items-center gap-2.5 w-full">
+                    <span className="text-slate-500 font-black tracking-widest text-sm shrink-0">
                       {roman}
                     </span>
+                    <p className={titleClasses}>{rank.title}</p>
                     {isCurrentRank && (
                       <span className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider">
                         • Current
                       </span>
                     )}
                   </div>
-                  <p className={isCurrentRank ? 'text-white font-bold text-xl' : 'text-slate-200 font-semibold text-lg'}>
-                    {rank.title}
-                  </p>
-                  <p className={`${isCurrentRank ? 'text-slate-300' : 'text-slate-400'} leading-relaxed italic text-[11px] whitespace-normal break-words mt-1 pr-2`}>
+                  <p className={loreClasses}>
                     {rank.quote}
                   </p>
                 </div>
 
-                <div className="relative z-10 flex flex-col items-center justify-center gap-1 flex-shrink-0 min-w-[55px]">
-                  <div style={{ color: isLocked ? '#475569' : rank.glowColor }}>
-                    <Sparkles size={16} className={isCurrentRank ? 'animate-pulse' : ''} />
-                  </div>
-                  <span className="text-slate-300 font-mono text-xs bg-white/5 px-3 py-1 rounded-full mt-1 text-center">
-                    {rank.threshold === 0 ? 'Start' : `${rank.threshold.toLocaleString()} XP`}
-                  </span>
+                <div className="absolute top-5 right-5 md:top-6 md:right-6 flex flex-col items-end">
+                  {isCurrentRank ? (
+                    <span className="text-cyan-300 font-mono text-xs md:text-sm bg-cyan-500/10 px-3 py-1 rounded-full border border-cyan-500/20 shrink-0">
+                      {rank.threshold === 0 ? 'Start' : `${rank.threshold.toLocaleString()} XP`}
+                    </span>
+                  ) : (
+                    <span className="text-slate-300 font-mono text-xs md:text-sm bg-white/5 px-2.5 py-1 rounded-full border border-white/10 shrink-0">
+                      {rank.threshold === 0 ? 'Start' : `${rank.threshold.toLocaleString()} XP`}
+                    </span>
+                  )}
                 </div>
               </div>
             );
