@@ -25,7 +25,55 @@
   * { border-color: #1e293b; }
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Share+Tech+Mono&display=swap");
+
+.font-tactical { font-family: 'Share Tech Mono', monospace; }
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 6px rgba(245,158,11,0.85)); }
+  20% { opacity: 0.85; transform: scale(0.97); }
+  40% { opacity: 1; transform: scale(1.05); filter: drop-shadow(0 0 14px rgba(245,158,11,1)); }
+  55% { opacity: 0.7; transform: scale(0.98); }
+  70% { opacity: 1; transform: scale(1.02); }
+  85% { opacity: 0.9; transform: scale(1); }
+}
+.animate-flicker { animation: flicker 1.6s ease-in-out infinite; will-change: transform, opacity; transform-origin: center; }
+
+@keyframes gradient-cycle {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes header-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+.header-scanline {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0.4;
+}
+.header-scanline::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
+}
+.header-scanline::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 30%;
+  background: linear-gradient(to bottom, transparent, rgba(0,255,163,0.08), transparent);
+  animation: header-scan 6s linear infinite; will-change: transform;
+}
+
+@keyframes ripple-pop {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.cta-ripple:active::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(circle, rgba(255,255,255,0.55), transparent 60%);
+  animation: ripple-pop 0.5s ease-out;
+  pointer-events: none;
+}
+.cta-ripple:active .cta-plus { transform: rotate(45deg); }
+.cta-plus { transition: transform 0.25s ease; }
 
 @keyframes vault-pulse {
   0%, 100% { opacity: 0.4; }
