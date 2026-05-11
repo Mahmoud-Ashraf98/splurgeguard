@@ -686,7 +686,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
     toast.success(
       progressDP > 0
-        ? `Reward deleted. ${progressDP} DP progress forfeited.`
+        ? `Reward deleted. ${progressDP} DP progress lost.`
         : "Reward deleted."
     );
   };
