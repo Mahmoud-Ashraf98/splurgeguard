@@ -13,7 +13,7 @@ const STROKE = 3;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-export function HoldSecureButton({ onSecure, durationMs = 1500, label = "SECURE" }: Props) {
+export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT" }: Props) {
   const [holding, setHolding] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [flash, setFlash] = useState(false);
