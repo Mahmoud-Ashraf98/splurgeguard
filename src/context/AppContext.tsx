@@ -448,12 +448,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const habit = data.userState.targetHabit;
     const habitLower = habit?.toLowerCase().trim();
     const isHabit = !!habitLower && input.category.toLowerCase().trim() === habitLower;
-    const countsTowardDaily = !isEss && !isHabit && !amortDays;
+    // Amortized expenses now contribute a daily slice toward the daily limit
+    // (handled inside discretionarySpentOn / smartDailyLimit), so the breach
+    // check should evaluate the new slice rather than the full amount.
+    const countsTowardDaily = !isEss && !isHabit;
+    const slice = amortDays ? input.amountVND / amortDays : input.amountVND;
 
     if (countsTowardDaily) {
       const todaySpent = todayDiscretionary;
       const limit = smartDailyLimit;
-      if (todaySpent + input.amountVND > limit) {
+      if (todaySpent + slice > limit) {
         mutate((d) => {
           if (!d.userState) return d;
           const tx: Transaction = {
@@ -466,6 +470,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isEssential: false,
             justification: input.justification,
             fromVault: !!input.fromVault,
+            amortizeDays: amortDays,
+            amortizationDays: amortDays,
           };
           // -25 penalty (does NOT subtract from lifetime), then add the small dpForAmount gain
           const gain = dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
@@ -507,6 +513,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isEssential: isEss,
         justification: input.justification,
         fromVault: !!input.fromVault,
+        amortizeDays: amortDays,
         amortizationDays: amortDays,
       };
       const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
