@@ -102,8 +102,8 @@ export function LogSheet({ open, onClose }: Props) {
   );
 
   useEffect(() => {
-    if (!isDiscretionarySelected && amortize) setAmortize(false);
-  }, [isDiscretionarySelected, amortize]);
+    if (!isDiscretionarySelected && amortizeDays !== 1) setAmortizeDays(1);
+  }, [isDiscretionarySelected, amortizeDays]);
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
   const rate = data.userState?.usdExchangeRate ?? 26310;
