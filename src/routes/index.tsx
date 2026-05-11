@@ -447,6 +447,7 @@ function Index() {
       </div>
 
       <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      {showLevelGuide && <LevelGuideModal onClose={() => setShowLevelGuide(false)} />}
 
     </div>
   );
