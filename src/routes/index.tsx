@@ -361,7 +361,7 @@ function Index() {
                     className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest"
                     style={{ textShadow: !isCompleted && !isForfeited ? "0 0 6px rgba(0,212,255,0.6)" : "none" }}
                   >
-                    // DIRECTIVE 0{index + 1}
+                    CHALLENGE 0{index + 1}
                   </p>
                   {!isCompleted && !isForfeited && (
                     <motion.p
@@ -370,7 +370,7 @@ function Index() {
                       transition={{ duration: 0.45, delay: 0.05 * index, ease: "easeOut" }}
                       className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded"
                     >
-                      YIELD: +{p.reward} DP
+                      EARNS: +{p.reward} DP
                     </motion.p>
                   )}
                 </div>
