@@ -305,7 +305,7 @@ function StatsPage() {
           {currentMilestone && (
             <div className="mb-4 p-3 rounded-lg border border-cyan-400/20 bg-cyan-400/10">
               <p className="font-mono text-[8px] uppercase tracking-widest text-cyan-400 mb-1">
-                Secured Milestone
+                Conquered Milestone
               </p>
               <p className="font-bold text-sm text-cyan-50">{currentMilestone.title}</p>
             </div>
