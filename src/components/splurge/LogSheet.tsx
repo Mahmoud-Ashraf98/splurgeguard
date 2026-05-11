@@ -56,7 +56,7 @@ import {
   ESSENTIAL_CATEGORIES,
   isEssentialCategory,
 } from "@/lib/splurge-types";
-import { fmtVND } from "@/lib/splurge-utils";
+import { fmtVND, fmtMoney } from "@/lib/splurge-utils";
 
 interface Props {
   open: boolean;
