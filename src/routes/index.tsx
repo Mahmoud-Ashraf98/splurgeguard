@@ -8,7 +8,7 @@ import { LogSheet } from "@/components/splurge/LogSheet";
 import { DailyContractsBoard } from "@/components/splurge/DailyContractsBoard";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 
-import { RANKS, getRankForXP, getNextRank } from "@/lib/ranks";
+import { getRankForXP, getNextRank } from "@/lib/ranks";
 
 
 export const Route = createFileRoute("/")({
