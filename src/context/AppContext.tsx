@@ -258,7 +258,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ? { ...d.userState, dailyContracts: newContracts, lastContractRefreshDate: todayStr }
         : d.userState,
     }));
-    setTimeout(() => toast.success('New daily contracts available.'), 500);
+    setTimeout(() => toast.success('New daily challenges available.'), 500);
   }, [hydrated, data.userState?.lastContractRefreshDate, mutate, data.userState]);
 
   // Vault cooling -> ready (global, battery friendly)
@@ -398,7 +398,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const initUser: AppContextValue["initUser"] = (input) => {
     const today = new Date();
     const us: UserState = {
-      userName: input.userName || "Operator",
+      userName: input.userName || "Master",
       currentBalanceVND: input.currentBalanceVND ?? 0,
       essentialSpentVND: 0,
       cycleStartDate: today.toISOString(),
@@ -686,7 +686,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
     toast.success(
       progressDP > 0
-        ? `Reward deleted. ${progressDP} DP progress forfeited.`
+        ? `Reward deleted. ${progressDP} DP progress lost.`
         : "Reward deleted."
     );
   };

@@ -179,7 +179,7 @@ function Index() {
                     className="w-1.5 h-1.5 rounded-full animate-pulse"
                     style={{ backgroundColor: "#00FFA3", boxShadow: "0 0 8px #00FFA3", animationDuration: "2.4s" }}
                   ></span>
-                  System Online
+                  Mindset: Focused
                 </p>
                 <h1
                   className="text-2xl font-black uppercase tracking-widest truncate"
@@ -191,7 +191,7 @@ function Index() {
                     filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.15))",
                   }}
                 >
-                  {us.userName || "Operator"}
+                  {us.userName || "Master"}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <button
@@ -310,7 +310,7 @@ function Index() {
               <Target className="h-3 w-3 text-cyan-400" />
             </div>
             <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.3em] text-slate-300">
-              Active Contracts
+              Active Challenges
             </h2>
           </div>
           {dailyContracts.length > 0 && (
@@ -322,7 +322,7 @@ function Index() {
 
         {dailyContracts.length === 0 ? (
           <p className="px-5 font-mono text-[10px] uppercase tracking-widest text-slate-600">
-            No contracts. Refresh at midnight.
+            No active challenges. Maintain your baseline.
           </p>
         ) : (
         <>
@@ -361,7 +361,7 @@ function Index() {
                     className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest"
                     style={{ textShadow: !isCompleted && !isForfeited ? "0 0 6px rgba(0,212,255,0.6)" : "none" }}
                   >
-                    // DIRECTIVE 0{index + 1}
+                    CHALLENGE 0{index + 1}
                   </p>
                   {!isCompleted && !isForfeited && (
                     <motion.p
@@ -370,7 +370,7 @@ function Index() {
                       transition={{ duration: 0.45, delay: 0.05 * index, ease: "easeOut" }}
                       className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded"
                     >
-                      YIELD: +{p.reward} DP
+                      EARNS: +{p.reward} DP
                     </motion.p>
                   )}
                 </div>
@@ -404,7 +404,7 @@ function Index() {
                       <button
                         onClick={() => setForfeitTarget(p)}
                         className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg bg-slate-950 border-2 border-rose-900/60 text-rose-400/80 transition-all hover:bg-rose-500/10 hover:border-rose-500/60 hover:text-rose-400 active:scale-95"
-                        aria-label="Forfeit contract"
+                        aria-label="Give In"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -413,13 +413,13 @@ function Index() {
                   {isCompleted && (
                     <div className="flex items-center justify-center py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                       <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                      Secured [+{p.reward} DP]
+                      Conquered [+{p.reward} DP]
                     </div>
                   )}
                   {isForfeited && (
                     <div className="flex items-center justify-center py-3 rounded-xl bg-rose-500/5 border border-rose-500/10 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-500/70">
                       <XCircle className="h-3.5 w-3.5 mr-2" />
-                      Forfeited [{p.penalty} DP]
+                      Gave In [{p.penalty} DP]
                     </div>
                   )}
                 </div>

@@ -13,7 +13,7 @@ const STROKE = 3;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-export function HoldSecureButton({ onSecure, durationMs = 1500, label = "SECURE" }: Props) {
+export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT" }: Props) {
   const [holding, setHolding] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [flash, setFlash] = useState(false);
@@ -96,7 +96,7 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "SECURE"
         WebkitTouchCallout: "none",
         willChange: "transform",
       }}
-      aria-label={holding ? "Hold to secure" : label}
+      aria-label={holding ? "Hold to commit" : label}
     >
       <svg width={SIZE} height={SIZE} className="-rotate-90 flex-shrink-0">
         <circle cx={SIZE / 2} cy={SIZE / 2} r={R} stroke="rgba(255,255,255,0.08)" strokeWidth={STROKE} fill="none" />
@@ -114,7 +114,7 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "SECURE"
       </svg>
       <span className="flex items-center gap-1.5">
         <Check className="h-3.5 w-3.5" />
-        {holding ? "HOLD TO SECURE..." : label}
+        {holding ? "HOLD TO COMMIT..." : label}
       </span>
     </motion.button>
   );

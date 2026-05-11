@@ -137,7 +137,7 @@ function SettingsPage() {
             <User className="h-4 w-4" /> Identity
           </h2>
           <Field
-            label="Operator Name / Alias"
+            label="Master Name / Alias"
             value={us.userName ?? ""}
             onChange={(e) => app.updateUserState({ userName: e.target.value })}
             helper="How the app addresses you across the dashboard."
