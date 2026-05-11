@@ -404,7 +404,7 @@ function Index() {
                       <button
                         onClick={() => setForfeitTarget(p)}
                         className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg bg-slate-950 border-2 border-rose-900/60 text-rose-400/80 transition-all hover:bg-rose-500/10 hover:border-rose-500/60 hover:text-rose-400 active:scale-95"
-                        aria-label="Forfeit contract"
+                        aria-label="Give In"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -413,13 +413,13 @@ function Index() {
                   {isCompleted && (
                     <div className="flex items-center justify-center py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-500">
                       <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                      Secured [+{p.reward} DP]
+                      Conquered [+{p.reward} DP]
                     </div>
                   )}
                   {isForfeited && (
                     <div className="flex items-center justify-center py-3 rounded-xl bg-rose-500/5 border border-rose-500/10 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-500/70">
                       <XCircle className="h-3.5 w-3.5 mr-2" />
-                      Forfeited [{p.penalty} DP]
+                      Gave In [{p.penalty} DP]
                     </div>
                   )}
                 </div>
