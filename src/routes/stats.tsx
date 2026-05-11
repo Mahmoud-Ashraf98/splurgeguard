@@ -779,7 +779,7 @@ function StatsPage() {
       </div>
 
       <Dialog open={trophyRoomOpen} onOpenChange={setTrophyRoomOpen}>
-        <DialogContent className="bg-slate-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.1)] max-w-md w-full max-h-[80vh] overflow-y-auto p-0">
+        <DialogContent className="bg-slate-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.1)] max-w-[calc(100vw-2rem)] sm:max-w-md w-full max-h-[80vh] overflow-y-auto overflow-x-hidden p-0">
           <div className="p-6">
 
             <DialogHeader className="mb-4">
@@ -811,7 +811,7 @@ function StatsPage() {
               {trophies.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07]"
+                  className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07] min-w-0"
                 >
                   {/* Left: name */}
                   <div className="flex flex-col gap-1 min-w-0 flex-1">
