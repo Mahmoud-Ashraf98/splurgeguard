@@ -114,8 +114,9 @@ function Index() {
                   {us.userName || "Operator"}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <span
-                    className="font-mono text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border backdrop-blur-md"
+                  <button
+                    onClick={() => setShowLevelGuide(true)}
+                    className="group/g flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
                     style={{
                       color: currentRank.glowColor,
                       borderColor: `${currentRank.glowColor}40`,
@@ -123,7 +124,10 @@ function Index() {
                     }}
                   >
                     LV{us.currentLevel} - {currentRank.title}
-                  </span>
+                    <span className="opacity-50 group-hover/g:opacity-100 transition-opacity flex items-center gap-1">
+                      GUIDE <ExternalLink className="h-2.5 w-2.5 inline" />
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
