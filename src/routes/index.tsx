@@ -179,7 +179,7 @@ function Index() {
                     className="w-1.5 h-1.5 rounded-full animate-pulse"
                     style={{ backgroundColor: "#00FFA3", boxShadow: "0 0 8px #00FFA3", animationDuration: "2.4s" }}
                   ></span>
-                  System Online
+                  Mindset: Focused
                 </p>
                 <h1
                   className="text-2xl font-black uppercase tracking-widest truncate"
@@ -191,7 +191,7 @@ function Index() {
                     filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.15))",
                   }}
                 >
-                  {us.userName || "Operator"}
+                  {us.userName || "Master"}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <button
