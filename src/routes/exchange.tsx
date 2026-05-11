@@ -85,15 +85,15 @@ function ExchangePage() {
             </button>
           )}
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-fuchsia-400/80">Black Market</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-fuchsia-400/80">Level Ups</p>
             <h1
               className="text-2xl font-black tracking-tight text-white"
               style={{ textShadow: "0 0 18px rgba(168,85,247,0.55)" }}
             >
-              THE SPOILS
+              THE REWARDS
             </h1>
             <p className="mt-1 text-[11px] leading-snug text-slate-400 max-w-xs">
-              REAP YOUR BOUNTY. You endured the grind. A true Sovereign enjoys the spoils without guilt.
+              CLAIM YOUR REWARD. You endured the grind. A true Master enjoys the rewards without guilt.
             </p>
           </div>
         </div>
