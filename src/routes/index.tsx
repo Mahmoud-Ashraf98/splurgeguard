@@ -113,7 +113,15 @@ function Index() {
           style={{ backgroundColor: currentRank.glowColor }}
         ></div>
 
-        <div className="relative z-10 rounded-[1.5rem] border border-white/10 bg-slate-950/80 backdrop-blur-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] mx-5">
+        <div className="relative z-10 rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-950/90 backdrop-blur-2xl overflow-hidden mx-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_15px_35px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.04)]">
+          {/* Sweeping glare */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%)",
+              animation: "shimmer 4s ease-in-out infinite",
+            }}
+          />
           {/* Animated scanline noise overlay */}
           <div className="header-scanline" />
           <div className="absolute inset-0 bg-cyber-mesh opacity-50 mix-blend-overlay pointer-events-none"></div>
@@ -126,23 +134,43 @@ function Index() {
 
           <div className="p-5 flex items-center justify-between relative z-10">
             <div className="flex items-center gap-4 min-w-0">
-              <div
-                className="w-16 h-16 flex-shrink-0 relative"
-                style={{ filter: `drop-shadow(0 0 12px ${currentRank.glowColor})` }}
-              >
-                {/* Slow rotating gradient border */}
-                <div
-                  aria-hidden
-                  className="absolute -inset-0.5 rounded-full animate-spin"
+              {/* Targeting Reticle Avatar */}
+              <div className="w-16 h-16 flex-shrink-0 relative">
+                <svg
+                  className="absolute text-cyan-500/40"
                   style={{
-                    animationDuration: "8s",
-                    background: `conic-gradient(from 0deg, ${currentRank.glowColor}, #00d4ff, ${currentRank.glowColor})`,
-                    WebkitMask: "radial-gradient(closest-side, transparent 64%, black 66%)",
-                    mask: "radial-gradient(closest-side, transparent 64%, black 66%)",
+                    inset: "-4px",
+                    width: "calc(100% + 8px)",
+                    height: "calc(100% + 8px)",
+                    animation: "spin 10s linear infinite",
                     willChange: "transform",
                   }}
-                />
-                {currentRank.renderAvatar()}
+                  viewBox="0 0 100 100"
+                >
+                  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 5" />
+                </svg>
+                <svg
+                  className="absolute text-white/10"
+                  style={{
+                    inset: "-8px",
+                    width: "calc(100% + 16px)",
+                    height: "calc(100% + 16px)",
+                    animation: "spin 16s linear infinite reverse",
+                    willChange: "transform",
+                  }}
+                  viewBox="0 0 100 100"
+                >
+                  <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="18 82" />
+                </svg>
+                <div
+                  style={{
+                    filter: `drop-shadow(0 0 10px ${currentRank.glowColor})`,
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
+                  {currentRank.renderAvatar()}
+                </div>
               </div>
 
               <div className="flex flex-col min-w-0">
