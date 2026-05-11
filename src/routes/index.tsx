@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Flame, Coins, Lock, Target, CheckCircle2, XCircle,
-  ExternalLink, Check, X,
+  ExternalLink, X, Info,
   Bike, Coffee, ShoppingCart, Utensils, CupSoda,
   type LucideIcon,
 } from "lucide-react";
@@ -11,6 +12,8 @@ import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
 import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
+import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
+import { ForfeitModal } from "@/components/splurge/ForfeitModal";
 import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
 import type { DailyContract } from "@/lib/splurge-types";
 
@@ -20,6 +23,7 @@ const CONTRACT_ICON_MAP: Record<string, LucideIcon> = {
   Bike, Coffee, ShoppingCart, Utensils, CupSoda,
 };
 
+const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -31,6 +35,10 @@ function Index() {
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showLevelGuide, setShowLevelGuide] = useState(false);
+  const [showLimitInfo, setShowLimitInfo] = useState(false);
+  const [forfeitTarget, setForfeitTarget] = useState<DailyContract | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
@@ -39,7 +47,11 @@ function Index() {
 
   const remaining = Math.max(0, app.smartDailyLimit - app.todayDiscretionary);
   const next = nextMilestone(us.currentStreakDays);
-  const milestoneProgress = Math.min(1, us.currentStreakDays / next);
+  const milestoneSegments = 3;
+  const milestoneFilled = Math.min(
+    milestoneSegments,
+    Math.round((us.currentStreakDays / next) * milestoneSegments),
+  );
 
   const activeVault = app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").slice(0, 3);
   const currentRank = getRankForXP(us.ascensionXP);
@@ -49,6 +61,10 @@ function Index() {
   const xpPercentage = nextRank ? Math.min(100, (xpNumerator / xpDenominator) * 100) : 100;
 
   const dailyContracts: DailyContract[] = us.dailyContracts ?? [];
+
+  // Weekly habit (used for both inner ring + bottom card)
+  const habitSpent = us.targetHabit ? weeklyHabitSpent(app.data.transactions, us.targetHabit) : 0;
+  const habitLimit = us.weeklyHabitLimitVND;
 
   const secureProtocol = (id: string) => {
     const c = dailyContracts.find((x) => x.id === id);
@@ -71,18 +87,35 @@ function Index() {
     });
   };
 
+  const onCarouselScroll = () => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const cardW = el.clientWidth * 0.85;
+    const idx = Math.round(el.scrollLeft / Math.max(1, cardW));
+    if (idx !== carouselIndex) setCarouselIndex(Math.min(dailyContracts.length - 1, Math.max(0, idx)));
+  };
+
+  // Cycle elapsed
+  const cycleStart = new Date(us.cycleStartDate).getTime();
+  const cycleEnd = new Date(us.paydayDate).getTime();
+  const cycleNow = Date.now();
+  const cycleTotal = Math.max(1, cycleEnd - cycleStart);
+  const cycleElapsed = Math.min(1, Math.max(0, (cycleNow - cycleStart) / cycleTotal));
+
+  const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon..6=Sun
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-32 pt-6">
       {/* ── 1. SOVEREIGN BLACK CARD (OPERATOR ID) ──────────────────────── */}
       <div className="relative mt-4 mb-8 group">
-        {/* Ambient Rank Glow */}
         <div
           className="absolute inset-0 opacity-20 blur-[50px] transition-opacity duration-700 group-hover:opacity-40 pointer-events-none"
           style={{ backgroundColor: currentRank.glowColor }}
         ></div>
 
         <div className="relative z-10 rounded-[1.5rem] border border-white/10 bg-slate-950/80 backdrop-blur-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] mx-5">
-          {/* CSS Mesh Overlay & Watermark */}
+          {/* Animated scanline noise overlay */}
+          <div className="header-scanline" />
           <div className="absolute inset-0 bg-cyber-mesh opacity-50 mix-blend-overlay pointer-events-none"></div>
           <div
             className="absolute -right-4 -top-8 font-black text-[120px] opacity-5 select-none pointer-events-none leading-none"
@@ -92,22 +125,32 @@ function Index() {
           </div>
 
           <div className="p-5 flex items-center justify-between relative z-10">
-            {/* Left: Avatar & Info */}
             <div className="flex items-center gap-4 min-w-0">
               <div
                 className="w-16 h-16 flex-shrink-0 relative"
                 style={{ filter: `drop-shadow(0 0 12px ${currentRank.glowColor})` }}
               >
+                {/* Slow rotating gradient border */}
                 <div
-                  className="absolute inset-0 rounded-full border border-white/10 border-t-white/30 animate-spin"
-                  style={{ animationDuration: "4s" }}
-                ></div>
+                  aria-hidden
+                  className="absolute -inset-0.5 rounded-full animate-spin"
+                  style={{
+                    animationDuration: "8s",
+                    background: `conic-gradient(from 0deg, ${currentRank.glowColor}, #00d4ff, ${currentRank.glowColor})`,
+                    WebkitMask: "radial-gradient(closest-side, transparent 64%, black 66%)",
+                    mask: "radial-gradient(closest-side, transparent 64%, black 66%)",
+                    willChange: "transform",
+                  }}
+                />
                 {currentRank.renderAvatar()}
               </div>
 
               <div className="flex flex-col min-w-0">
                 <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-0.5 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full animate-pulse"
+                    style={{ backgroundColor: "#00FFA3", boxShadow: "0 0 8px #00FFA3", animationDuration: "2.4s" }}
+                  ></span>
                   System Online
                 </p>
                 <h1 className="text-2xl font-black uppercase tracking-widest text-white truncate drop-shadow-md">
@@ -132,19 +175,18 @@ function Index() {
               </div>
             </div>
 
-            {/* Right: Currency Toggle */}
+            {/* Currency pill — glassmorphism */}
             <div className="flex-shrink-0 ml-2">
               <button
                 onClick={app.toggleCurrency}
-                className="relative overflow-hidden font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 border border-slate-700 bg-slate-900 rounded-xl px-3 py-2.5 transition-all hover:bg-slate-800 hover:text-white hover:border-slate-500 active:scale-95 shadow-inner"
+                className="relative overflow-hidden font-mono text-[10px] font-bold uppercase tracking-widest text-white/90 border border-white/20 bg-white/5 backdrop-blur-md rounded-xl px-3 py-2.5 transition-all hover:bg-white/10 hover:border-white/30 active:scale-95 shadow-inner"
               >
                 <span className="relative z-10">{us.displayCurrency}</span>
-                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
               </button>
             </div>
           </div>
 
-          {/* Segmented Power Cell XP Bar */}
           <div className="h-2 w-full bg-slate-950 relative border-t border-white/5">
             <div
               className="h-full transition-all duration-1000 ease-out relative"
@@ -161,22 +203,50 @@ function Index() {
 
       {/* ── 2. THE CORE REACTOR (DAILY LIMIT) ──────────────────────────── */}
       <div className="px-5">
-        <div className="mb-10 flex flex-col items-center">
+        <div className="mb-8 flex flex-col items-center">
           <StatusRing
             used={app.todayDiscretionary}
             limit={app.smartDailyLimit}
-            remainingLabel={fmtMoney(remaining, cur, rate)}
+            remainingValue={remaining}
+            formatRemaining={(n) => fmtMoney(n, cur, rate)}
+            innerUsed={habitSpent}
+            innerLimit={habitLimit}
           />
-          <div className="mt-6 flex w-full items-center justify-around">
-            <div className="flex flex-col items-center">
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
-              <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.todayDiscretionary, cur, rate)}</span>
+
+          {/* Stats row — frosted cards */}
+          <div className="mt-6 grid w-full grid-cols-2 gap-3">
+            <div className="rounded-xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-md p-3 shadow-inner">
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden>💸</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
+              </div>
+              <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.todayDiscretionary, cur, rate)}</div>
             </div>
-            <div className="h-8 w-px bg-white/5" />
-            <div className="flex flex-col items-center">
-              <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
-              <span className="mt-1 font-mono text-lg tabular-nums text-slate-300">{fmtMoney(app.smartDailyLimit, cur, rate)}</span>
-              <span className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-cyan-500/50">Includes Active Amortizations</span>
+            <div className="rounded-xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-md p-3 shadow-inner">
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden>🎯</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
+                <button
+                  onClick={() => setShowLimitInfo((v) => !v)}
+                  className="ml-auto text-slate-500 hover:text-cyan-400 transition-colors"
+                  aria-label="What goes into the daily limit?"
+                >
+                  <Info className="h-3 w-3" />
+                </button>
+              </div>
+              <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.smartDailyLimit, cur, rate)}</div>
+              <AnimatePresence>
+                {showLimitInfo && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2 font-mono text-[9px] uppercase tracking-widest text-cyan-500/70 leading-relaxed"
+                  >
+                    Includes active amortizations.
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -184,7 +254,7 @@ function Index() {
 
       {/* ── 3. ACTIVE CONTRACTS (HORIZONTAL BOUNTY BOARD) ──────────────── */}
       <div className="mb-10">
-        <div className="px-5 flex items-center justify-between mb-4">
+        <div className="px-5 flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-md bg-cyan-500/10 border border-cyan-500/20">
               <Target className="h-3 w-3 text-cyan-400" />
@@ -193,9 +263,11 @@ function Index() {
               Active Contracts
             </h2>
           </div>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
-            {dailyContracts.filter((c) => c.status !== 'available').length}/{dailyContracts.length}
-          </span>
+          {dailyContracts.length > 0 && (
+            <span className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/80 bg-cyan-400/5 border border-cyan-400/20 rounded-full px-2 py-0.5">
+              {Math.min(carouselIndex + 1, dailyContracts.length)} of {dailyContracts.length}
+            </span>
+          )}
         </div>
 
         {dailyContracts.length === 0 ? (
@@ -203,11 +275,17 @@ function Index() {
             No contracts. Refresh at midnight.
           </p>
         ) : (
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-5 pb-4 custom-scrollbar-hide">
+        <>
+        <div
+          ref={carouselRef}
+          onScroll={onCarouselScroll}
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-5 pb-4 custom-scrollbar-hide"
+        >
           {dailyContracts.map((p, index) => {
             const Icon = CONTRACT_ICON_MAP[p.iconType] ?? Coffee;
             const isCompleted = p.status === 'secured';
             const isForfeited = p.status === 'yielded';
+            const accent = isCompleted ? "#10b981" : isForfeited ? "#f43f5e" : "#00d4ff";
             let cardClasses =
               "relative w-[85vw] max-w-[320px] flex-none snap-center flex flex-col justify-between rounded-[1.25rem] border p-5 transition-all duration-500 overflow-hidden ";
             if (isCompleted) {
@@ -218,20 +296,32 @@ function Index() {
               cardClasses += "bg-slate-900/80 border-slate-700/50 backdrop-blur-xl shadow-2xl scanline-effect hover:border-cyan-500/30";
             }
             return (
-              <div key={p.id} className={cardClasses}>
+              <div
+                key={p.id}
+                className={cardClasses}
+                style={{ borderLeft: `3px solid ${accent}` }}
+              >
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                 {!isCompleted && !isForfeited && (
                   <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-500/30"></div>
                 )}
 
                 <div className="flex justify-between items-center mb-3">
-                  <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest">
+                  <p
+                    className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest"
+                    style={{ textShadow: !isCompleted && !isForfeited ? "0 0 6px rgba(0,212,255,0.6)" : "none" }}
+                  >
                     // DIRECTIVE 0{index + 1}
                   </p>
                   {!isCompleted && !isForfeited && (
-                    <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                    <motion.p
+                      initial={{ y: 5, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.45, delay: 0.05 * index, ease: "easeOut" }}
+                      className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded"
+                    >
                       YIELD: +{p.reward} DP
-                    </p>
+                    </motion.p>
                   )}
                 </div>
 
@@ -260,15 +350,11 @@ function Index() {
                 <div className="mt-auto pt-4 border-t border-white/5">
                   {!isCompleted && !isForfeited && (
                     <div className="flex items-center gap-2">
+                      <HoldSecureButton onSecure={() => secureProtocol(p.id)} />
                       <button
-                        onPointerDown={() => secureProtocol(p.id)}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 font-mono text-[10px] font-bold uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-500/20 active:scale-95 touch-none"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Secure
-                      </button>
-                      <button
-                        onPointerDown={() => forfeitProtocol(p.id)}
-                        className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 text-slate-500 transition-all hover:bg-rose-500/10 hover:text-rose-400 active:scale-95 touch-none"
+                        onClick={() => setForfeitTarget(p)}
+                        className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg bg-slate-950 border-2 border-rose-900/60 text-rose-400/80 transition-all hover:bg-rose-500/10 hover:border-rose-500/60 hover:text-rose-400 active:scale-95"
+                        aria-label="Forfeit contract"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -291,6 +377,18 @@ function Index() {
             );
           })}
         </div>
+        {/* Dots */}
+        <div className="px-5 flex items-center justify-center gap-1.5">
+          {dailyContracts.map((_, i) => (
+            <span
+              key={i}
+              className={`h-1 rounded-full transition-all ${
+                i === carouselIndex ? "w-5 bg-cyan-400 shadow-[0_0_8px_rgba(0,212,255,0.6)]" : "w-1.5 bg-slate-700"
+              }`}
+            />
+          ))}
+        </div>
+        </>
         )}
       </div>
 
@@ -303,16 +401,29 @@ function Index() {
           ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Math.round(us.currentBalanceVND / rate))
           : new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(us.currentBalanceVND);
         return (
-          <div className="flex justify-between items-center w-full bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 mb-4 shadow-lg">
-            <div className="flex flex-col items-start">
-              <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1">Total Cycle Balance</span>
-              <span className="text-xl font-mono text-[#f1f5f9] tabular-nums drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">{balanceFormatted}</span>
+          <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 mb-4 shadow-lg">
+            <div className="flex justify-between items-stretch">
+              <div className="flex flex-col items-start min-w-0">
+                <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 flex items-center gap-1.5">
+                  <Coins className="h-3 w-3 text-cyan-400 animate-pulse" style={{ animationDuration: "2.4s" }} />
+                  Total Cycle Balance
+                </span>
+                <span className="text-xl font-mono text-[#f1f5f9] tabular-nums drop-shadow-[0_0_8px_rgba(255,255,255,0.2)] truncate">{balanceFormatted}</span>
+              </div>
+              <div className="w-px bg-white/10 mx-3" />
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 text-right">Time to Payday</span>
+                <span className="text-lg font-mono text-cyan-300 text-right tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
+                  {daysUntilPayday === 0 ? "TODAY" : `${daysUntilPayday} DAYS`}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 text-right">Time to Payday</span>
-              <span className="text-lg font-mono text-cyan-300 text-right tabular-nums drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
-                {daysUntilPayday === 0 ? "TODAY" : `${daysUntilPayday} DAYS`}
-              </span>
+            {/* Cycle elapsed bar */}
+            <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-slate-800/60">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_8px_rgba(0,212,255,0.5)]"
+                style={{ width: `${cycleElapsed * 100}%` }}
+              />
             </div>
           </div>
         );
@@ -326,7 +437,7 @@ function Index() {
           </div>
           <button
             onClick={() => navigate({ to: "/exchange", search: { new: true } })}
-            className="rounded-md border border-cyan-400/30 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-400/10 hover:shadow-[0_0_15px_-3px_#00d4ff]"
+            className="rounded-md border border-cyan-400/40 bg-cyan-400/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-cyan-400 transition-all hover:bg-cyan-400/10 hover:shadow-[0_0_15px_-3px_#00d4ff] active:scale-110 active:shadow-[0_0_25px_0_#00d4ff]"
           >
             Spend DP
           </button>
@@ -334,7 +445,7 @@ function Index() {
         <div className="mb-4 flex items-end justify-between">
           <div>
             <p
-              className="font-mono text-5xl font-black tabular-nums text-cyan-400"
+              className="font-tactical text-5xl font-black tabular-nums text-cyan-400"
               style={{ filter: "drop-shadow(0 0 12px rgba(0,212,255,0.6))" }}
             >
               {us.totalDP}
@@ -355,9 +466,7 @@ function Index() {
                 <span className="font-mono text-xs font-black tabular-nums">{us.currentStreakDays}</span>
               </div>
             )}
-            <Flame
-              className="h-5 w-5 animate-pulse text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"
-            />
+            <Flame className="h-5 w-5 text-amber-500 animate-flicker" />
             <span className="font-mono text-lg font-bold tabular-nums text-amber-400">{us.currentStreakDays}</span>
             <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">day streak</span>
           </div>
@@ -366,19 +475,28 @@ function Index() {
           <span>Next milestone</span>
           <span className="tabular-nums">{us.currentStreakDays}/{next}</span>
         </div>
-        <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
-          <div
-            className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.5)]"
-            style={{ width: `${milestoneProgress * 100}%` }}
-          />
+        {/* Segmented bar */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {Array.from({ length: milestoneSegments }).map((_, i) => {
+            const filled = i < milestoneFilled;
+            return (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  filled
+                    ? "bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_10px_rgba(0,212,255,0.7)]"
+                    : "bg-slate-800/60"
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
 
       {us.weeklyHabitLimitVND > 0 && us.targetHabit && (() => {
-        const spent = weeklyHabitSpent(app.data.transactions, us.targetHabit);
         const limit = us.weeklyHabitLimitVND;
-        const pct = Math.min(1, spent / limit);
-        const over = spent > limit;
+        const pct = Math.min(1, habitSpent / limit);
+        const over = habitSpent > limit;
         const warn = pct >= 0.8;
         const barColor = over
           ? "from-rose-500 to-red-500 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
@@ -386,14 +504,24 @@ function Index() {
           ? "from-amber-400 to-orange-400 shadow-[0_0_10px_rgba(251,191,36,0.6)]"
           : "from-emerald-400 to-teal-400 shadow-[0_0_10px_rgba(0,255,135,0.5)]";
         const valColor = over ? "text-rose-400" : warn ? "text-amber-400" : "text-emerald-400";
+        const isClean = habitSpent === 0;
         return (
           <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
             <div className="mb-3 flex items-center justify-between">
               <span className="font-mono text-xs uppercase tracking-widest text-slate-500">Weekly {us.targetHabit} Limit</span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">Mon → Sun</span>
+              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-widest">
+                {DAY_LABELS.map((d, i) => (
+                  <span
+                    key={d}
+                    className={i === todayDow ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(0,212,255,0.7)]" : "text-slate-700"}
+                  >
+                    {d.charAt(0)}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="mb-2 flex items-baseline justify-between">
-              <span className={`font-mono text-2xl font-bold tabular-nums ${valColor}`}>{fmtMoney(spent, cur, rate)}</span>
+              <span className={`font-mono text-2xl font-bold tabular-nums ${valColor}`}>{fmtMoney(habitSpent, cur, rate)}</span>
               <span className="font-mono text-xs tabular-nums text-slate-500">/ {fmtMoney(limit, cur, rate)}</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/60">
@@ -402,6 +530,11 @@ function Index() {
                 style={{ width: `${pct * 100}%` }}
               />
             </div>
+            {isClean && (
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-emerald-400 drop-shadow-[0_0_6px_rgba(0,255,135,0.6)]">
+                Clean Week 🌿
+              </p>
+            )}
           </div>
         );
       })()}
@@ -409,12 +542,27 @@ function Index() {
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-400">Active Vault</h2>
-          <Link to="/vault" className="font-mono text-[10px] uppercase tracking-widest text-cyan-400 hover:text-cyan-300">View all →</Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/vault"
+              search={{ new: true }}
+              className="flex items-center justify-center w-6 h-6 rounded-md border border-white/10 bg-white/5 backdrop-blur-md text-cyan-400 hover:bg-white/10 transition-all"
+              aria-label="Quick add to vault"
+            >
+              <Plus className="h-3 w-3" />
+            </Link>
+            <Link to="/vault" className="font-mono text-[10px] uppercase tracking-widest text-cyan-400 hover:text-cyan-300">View all →</Link>
+          </div>
         </div>
         {activeVault.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/5 bg-slate-900/20 p-6 text-center backdrop-blur-xl">
-            <Lock className="mx-auto mb-2 h-6 w-6 text-slate-600" />
-            <p className="text-xs text-slate-500">No items cooling. Resist an impulse → vault it.</p>
+          <div className="rounded-2xl border border-dashed border-cyan-500/15 bg-slate-900/20 p-6 text-center backdrop-blur-xl">
+            <Lock
+              className="mx-auto mb-2 h-8 w-8 text-cyan-400/60"
+              style={{ filter: "drop-shadow(0 0 12px rgba(0,212,255,0.45))" }}
+            />
+            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-300/70">
+              Vault Empty — Resist an impulse. Vault it.
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -437,18 +585,32 @@ function Index() {
       </div>
       </div>
 
+      {/* CTA */}
       <div className="fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5">
         <button
           onClick={() => setSheetOpen(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_20px_-5px_#00ff87] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_30px_-5px_#00ff87] active:scale-[0.98]"
+          className="cta-ripple relative overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_28px_-6px_#00FFA3] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite]"
+          style={{
+            backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)",
+            willChange: "transform",
+          }}
         >
-          <Plus className="h-5 w-5" /> Log Expense
+          <Plus className="cta-plus h-5 w-5" /> Log Expense
         </button>
       </div>
 
       <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       {showLevelGuide && <LevelGuideModal onClose={() => setShowLevelGuide(false)} />}
-
+      <ForfeitModal
+        open={!!forfeitTarget}
+        contractName={forfeitTarget?.title ?? ""}
+        penalty={forfeitTarget?.penalty ?? 0}
+        onCancel={() => setForfeitTarget(null)}
+        onConfirm={() => {
+          if (forfeitTarget) forfeitProtocol(forfeitTarget.id);
+          setForfeitTarget(null);
+        }}
+      />
     </div>
   );
 }
