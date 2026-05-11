@@ -20,7 +20,6 @@ function Index() {
   const app = useApp();
   const navigate = useNavigate();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(false);
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
