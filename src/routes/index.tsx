@@ -433,6 +433,7 @@ function Index() {
           </div>
         )}
       </div>
+      </div>
 
       <div className="fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5">
         <button
