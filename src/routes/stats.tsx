@@ -595,6 +595,11 @@ function StatsPage() {
                       t.isEssential ? "text-emerald-400/80" : "text-rose-400"
                     }`}>
                       {fmtMoney(Math.abs(t.amountVND ?? 0), cur, rate)}
+                      {(t.amortizeDays ?? t.amortizationDays ?? 1) > 1 && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded font-mono text-[8px] font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-500/70 whitespace-nowrap">
+                          📅 {t.amortizeDays ?? t.amortizationDays}D
+                        </span>
+                      )}
                     </p>
                     <button
                       onClick={() => app.deleteTransaction(t.id)}
