@@ -310,7 +310,7 @@ function Index() {
               <Target className="h-3 w-3 text-cyan-400" />
             </div>
             <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.3em] text-slate-300">
-              Active Contracts
+              Active Challenges
             </h2>
           </div>
           {dailyContracts.length > 0 && (
@@ -322,7 +322,7 @@ function Index() {
 
         {dailyContracts.length === 0 ? (
           <p className="px-5 font-mono text-[10px] uppercase tracking-widest text-slate-600">
-            No contracts. Refresh at midnight.
+            No active challenges. Maintain your baseline.
           </p>
         ) : (
         <>
