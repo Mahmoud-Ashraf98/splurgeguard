@@ -31,41 +31,248 @@ function Index() {
   const milestoneProgress = Math.min(1, us.currentStreakDays / next);
 
   const activeVault = app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").slice(0, 3);
-  const currentRank = RANKS.find(r => r.level === us.currentLevel) ?? RANKS[0];
+  const currentRank = getRankForXP(us.ascensionXP);
+  const nextRank = getNextRank(currentRank.level);
+  const xpNumerator = us.ascensionXP - currentRank.threshold;
+  const xpDenominator = nextRank ? nextRank.threshold - currentRank.threshold : currentRank.threshold;
+  const xpPercentage = nextRank ? Math.min(100, (xpNumerator / xpDenominator) * 100) : 100;
+
+  type LiveContract = {
+    id: string;
+    title: string;
+    description: string;
+    isCompleted: boolean;
+    isForfeited: boolean;
+    dp: number;
+    icon: typeof Shield;
+  };
+  const liveContracts: LiveContract[] = [
+    {
+      id: "daily-limit",
+      title: "Hold The Line",
+      description: `Stay under your ${fmtMoney(app.smartDailyLimit, cur, rate)} daily limit.`,
+      isCompleted: app.todayDiscretionary <= app.smartDailyLimit && app.todayDiscretionary > 0,
+      isForfeited: app.todayDiscretionary > app.smartDailyLimit,
+      dp: 50,
+      icon: Shield,
+    },
+    {
+      id: "vault-item",
+      title: "Maintain Containment",
+      description: `${app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").length} items locked. Keep impulses contained.`,
+      isCompleted: app.data.vaultItems.some((v) => v.status === "discarded"),
+      isForfeited: false,
+      dp: 10,
+      icon: Lock,
+    },
+  ];
+  if ((us.weeklyHabitLimitVND ?? 0) > 0 && us.targetHabit) {
+    const spent = weeklyHabitSpent(app.data.transactions, us.targetHabit);
+    liveContracts.push({
+      id: "habit-limit",
+      title: `${us.targetHabit} Protocol`,
+      description: `Keep weekly spend under ${fmtMoney(us.weeklyHabitLimitVND, cur, rate)}.`,
+      isCompleted: false,
+      isForfeited: spent > us.weeklyHabitLimitVND,
+      dp: 250,
+      icon: Target,
+    });
+  }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-32 pt-6">
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">Welcome Back,</p>
-          <div className="mt-1 flex items-center gap-2">
-            <h1
-              className="mt-1 flex items-center gap-3 text-2xl font-black text-white min-w-0 drop-shadow-[0_0_12px_rgba(255,255,255,0.3)]"
-            >
-              <span className="truncate">{us.userName || "Operator"}</span>
-              <span
-                className={`whitespace-nowrap flex-shrink-0 rounded-full border bg-slate-950/60 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest ${currentRank.color} backdrop-blur-md`}
-                style={{
-                  borderColor: currentRank.glowColor,
-                  boxShadow: `0 0 15px -3px ${currentRank.glowColor}, inset 0 0 8px -4px ${currentRank.glowColor}`,
-                }}
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-32 pt-6">
+      {/* ── 1. SOVEREIGN BLACK CARD (OPERATOR ID) ──────────────────────── */}
+      <div className="relative mt-4 mb-8 group">
+        {/* Ambient Rank Glow */}
+        <div
+          className="absolute inset-0 opacity-20 blur-[50px] transition-opacity duration-700 group-hover:opacity-40 pointer-events-none"
+          style={{ backgroundColor: currentRank.glowColor }}
+        ></div>
+
+        <div className="relative z-10 rounded-[1.5rem] border border-white/10 bg-slate-950/80 backdrop-blur-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] mx-5">
+          {/* CSS Mesh Overlay & Watermark */}
+          <div className="absolute inset-0 bg-cyber-mesh opacity-50 mix-blend-overlay pointer-events-none"></div>
+          <div
+            className="absolute -right-4 -top-8 font-black text-[120px] opacity-5 select-none pointer-events-none leading-none"
+            style={{ color: currentRank.glowColor }}
+          >
+            {us.currentLevel}
+          </div>
+
+          <div className="p-5 flex items-center justify-between relative z-10">
+            {/* Left: Avatar & Info */}
+            <div className="flex items-center gap-4 min-w-0">
+              <div
+                className="w-16 h-16 flex-shrink-0 relative"
+                style={{ filter: `drop-shadow(0 0 12px ${currentRank.glowColor})` }}
               >
-                LV{currentRank.level} {currentRank.title}
-              </span>
-            </h1>
+                <div
+                  className="absolute inset-0 rounded-full border border-white/10 border-t-white/30 animate-spin"
+                  style={{ animationDuration: "4s" }}
+                ></div>
+                {currentRank.renderAvatar()}
+              </div>
+
+              <div className="flex flex-col min-w-0">
+                <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-0.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  System Online
+                </p>
+                <h1 className="text-2xl font-black uppercase tracking-widest text-white truncate drop-shadow-md">
+                  {us.userName || "Operator"}
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span
+                    className="font-mono text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border backdrop-blur-md"
+                    style={{
+                      color: currentRank.glowColor,
+                      borderColor: `${currentRank.glowColor}40`,
+                      backgroundColor: `${currentRank.glowColor}15`,
+                    }}
+                  >
+                    LV{us.currentLevel} - {currentRank.title}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Currency Toggle */}
+            <div className="flex-shrink-0 ml-2">
+              <button
+                onClick={app.toggleCurrency}
+                className="relative overflow-hidden font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 border border-slate-700 bg-slate-900 rounded-xl px-3 py-2.5 transition-all hover:bg-slate-800 hover:text-white hover:border-slate-500 active:scale-95 shadow-inner"
+              >
+                <span className="relative z-10">{us.displayCurrency}</span>
+                <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+              </button>
+            </div>
+          </div>
+
+          {/* Segmented Power Cell XP Bar */}
+          <div className="h-2 w-full bg-slate-950 relative border-t border-white/5">
+            <div
+              className="h-full transition-all duration-1000 ease-out relative"
+              style={{
+                width: `${xpPercentage}%`,
+                backgroundColor: currentRank.glowColor,
+                boxShadow: `0 0 15px ${currentRank.glowColor}`,
+              }}
+            ></div>
+            <div className="absolute inset-0 xp-power-cells pointer-events-none"></div>
           </div>
         </div>
-        <button
-          onClick={app.toggleCurrency}
-          className="rounded-lg border border-white/5 bg-slate-900/40 px-3 py-1.5 font-mono text-xs tracking-widest text-emerald-400 backdrop-blur-xl transition-all hover:border-emerald-400/40 hover:shadow-[0_0_20px_-5px_#00ff87]"
-        >
-          {cur}
-        </button>
-      </header>
+      </div>
 
-      <MainQuestCard onOpenGuide={() => setGuideOpen(true)} />
-      {guideOpen && <LevelGuideModal onClose={() => setGuideOpen(false)} />}
+      {/* ── 2. LIVE CONTRACTS (READ-ONLY BOUNTY BOARD) ───────────────── */}
+      <div className="mb-10">
+        <div className="px-5 flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-cyan-500/10 border border-cyan-500/20">
+              <Target className="h-3 w-3 text-cyan-400" />
+            </div>
+            <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.3em] text-slate-300">
+              Active Contracts
+            </h2>
+          </div>
+        </div>
 
+        {/* Horizontal Swipe Container */}
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 px-5 pb-4 custom-scrollbar-hide">
+          {liveContracts.map((contract, index) => {
+            const Icon = contract.icon;
+            let cardClasses =
+              "relative w-[85vw] max-w-[320px] flex-none snap-center flex flex-col justify-between rounded-[1.25rem] border p-5 transition-all duration-500 overflow-hidden ";
+            if (contract.isCompleted) {
+              cardClasses +=
+                "bg-emerald-950/20 border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]";
+            } else if (contract.isForfeited) {
+              cardClasses += "bg-rose-950/20 border-rose-500/20 opacity-60";
+            } else {
+              cardClasses +=
+                "bg-slate-900/80 border-slate-700/50 backdrop-blur-xl shadow-2xl scanline-effect hover:border-cyan-500/30";
+            }
+            return (
+              <div key={contract.id} className={cardClasses}>
+                {/* Tactical Header Overlay */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                {!contract.isCompleted && !contract.isForfeited && (
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-cyan-500/30"></div>
+                )}
+
+                {/* Serial Number & Yield */}
+                <div className="flex justify-between items-center mb-3">
+                  <p className="font-mono text-[8px] text-slate-500 uppercase tracking-widest">
+                    // DIRECTIVE 0{index + 1}
+                  </p>
+                  {!contract.isCompleted && !contract.isForfeited && (
+                    <p className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded">
+                      YIELD: +{contract.dp} DP
+                    </p>
+                  )}
+                </div>
+
+                {/* Main Content */}
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl border shadow-inner ${
+                      contract.isCompleted
+                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                        : contract.isForfeited
+                        ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                        : "bg-slate-950 border-slate-800 text-cyan-400"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0 mt-0.5">
+                    <h3
+                      className={`font-bold text-base truncate ${
+                        contract.isCompleted
+                          ? "text-emerald-50"
+                          : contract.isForfeited
+                          ? "text-slate-500"
+                          : "text-white"
+                      }`}
+                    >
+                      {contract.title}
+                    </h3>
+                    <p
+                      className={`text-[11px] leading-relaxed line-clamp-2 mt-1 ${
+                        contract.isCompleted || contract.isForfeited ? "text-slate-500" : "text-slate-400"
+                      }`}
+                    >
+                      {contract.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Read-Only Status Footer */}
+                <div className="mt-auto pt-4 border-t border-white/5">
+                  {!contract.isCompleted && !contract.isForfeited && (
+                    <div className="flex items-center justify-center py-3 rounded-xl bg-slate-900 border border-slate-800 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      Tracking Progress...
+                    </div>
+                  )}
+                  {contract.isCompleted && (
+                    <div className="flex items-center justify-center py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono text-[10px] font-bold uppercase tracking-widest text-emerald-500">
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
+                      Directive Secured
+                    </div>
+                  )}
+                  {contract.isForfeited && (
+                    <div className="flex items-center justify-center py-3 rounded-xl bg-rose-500/5 border border-rose-500/10 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-500/50">
+                      <XCircle className="h-3.5 w-3.5 mr-2" />
+                      Breach Detected
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="px-5">
       <DailyContractsBoard />
 
       <div className="mb-8 flex flex-col items-center">
