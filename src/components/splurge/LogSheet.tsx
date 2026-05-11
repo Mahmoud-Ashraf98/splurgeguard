@@ -107,6 +107,7 @@ export function LogSheet({ open, onClose }: Props) {
 
   const showCurrency = category === "Travelling" || category === "Visa and documents fees";
   const rate = data.userState?.usdExchangeRate ?? 26310;
+  const cur = data.userState?.displayCurrency ?? "VND";
 
   const amountVND = useMemo(() => {
     const n = Number(amount);
