@@ -286,86 +286,232 @@ function StatsPage() {
         </div>
       </div>
 
-      {/* Freedom Engine — full width, below the gauge */}
-      <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/60 p-5 mt-4 mb-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-cyan-500/5 blur-3xl pointer-events-none" />
+      {/* ── The Freedom Engine — trophy room for preserved capital ───────── */}
+      {(() => {
+        const discardedItems = (app.data.vaultItems ?? [])
+          .filter((v) => v.status === 'discarded')
+          .slice()
+          .reverse();
+        const discardedCount = discardedItems.length;
+        const isNearMilestone = milestoneProgress > 90;
 
-        <div className="relative z-10 flex flex-col">
-          <div className="flex items-center gap-2 mb-1">
-            <Trophy className="h-4 w-4 text-cyan-400" />
-            <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/80">
-              Capital Preserved
-            </p>
-          </div>
-
-          <h2 className="text-3xl font-black text-white tracking-widest tabular-nums mb-4 drop-shadow-[0_0_12px_rgba(0,212,255,0.3)]">
-            {fmtMoney(totalPreservedCapital, cur, rate)}
-          </h2>
-
-          {currentMilestone && (
-            <div className="mb-4 p-3 rounded-lg border border-cyan-400/20 bg-cyan-400/10">
-              <p className="font-mono text-[8px] uppercase tracking-widest text-cyan-400 mb-1">
-                Conquered Milestone
-              </p>
-              <p className="font-bold text-sm text-cyan-50">{currentMilestone.title}</p>
-            </div>
-          )}
-
-          {nextMilestone && (
-            <div className="mb-4">
-              <div className="flex justify-between font-mono text-[9px] text-slate-400 mb-1">
-                <span className="truncate mr-2">Next: {nextMilestone.title}</span>
-                <span className="flex-shrink-0">{fmtMoney(nextMilestone.threshold, cur, rate)}</span>
-              </div>
-              <div className="h-1 rounded-full bg-slate-800 overflow-hidden">
-                <div
-                  className="h-full bg-cyan-400 transition-all duration-1000"
-                  style={{
-                    width: `${milestoneProgress}%`,
-                    boxShadow: '0 0 10px rgba(0,212,255,0.6)',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {!nextMilestone && currentMilestone && (
-            <div className="mb-4 p-3 rounded-lg border border-cyan-400/40 bg-cyan-400/10">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400">
-                Maximum milestone reached. You have beaten the game.
-              </p>
-            </div>
-          )}
-
-          <div className="mt-2 pt-4 border-t border-white/5">
-            <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500 mb-2">
-              Neutralized Impulses
-            </p>
+        return (
+          <section
+            aria-label="The Freedom Engine"
+            className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80 p-5 sm:p-6 mt-4 mb-6"
+          >
+            {/* Ambient halos */}
+            <div className="pointer-events-none absolute inset-0 bg-cyan-500/5 blur-3xl" />
             <div
-              className="max-h-24 overflow-y-auto space-y-1 pr-2"
-              style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
-            >
-              {(app.data.vaultItems ?? [])
-                .filter((v) => v.status === 'discarded')
-                .slice()
-                .reverse()
-                .map((v) => (
-                  <div key={v.id} className="flex justify-between items-center text-[10px] font-mono">
-                    <span className="text-slate-500 line-through truncate mr-2">{v.itemName}</span>
-                    <span className="text-cyan-500/50 tabular-nums flex-shrink-0">
-                      +{fmtMoney(v.estimatedAmountVND, cur, rate)}
-                    </span>
+              aria-hidden
+              className="pointer-events-none absolute -top-32 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -bottom-32 right-1/4 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl"
+            />
+
+            <div className="relative z-10 flex flex-col">
+              {/* Eyebrow */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-cyan-400" />
+                  <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-cyan-400/90">
+                    The Freedom Engine
+                  </p>
+                </div>
+                <span className="font-mono text-[8px] uppercase tracking-[0.35em] text-slate-500">
+                  Trophy Room
+                </span>
+              </div>
+
+              {/* ── Capital Core — Hero Metric ───────────────────────────── */}
+              <div className="flex flex-col items-center text-center py-3 sm:py-5 mb-5">
+                <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.45em] text-emerald-400/70 mb-2">
+                  Total Capital Preserved
+                </span>
+                <h2
+                  className="font-mono font-black tabular-nums text-white tracking-tight leading-none break-all"
+                  style={{
+                    fontSize: 'clamp(2rem, 9vw, 4.25rem)',
+                    textShadow:
+                      '0 0 28px rgba(0,212,255,0.55), 0 0 56px rgba(52,211,153,0.28)',
+                    filter:
+                      'drop-shadow(0 0 18px rgba(0,212,255,0.55)) drop-shadow(0 0 32px rgba(52,211,153,0.22))',
+                  }}
+                >
+                  {fmtMoney(totalPreservedCapital, cur, rate)}
+                </h2>
+                <span className="mt-3 font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
+                  {discardedCount} Impulse{discardedCount === 1 ? '' : 's'} Neutralized
+                </span>
+              </div>
+
+              {/* ── Cinematic Milestone Cards ────────────────────────────── */}
+              {currentMilestone && (
+                <div className="mb-3 rounded-xl ring-1 ring-cyan-500/20 bg-cyan-500/10 backdrop-blur-md p-4">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className="h-3 w-3 text-cyan-300" />
+                    <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/80">
+                      Most Recent Milestone
+                    </p>
                   </div>
-                ))}
-              {(app.data.vaultItems ?? []).filter((v) => v.status === 'discarded').length === 0 && (
-                <p className="font-mono text-[9px] text-slate-700 italic">
-                  No impulses neutralized yet.
-                </p>
+                  <p className="font-bold text-sm text-cyan-50">{currentMilestone.title}</p>
+                </div>
               )}
+
+              {nextMilestone && (
+                <div className="mb-4 rounded-xl ring-1 ring-cyan-500/20 bg-cyan-500/10 backdrop-blur-md p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/80 mb-1">
+                        Next Milestone
+                      </p>
+                      <p className="font-semibold text-sm text-cyan-50 truncate">
+                        {nextMilestone.title}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/60">
+                        Target
+                      </p>
+                      <p className="font-mono text-xs tabular-nums text-cyan-100">
+                        {fmtMoney(nextMilestone.threshold, cur, rate)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Segmented Reactor Progress Bar */}
+                  <div>
+                    <div className="flex justify-between font-mono text-[9px] uppercase tracking-[0.3em] mb-1.5">
+                      <span className={isNearMilestone ? 'text-emerald-300' : 'text-cyan-300/70'}>
+                        Reactor Charge
+                      </span>
+                      <span
+                        className={`tabular-nums ${
+                          isNearMilestone ? 'text-emerald-300' : 'text-cyan-100'
+                        }`}
+                      >
+                        {Math.floor(milestoneProgress)}%
+                      </span>
+                    </div>
+                    <div
+                      className={`relative h-2.5 overflow-hidden rounded-full bg-slate-950/80 ring-1 transition-all duration-500 ${
+                        isNearMilestone ? 'ring-emerald-400/40' : 'ring-cyan-500/15'
+                      }`}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 transition-all duration-1000"
+                        style={{
+                          width: `${milestoneProgress}%`,
+                          background: isNearMilestone
+                            ? 'linear-gradient(90deg, rgba(0,212,255,0.65), rgba(52,211,153,0.95))'
+                            : 'linear-gradient(90deg, rgba(0,255,135,0.55), rgba(0,212,255,0.95))',
+                          boxShadow: isNearMilestone
+                            ? '0 0 14px rgba(52,211,153,0.65), inset 0 0 6px rgba(255,255,255,0.25)'
+                            : '0 0 12px rgba(0,212,255,0.55), inset 0 0 6px rgba(255,255,255,0.2)',
+                        }}
+                      />
+                      <div
+                        className="absolute inset-y-0 right-0"
+                        style={{
+                          width: `${Math.max(0, 100 - milestoneProgress)}%`,
+                          background: isNearMilestone
+                            ? 'linear-gradient(90deg, rgba(52,211,153,0.15), rgba(52,211,153,0.35))'
+                            : 'linear-gradient(90deg, rgba(15,23,42,0), rgba(30,41,59,0.4))',
+                          animation: isNearMilestone
+                            ? 'vault-pulse 1.4s ease-in-out infinite'
+                            : undefined,
+                          boxShadow: isNearMilestone
+                            ? '0 0 14px rgba(52,211,153,0.55)'
+                            : undefined,
+                        }}
+                      />
+                      {/* Energy-cell dividers overlay */}
+                      <div
+                        aria-hidden
+                        className="xp-power-cells absolute inset-0 pointer-events-none"
+                      />
+                    </div>
+                    {isNearMilestone && (
+                      <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.4em] text-emerald-300/90 text-right">
+                        Final Push · Capital Surge Imminent
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!nextMilestone && currentMilestone && (
+                <div className="mb-4 rounded-xl ring-1 ring-emerald-400/30 bg-emerald-500/10 backdrop-blur-md p-4 text-center">
+                  <Sparkles className="h-4 w-4 text-emerald-300 inline-block mr-1.5 align-text-bottom" />
+                  <p className="inline font-mono text-[10px] uppercase tracking-[0.4em] text-emerald-300">
+                    Final Threshold Cleared · Mastery Achieved
+                  </p>
+                </div>
+              )}
+
+              {/* ── The Conqueror's Ledger ───────────────────────────────── */}
+              <div className="mt-3 pt-4 border-t border-white/5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <Trophy className="h-3 w-3 text-cyan-300/80" />
+                    <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-cyan-300/80">
+                      The Conqueror&rsquo;s Ledger
+                    </p>
+                  </div>
+                  {discardedCount > 0 && (
+                    <span className="font-mono text-[8px] uppercase tracking-[0.35em] text-slate-500 tabular-nums">
+                      {discardedCount} Record{discardedCount === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </div>
+
+                {discardedCount === 0 ? (
+                  <div
+                    className="rounded-xl border border-cyan-500/20 bg-slate-900/50 backdrop-blur-md px-4 py-6 text-center"
+                    style={{ animation: 'vault-glow-breathe 4s ease-in-out infinite' }}
+                  >
+                    <p
+                      className="font-mono text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] text-cyan-200"
+                      style={{ animation: 'vault-pulse 3.2s ease-in-out infinite' }}
+                    >
+                      Awaiting Restraint.
+                    </p>
+                    <p className="mt-1.5 font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.35em] text-cyan-300/70">
+                      Send Impulses To The Vault.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className="max-h-56 overflow-y-auto pr-1 space-y-1.5"
+                    style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+                  >
+                    {discardedItems.map((v) => (
+                      <div
+                        key={v.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-slate-700/50 bg-slate-900/40 backdrop-blur-sm px-3 py-2 transition-all duration-200 hover:border-emerald-400/30 hover:bg-slate-900/60"
+                      >
+                        <span className="font-mono text-[11px] text-slate-500 line-through decoration-slate-600/70 truncate min-w-0">
+                          {v.itemName}
+                        </span>
+                        <span
+                          className="font-mono text-xs font-bold tabular-nums text-emerald-400 flex-shrink-0"
+                          style={{
+                            textShadow: '0 0 8px rgba(52,211,153,0.45)',
+                          }}
+                        >
+                          +{fmtMoney(v.estimatedAmountVND, cur, rate)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
+        );
+      })()}
 
 
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
