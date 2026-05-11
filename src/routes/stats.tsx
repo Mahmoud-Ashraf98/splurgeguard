@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   RotateCcw,
@@ -29,6 +29,12 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { fmtMoney } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
 import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
@@ -60,7 +66,9 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 };
 
 function StatsPage() {
+  const [trophyRoomOpen, setTrophyRoomOpen] = useState(false);
   const app = useApp();
+  const { vaultItems } = app.data;
   const us = app.data.userState;
 
   const breakdown = useMemo(() => {
@@ -205,6 +213,8 @@ function StatsPage() {
     Math.round((todayMidnightMs - cycleStartMs) / MS_PER_DAY)
   );
 
+  const trophies = vaultItems.filter(item => item.status === 'discarded');
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-24 pt-6">
       <header className="mb-6">
@@ -320,7 +330,10 @@ function StatsPage() {
                     The Freedom Engine
                   </p>
                 </div>
-                <span className="font-mono text-[8px] uppercase tracking-[0.35em] text-slate-500">
+                <span
+                  className="text-xs font-bold tracking-widest uppercase cursor-pointer text-slate-400 hover:text-cyan-400 transition-colors duration-200 underline-offset-2 hover:underline select-none"
+                  onClick={() => setTrophyRoomOpen(true)}
+                >
                   Trophy Room
                 </span>
               </div>
@@ -362,12 +375,12 @@ function StatsPage() {
 
               {nextMilestone && (
                 <div className="mb-4 rounded-xl ring-1 ring-cyan-500/20 bg-cyan-500/10 backdrop-blur-md p-4">
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex flex-col gap-1 w-full sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="min-w-0">
                       <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/80 mb-1">
                         Next Milestone
                       </p>
-                      <p className="font-semibold text-sm text-cyan-50 truncate">
+                      <p className="text-slate-300 text-sm leading-relaxed whitespace-normal flex-1 min-w-0">
                         {nextMilestone.title}
                       </p>
                     </div>
@@ -375,7 +388,7 @@ function StatsPage() {
                       <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/60">
                         Target
                       </p>
-                      <p className="font-mono text-xs tabular-nums text-cyan-100">
+                      <p className="text-cyan-400 font-mono text-sm font-bold shrink-0 sm:text-right">
                         {fmtMoney(nextMilestone.threshold, cur, rate)}
                       </p>
                     </div>
@@ -764,6 +777,73 @@ function StatsPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={trophyRoomOpen} onOpenChange={setTrophyRoomOpen}>
+        <DialogContent className="bg-slate-950/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.1)] max-w-md w-full max-h-[80vh] overflow-y-auto p-0">
+          <div className="p-6">
+
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-white font-bold tracking-widest uppercase text-lg">
+                Trophy Room
+              </DialogTitle>
+              <p className="text-cyan-400 text-xs tracking-[0.2em] font-semibold uppercase mt-1">
+                CONQUEROR&apos;S LEDGER
+              </p>
+              <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+                Every item below is money you kept. Proof of discipline compounding.
+              </p>
+            </DialogHeader>
+
+            {/* ── Empty state ── */}
+            {trophies.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="w-14 h-14 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="text-2xl">🏆</span>
+                </div>
+                <p className="text-slate-400 text-sm text-center leading-relaxed">
+                  No trophies yet. Discard your first Vault item to start the ledger.
+                </p>
+              </div>
+            )}
+
+            {/* ── Trophy list ── */}
+            <div className="flex flex-col gap-3">
+              {trophies.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-start justify-between gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.07]"
+                >
+                  {/* Left: name */}
+                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <p className="text-slate-200 font-semibold text-sm leading-snug truncate">
+                      {item.itemName}
+                    </p>
+                    {item.discardedAt && (
+                      <p className="text-slate-500 text-xs">
+                        Resisted on{" "}
+                        {new Date(item.discardedAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Right: amount saved */}
+                  <div className="shrink-0 text-right">
+                    <p className="text-cyan-400 font-mono text-sm font-bold">
+                      {`${Number(item.estimatedAmountVND).toLocaleString()} VND`}
+                    </p>
+                    <p className="text-slate-500 text-xs mt-0.5">saved</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
