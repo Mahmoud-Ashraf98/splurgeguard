@@ -123,7 +123,7 @@ export function LogSheet({ open, onClose }: Props) {
 
   const submitLog = () => {
     if (!canLog) return;
-    const parsedAmort = amortize && isDiscretionarySelected ? Math.max(2, parseInt(amortDays, 10) || 2) : undefined;
+    const parsedAmort = isDiscretionarySelected && amortizeDays > 1 ? amortizeDays : undefined;
     logExpense({
       amountVND,
       originalAmount: showCurrency && currency === "USD" ? Number(amount) : undefined,
