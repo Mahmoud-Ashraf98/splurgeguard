@@ -148,14 +148,15 @@ function StatsPage() {
   const now = Date.now();
   const activeAmortizations = app.data.transactions
     .map((t) => {
-      if (!t.amortizationDays || t.amortizationDays <= 1) return null;
+      const lifespan = t.amortizeDays ?? t.amortizationDays ?? 1;
+      if (lifespan <= 1) return null;
       const daysSince = (now - new Date(t.timestamp).getTime()) / 86400000;
-      if (daysSince >= t.amortizationDays || daysSince < 0) return null;
-      const remaining = t.amountVND * (1 - daysSince / t.amortizationDays);
-      const pct = Math.min(1, daysSince / t.amortizationDays);
-      return { tx: t, remaining, pct };
+      if (daysSince >= lifespan || daysSince < 0) return null;
+      const remaining = t.amountVND * (1 - daysSince / lifespan);
+      const pct = Math.min(1, daysSince / lifespan);
+      return { tx: t, lifespan, remaining, pct };
     })
-    .filter((x): x is { tx: typeof app.data.transactions[number]; remaining: number; pct: number } => !!x);
+    .filter((x): x is { tx: typeof app.data.transactions[number]; lifespan: number; remaining: number; pct: number } => !!x);
 
   let cumulative = 0;
   const radius = 60;
