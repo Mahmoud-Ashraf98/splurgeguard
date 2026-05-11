@@ -74,9 +74,8 @@ export function LogSheet({ open, onClose }: Props) {
   // vault
   const [itemName, setItemName] = useState("");
   const [delayHours, setDelayHours] = useState(24);
-  // amortization
-  const [amortize, setAmortize] = useState(false);
-  const [amortDays, setAmortDays] = useState("30");
+  // amortization (Consumption Lifespan): 1 = today only
+  const [amortizeDays, setAmortizeDays] = useState<number>(1);
 
   useEffect(() => {
     if (!open) {
@@ -88,8 +87,7 @@ export function LogSheet({ open, onClose }: Props) {
       setDelayHours(24);
       setMode("log");
       setCatOpen(false);
-      setAmortize(false);
-      setAmortDays("30");
+      setAmortizeDays(1);
     }
   }, [open]);
 
