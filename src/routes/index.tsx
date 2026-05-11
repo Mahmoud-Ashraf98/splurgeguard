@@ -235,6 +235,19 @@ function Index() {
                 </button>
               </div>
               <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.smartDailyLimit, cur, rate)}</div>
+              {app.data.transactions.some((tx) => {
+                const lifespan = tx.amortizeDays ?? tx.amortizationDays ?? 1;
+                if (lifespan <= 1) return false;
+                const daysSince = Math.floor(
+                  (new Date().setHours(0, 0, 0, 0) - new Date(tx.timestamp).setHours(0, 0, 0, 0)) /
+                    86400000,
+                );
+                return daysSince >= 0 && daysSince < lifespan;
+              }) && (
+                <p className="text-[8px] mt-1 font-mono uppercase tracking-widest text-cyan-500/80 text-center w-full">
+                  // INCLUDES ACTIVE AMORTIZATIONS
+                </p>
+              )}
               <AnimatePresence>
                 {showLimitInfo && (
                   <motion.p
@@ -243,7 +256,7 @@ function Index() {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-2 font-mono text-[9px] uppercase tracking-widest text-cyan-500/70 leading-relaxed"
                   >
-                    Includes active amortizations.
+                    Counts essentials, habits, and the daily slice of every active amortization.
                   </motion.p>
                 )}
               </AnimatePresence>
