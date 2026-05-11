@@ -490,16 +490,10 @@ function StatsPage() {
           </div>
           <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
           <div className="space-y-2">
-            {activeAmortizations.map(({ tx }) => {
-              const progressPct =
-                tx.amortizationDays && tx.amortizationDays > 0
-                  ? Math.min(100, (daysElapsedInCycle / tx.amortizationDays) * 100)
-                  : 100;
+            {activeAmortizations.map(({ tx, lifespan }) => {
+              const progressPct = Math.min(100, (daysElapsedInCycle / lifespan) * 100);
               const remainingPct = 100 - progressPct;
-              const dailyDrain =
-                tx.amortizationDays && tx.amortizationDays > 0
-                  ? tx.amountVND / tx.amortizationDays
-                  : 0;
+              const dailyDrain = tx.amountVND / lifespan;
               return (
                 <div
                   key={tx.id}
@@ -511,7 +505,7 @@ function StatsPage() {
                         {tx.justification || tx.category}
                       </p>
                       <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
-                        {tx.category} · {tx.amortizationDays}d
+                        {tx.category} · {lifespan}d
                       </p>
                     </div>
                     <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
@@ -520,9 +514,7 @@ function StatsPage() {
                   </div>
 
                   <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
-                    {tx.amortizationDays && tx.amortizationDays > 0
-                      ? `[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`
-                      : '[DRAIN: COMPLETE]'}
+                    {`[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`}
                   </p>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
