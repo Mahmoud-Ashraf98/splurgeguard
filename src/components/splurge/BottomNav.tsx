@@ -30,10 +30,26 @@ export function BottomNav() {
             <Link
               key={to}
               to={to}
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider transition-all duration-300 ${
+              className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider transition-all duration-300 ${
                 active ? "-translate-y-1 text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}
             >
+              {active && (
+                <>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute top-0 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-[length:200%_100%] animate-[gradient-cycle_3s_linear_infinite] shadow-[0_0_10px_rgba(0,212,255,0.6)]"
+                  />
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute top-1/2 left-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                    style={{
+                      background: "radial-gradient(circle, rgba(0,212,255,0.25) 0%, transparent 70%)",
+                      filter: "blur(6px)",
+                    }}
+                  />
+                </>
+              )}
               <span className="relative">
                 <Icon
                   className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
