@@ -58,3 +58,42 @@
   background-size: 200% 100%;
   animation: payload-drain 3s linear infinite;
 }
+
+/* Hide scrollbar for horizontal bounty board */
+.custom-scrollbar-hide::-webkit-scrollbar { display: none; }
+.custom-scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Holographic Mesh Background for Operator Card */
+.bg-cyber-mesh {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-position: center center;
+}
+
+/* Segmented Power Cell XP Bar */
+.xp-power-cells {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(0,0,0,0.8) 4px,
+    rgba(0,0,0,0.8) 6px
+  );
+}
+
+/* Infinite Scanline for Live Contracts */
+@keyframes contract-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+.scanline-effect::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 20%;
+  background: linear-gradient(to bottom, transparent, rgba(0, 212, 255, 0.2), transparent);
+  animation: contract-scan 3s linear infinite;
+  pointer-events: none;
+}
