@@ -329,7 +329,7 @@ function VaultPage() {
     <div className="px-5 pb-32 pt-6">
       <header className="mb-6">
         <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-cyan-400/70">
-          Tactical Containment
+          Impulse Control
         </p>
         <h1 className="text-2xl font-black uppercase tracking-widest text-white">The Vault</h1>
         <p className="mt-1 font-mono text-[10px] text-slate-500">
@@ -343,7 +343,7 @@ function VaultPage() {
         <section className="mb-8">
           <SectionLabel
             icon={<Lock className="h-3 w-3" />}
-            label="Active Containment"
+            label="Active Cooling"
             color="text-amber-400"
           />
           <div className="space-y-3">
