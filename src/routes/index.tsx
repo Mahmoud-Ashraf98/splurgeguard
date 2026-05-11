@@ -48,47 +48,28 @@ function Index() {
   const xpDenominator = nextRank ? nextRank.threshold - currentRank.threshold : currentRank.threshold;
   const xpPercentage = nextRank ? Math.min(100, (xpNumerator / xpDenominator) * 100) : 100;
 
-  type LiveContract = {
-    id: string;
-    title: string;
-    description: string;
-    isCompleted: boolean;
-    isForfeited: boolean;
-    dp: number;
-    icon: typeof Shield;
-  };
-  const liveContracts: LiveContract[] = [
-    {
-      id: "daily-limit",
-      title: "Hold The Line",
-      description: `Stay under your ${fmtMoney(app.smartDailyLimit, cur, rate)} daily limit.`,
-      isCompleted: app.todayDiscretionary <= app.smartDailyLimit && app.todayDiscretionary > 0,
-      isForfeited: app.todayDiscretionary > app.smartDailyLimit,
-      dp: 50,
-      icon: Shield,
-    },
-    {
-      id: "vault-item",
-      title: "Maintain Containment",
-      description: `${app.data.vaultItems.filter((v) => v.status === "cooling" || v.status === "ready").length} items locked. Keep impulses contained.`,
-      isCompleted: app.data.vaultItems.some((v) => v.status === "discarded"),
-      isForfeited: false,
-      dp: 10,
-      icon: Lock,
-    },
-  ];
-  if ((us.weeklyHabitLimitVND ?? 0) > 0 && us.targetHabit) {
-    const spent = weeklyHabitSpent(app.data.transactions, us.targetHabit);
-    liveContracts.push({
-      id: "habit-limit",
-      title: `${us.targetHabit} Protocol`,
-      description: `Keep weekly spend under ${fmtMoney(us.weeklyHabitLimitVND, cur, rate)}.`,
-      isCompleted: false,
-      isForfeited: spent > us.weeklyHabitLimitVND,
-      dp: 250,
-      icon: Target,
+  const dailyContracts: DailyContract[] = us.dailyContracts ?? [];
+
+  const secureProtocol = (id: string) => {
+    const c = dailyContracts.find((x) => x.id === id);
+    if (!c || c.status !== 'available') return;
+    app.updateUserState({
+      totalDP: us.totalDP + c.reward,
+      ascensionXP: (us.ascensionXP ?? 0) + c.reward,
+      lifetimeDP: us.lifetimeDP + Math.max(0, c.reward),
+      dailyContracts: dailyContracts.map((x) => x.id === id ? { ...x, status: 'secured' as const } : x),
     });
-  }
+  };
+
+  const forfeitProtocol = (id: string) => {
+    const c = dailyContracts.find((x) => x.id === id);
+    if (!c || c.status !== 'available') return;
+    app.updateUserState({
+      totalDP: us.totalDP + c.penalty,
+      ascensionXP: Math.max(0, (us.ascensionXP ?? 0) + c.penalty),
+      dailyContracts: dailyContracts.map((x) => x.id === id ? { ...x, status: 'yielded' as const } : x),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-32 pt-6">
