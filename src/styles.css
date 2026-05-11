@@ -145,3 +145,8 @@
   animation: contract-scan 3s linear infinite;
   pointer-events: none;
 }
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
