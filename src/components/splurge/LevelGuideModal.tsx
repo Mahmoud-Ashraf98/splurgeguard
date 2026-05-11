@@ -1,6 +1,6 @@
 import { RANKS } from '@/lib/ranks';
 import { useApp } from '@/context/AppContext';
-import { X, Sparkles, Hexagon } from 'lucide-react';
+import { X, Hexagon } from 'lucide-react';
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
