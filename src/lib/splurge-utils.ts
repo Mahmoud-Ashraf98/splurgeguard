@@ -1,5 +1,23 @@
 import type { UserState, Transaction } from "./splurge-types";
+import type { Subscription } from "./schemas";
 import { getDaysSinceFrom } from "./dateUtils";
+
+/** Sum of active subscriptions expressed as an equivalent monthly total (integer minor units / VND). */
+export function calculateSubscriptionMonthlyTotalCents(subs: Subscription[]): number {
+  return subs
+    .filter((s) => s.isActive)
+    .reduce((total, sub) => {
+      const monthlyEquivalent =
+        sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
+      return total + monthlyEquivalent;
+    }, 0);
+}
+
+/** Dailyized subscription overhead from the monthly equivalent (integer VND, rounded). */
+export function subscriptionDailyOverheadVND(subs: Subscription[] | undefined): number {
+  const monthly = calculateSubscriptionMonthlyTotalCents(subs ?? []);
+  return Math.round(monthly / 30);
+}
 
 /** Aggregations and spend curves only include settled (completed) rows. */
 export const txIsCompleted = (t: Transaction): boolean => (t.status ?? "completed") === "completed";
@@ -52,8 +70,16 @@ export const sumFrozenTransactionsToday = (txs: Transaction[], today = new Date(
 export const calcVisualDailyAllowance = (us: UserState, today: Date, txs: Transaction[]) =>
   Math.max(0, calcBaseDailyAllowance(us, today) - sumFrozenTransactionsToday(txs, today));
 
-export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Transaction[] = []) =>
-  calcVisualDailyAllowance(us, today, txs);
+// SUBSCRIPTION AMOUNTS ARE HANDLED IN OVERHEAD PHASE ONLY.
+// DO NOT deduct subscription amounts from current_flexible_pool or daily_allowance.
+// Subscription overhead reduces only the derived smart daily cap below; it is not mixed into discretionarySpentOn.
+
+export const calcSmartDailyLimit = (
+  us: UserState,
+  today = new Date(),
+  txs: Transaction[] = [],
+  subscriptionDailyOverheadVND = 0,
+) => Math.max(0, calcVisualDailyAllowance(us, today, txs) - subscriptionDailyOverheadVND);
 
 const matchesHabit = (cat: string, habit?: string) =>
   !!habit && cat.toLowerCase().trim() === habit.toLowerCase().trim();

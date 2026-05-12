@@ -1,3 +1,5 @@
+import type { Subscription } from "./schemas";
+
 export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
 export type TransactionStatus = "completed" | "frozen" | "rejected";
@@ -83,6 +85,8 @@ export interface AppData {
   transactions: Transaction[];
   vaultItems: VaultItem[];
   rewards: Reward[];
+  /** Auto-pay subscriptions (local-first); merged with D1-backed loader data on /stats. */
+  subscriptions: Subscription[];
   _isMigrationLoad?: boolean;
 }
 

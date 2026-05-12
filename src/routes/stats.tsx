@@ -37,10 +37,16 @@ import {
 } from "@/components/ui/dialog";
 import { fmtMoney, txIsCompleted } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
+import type { Subscription, SubscriptionViewModel } from "@/lib/schemas";
+import { getSubscriptions } from "@/utils/subscriptions.functions";
 import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
 
 export const Route = createFileRoute("/stats")({
   component: StatsPage,
+  loader: async () => {
+    const subscriptions = await getSubscriptions();
+    return { subscriptions };
+  },
 });
 
 const COLORS = ["#00ff87", "#fbbf24", "#00d4ff", "#ff4757", "#a855f7"];
@@ -70,6 +76,30 @@ function StatsPage() {
   const app = useApp();
   const { vaultItems } = app.data;
   const us = app.data.userState;
+  const loaderData = Route.useLoaderData();
+
+  const mergedSubscriptions = useMemo(() => {
+    const map = new Map<string, Subscription>();
+    for (const s of loaderData?.subscriptions ?? []) map.set(s.id, s);
+    for (const s of app.data.subscriptions ?? []) map.set(s.id, s);
+    return [...map.values()].filter((s) => s.isActive);
+  }, [loaderData?.subscriptions, app.data.subscriptions]);
+
+  const subscriptionViewModels: SubscriptionViewModel[] = useMemo(() => {
+    return mergedSubscriptions.map((sub) => {
+      const dailyDrainCents =
+        sub.billingCycle === "monthly"
+          ? Math.round(sub.amountCents / 30)
+          : Math.round(sub.amountCents / 365);
+      const monthlyEquivalentCents =
+        sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
+      return {
+        ...sub,
+        monthlyEquivalentCents,
+        dailyDrainCents,
+      };
+    });
+  }, [mergedSubscriptions]);
 
   const breakdown = useMemo(() => {
     if (!us) return [];
@@ -155,21 +185,8 @@ function StatsPage() {
 
   const isBurnWarning = burnPercent > timePercent;
 
-  const now = Date.now();
-  const activeAmortizations = app.data.transactions
-    .filter(txIsCompleted)
-    .map((t) => {
-      const lifespan = t.amortizeDays ?? t.amortizationDays ?? 1;
-      if (lifespan <= 1) return null;
-      const daysSince = (now - new Date(t.timestamp).getTime()) / 86400000;
-      if (daysSince >= lifespan || daysSince < 0) return null;
-      const remaining = t.amountVND * (1 - daysSince / lifespan);
-      const pct = Math.min(1, daysSince / lifespan);
-      return { tx: t, lifespan, remaining, pct };
-    })
-    .filter((x): x is { tx: typeof app.data.transactions[number]; lifespan: number; remaining: number; pct: number } => !!x);
-
   let cumulative = 0;
+  const trophies = vaultItems.filter(item => item.status === 'discarded');
   const radius = 60;
   const circ = 2 * Math.PI * radius;
 
@@ -208,15 +225,11 @@ function StatsPage() {
     return { date: day, dayTs, spent: spentThatDay, status };
   });
 
-  // Days elapsed since cycle start, for Payload Decay progress
-  const cycleStartMs = new Date(us.cycleStartDate).setHours(0, 0, 0, 0);
-  const todayMidnightMs = new Date().setHours(0, 0, 0, 0);
-  const daysElapsedInCycle = Math.max(
-    0,
-    Math.round((todayMidnightMs - cycleStartMs) / MS_PER_DAY)
-  );
-
-  const trophies = vaultItems.filter(item => item.status === 'discarded');
+  const todayMidnightMs = (() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t.getTime();
+  })();
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] px-5 pb-24 pt-6">
@@ -644,39 +657,51 @@ function StatsPage() {
         </div>
       </div>
 
-      {activeAmortizations.length > 0 && (
-        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
-          <div className="mb-1">
-            <TrendingDown className="w-4 h-4 inline-block mr-2 text-cyan-500" />
-            <span className="text-xs tracking-widest uppercase text-cyan-500">Spread-Out Costs</span>
-          </div>
-          <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
+      <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5 mb-6">
+        <div className="mb-1">
+          <TrendingDown className="w-4 h-4 inline-block mr-2 text-cyan-500" />
+          <span className="text-xs tracking-widest uppercase text-cyan-500">Spread-Out Costs</span>
+        </div>
+        <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
+        {subscriptionViewModels.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
+            No auto-pay subscriptions yet.
+          </p>
+        ) : (
           <div className="space-y-2">
-            {activeAmortizations.map(({ tx, lifespan }) => {
-              const progressPct = Math.min(100, (daysElapsedInCycle / lifespan) * 100);
+            {subscriptionViewModels.map((sub) => {
+              const periodDays = sub.billingCycle === "monthly" ? 30 : 365;
+              const nextDay = new Date(sub.nextBillingDate);
+              nextDay.setHours(0, 0, 0, 0);
+              const nextMs = nextDay.getTime();
+              const periodStartMs = nextMs - periodDays * MS_PER_DAY;
+              const daysElapsedInPeriod = Math.max(
+                0,
+                Math.min(periodDays, Math.round((todayMidnightMs - periodStartMs) / MS_PER_DAY)),
+              );
+              const progressPct = Math.min(100, (daysElapsedInPeriod / periodDays) * 100);
               const remainingPct = 100 - progressPct;
-              const dailyDrain = tx.amountVND / lifespan;
               return (
                 <div
-                  key={tx.id}
+                  key={sub.id}
                   className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
                 >
                   <div className="flex justify-between items-baseline mb-1 gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm text-white truncate">
-                        {tx.justification || tx.category}
+                        {sub.name}
                       </p>
                       <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
-                        {tx.category} · {lifespan}d
+                        {sub.billingCycle} · {periodDays}d
                       </p>
                     </div>
                     <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
-                      {fmtMoney(tx.amountVND, cur, rate)}
+                      {fmtMoney(sub.amountCents, cur, rate)}
                     </p>
                   </div>
 
                   <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
-                    {`[DRAIN: -${fmtMoney(Math.round(dailyDrain), cur, rate)} / DAY]`}
+                    {`[DRAIN: -${fmtMoney(sub.dailyDrainCents, cur, rate)} / DAY]`}
                   </p>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
@@ -693,8 +718,8 @@ function StatsPage() {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-5">
         <div className="mb-4">
