@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fmtMoney } from "@/lib/splurge-utils";
+import { fmtMoney, txIsCompleted } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
 import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
 
@@ -75,7 +75,7 @@ function StatsPage() {
     if (!us) return [];
     const map: Record<string, number> = {};
     app.data.transactions
-      .filter((t) => !t.isEssential)
+      .filter((t) => !t.isEssential && txIsCompleted(t))
       .forEach((t) => {
         map[t.category] = (map[t.category] || 0) + t.amountVND;
       });
@@ -93,7 +93,9 @@ function StatsPage() {
   const cur = us.displayCurrency;
   const rate = us.usdExchangeRate;
 
-  const discretionaryTotal = app.data.transactions.filter((t) => !t.isEssential).reduce((s, t) => s + t.amountVND, 0);
+  const discretionaryTotal = app.data.transactions
+    .filter((t) => !t.isEssential && txIsCompleted(t))
+    .reduce((s, t) => s + t.amountVND, 0);
   const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
 
   // === Freedom Engine: Total Preserved Capital ===
@@ -142,7 +144,7 @@ function StatsPage() {
     .filter((t) => {
       const txDate = new Date(t.timestamp);
       txDate.setHours(0, 0, 0, 0);
-      return txDate >= cycleStart && t.isEssential === false;
+      return txDate >= cycleStart && t.isEssential === false && txIsCompleted(t);
     })
     .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
 
@@ -155,6 +157,7 @@ function StatsPage() {
 
   const now = Date.now();
   const activeAmortizations = app.data.transactions
+    .filter(txIsCompleted)
     .map((t) => {
       const lifespan = t.amortizeDays ?? t.amortizationDays ?? 1;
       if (lifespan <= 1) return null;
@@ -194,7 +197,7 @@ function StatsPage() {
       .filter((t) => {
         const txDate = new Date(t.timestamp);
         txDate.setHours(0, 0, 0, 0);
-        return txDate.getTime() === dayTs && t.isEssential === false;
+        return txDate.getTime() === dayTs && t.isEssential === false && txIsCompleted(t);
       })
       .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
 

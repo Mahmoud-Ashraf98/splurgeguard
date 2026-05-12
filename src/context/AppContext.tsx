@@ -19,12 +19,14 @@ import {
   levelForLifetimeDP,
 } from "@/lib/splurge-types";
 import {
+  calcBaseDailyAllowance,
   calcSmartDailyLimit,
   dayKey,
   daysBetween,
   discretionarySpentOn,
   dpForAmount,
   milestoneBonus,
+  txIsCompleted,
   uuid,
 } from "@/lib/splurge-utils";
 import { RANKS, getRankForXP } from "@/lib/ranks";
@@ -109,6 +111,34 @@ const migrate = (parsed: AppData): AppData => {
     if (typeof us.lastContractRefreshDate !== "string") us.lastContractRefreshDate = "";
     data.userState = us;
   }
+  if (Array.isArray(data.transactions)) {
+    for (const t of data.transactions) {
+      if (t.status === undefined) t.status = "completed";
+      if (t.vault_expires_at === undefined) t.vault_expires_at = null;
+    }
+  }
+  if (Array.isArray(data.vaultItems) && Array.isArray(data.transactions)) {
+    for (const v of data.vaultItems) {
+      if (v.frozenTransactionId) continue;
+      if (v.status !== "cooling" && v.status !== "ready") continue;
+      const txId = uuid();
+      const coldEnd = new Date(new Date(v.createdAt).getTime() + v.delayHours * 3600000).toISOString();
+      const frozenTx: Transaction = {
+        id: txId,
+        timestamp: v.createdAt,
+        amountVND: v.estimatedAmountVND,
+        originalCurrency: "VND",
+        category: v.category,
+        isEssential: false,
+        justification: v.justification || v.itemName,
+        fromVault: true,
+        status: "frozen",
+        vault_expires_at: coldEnd,
+      };
+      data.transactions.unshift(frozenTx);
+      (v as VaultItem).frozenTransactionId = txId;
+    }
+  }
   return data;
 };
 
@@ -192,7 +222,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const yKey = us.lastLoginDate;
       const yDate = new Date(us.lastLoginDate + "T12:00:00");
       const ySpent = discretionarySpentOn(data.transactions, yKey);
-      const yLimit = calcSmartDailyLimit(us, yDate, data.transactions);
+      const yLimit = calcBaseDailyAllowance(us, yDate);
       if (ySpent <= yLimit) {
         dpGain += 50;
         newStreak += 1;
@@ -216,7 +246,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const habitLower = habit?.toLowerCase().trim();
       const weekAgo = new Date(today.getTime() - 7 * 86400000);
       const habitSpent = data.transactions
-        .filter((t) => habitLower && t.category.toLowerCase().trim() === habitLower && new Date(t.timestamp) >= weekAgo)
+        .filter(
+          (t) =>
+            txIsCompleted(t) &&
+            habitLower &&
+            t.category.toLowerCase().trim() === habitLower &&
+            new Date(t.timestamp) >= weekAgo,
+        )
         .reduce((s, t) => s + t.amountVND, 0);
       if (us.weeklyHabitLimitVND > 0 && habitSpent < us.weeklyHabitLimitVND) {
         dpGain += 250;
@@ -470,6 +506,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             isEssential: false,
             justification: input.justification,
             fromVault: !!input.fromVault,
+            status: "completed",
+            vault_expires_at: null,
             amortizeDays: amortDays,
             amortizationDays: amortDays,
           };
@@ -513,6 +551,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isEssential: isEss,
         justification: input.justification,
         fromVault: !!input.fromVault,
+        status: "completed",
+        vault_expires_at: null,
         amortizeDays: amortDays,
         amortizationDays: amortDays,
       };
@@ -543,18 +583,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addToVault: AppContextValue["addToVault"] = (input) => {
-    mutate((d) => ({
-      ...d,
-      vaultItems: [
-        {
-          ...input,
-          id: uuid(),
-          createdAt: new Date().toISOString(),
-          status: "cooling",
-        },
-        ...d.vaultItems,
-      ],
-    }));
+    mutate((d) => {
+      const vaultId = uuid();
+      const txId = uuid();
+      const createdAt = new Date().toISOString();
+      const vaultExpiresAt = new Date(Date.now() + input.delayHours * 3600000).toISOString();
+      const frozenTx: Transaction = {
+        id: txId,
+        timestamp: createdAt,
+        amountVND: input.estimatedAmountVND,
+        originalCurrency: "VND",
+        category: input.category,
+        isEssential: false,
+        justification: input.justification,
+        fromVault: true,
+        status: "frozen",
+        vault_expires_at: vaultExpiresAt,
+      };
+      return {
+        ...d,
+        transactions: [frozenTx, ...d.transactions],
+        vaultItems: [
+          {
+            ...input,
+            id: vaultId,
+            createdAt,
+            status: "cooling",
+            frozenTransactionId: txId,
+          },
+          ...d.vaultItems,
+        ],
+      };
+    });
     toast.success(`🔒 Added to Vault. Cooling for ${input.delayHours}h.`);
   };
 
@@ -569,28 +629,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const approveVault = (id: string) => {
     const vi = data.vaultItems.find((v) => v.id === id);
-    if (!vi) return;
-    logExpense({
-      amountVND: vi.estimatedAmountVND,
-      originalCurrency: "VND",
-      category: vi.category,
-      justification: vi.justification || vi.itemName,
-      fromVault: true,
-      vaultId: vi.id,
+    if (!vi || !data.userState) return;
+    const tx = vi.frozenTransactionId
+      ? data.transactions.find((t) => t.id === vi.frozenTransactionId)
+      : undefined;
+    if (!tx || (tx.status ?? "completed") !== "frozen") {
+      toast.error("No pending frozen purchase is linked to this vault item.");
+      return;
+    }
+    if (tx.amountVND > data.userState.currentBalanceVND) {
+      toast.error("Insufficient flexible pool to confirm this purchase.");
+      return;
+    }
+    mutate((d) => {
+      if (!d.userState) return d;
+      const v = d.vaultItems.find((x) => x.id === id);
+      if (!v?.frozenTransactionId) return d;
+      const fr = d.transactions.find((t) => t.id === v.frozenTransactionId);
+      if (!fr || (fr.status ?? "completed") !== "frozen") return d;
+      if (fr.amountVND > d.userState.currentBalanceVND) return d;
+      const us = {
+        ...d.userState,
+        currentBalanceVND: d.userState.currentBalanceVND - fr.amountVND,
+        totalDP: d.userState.totalDP - 10,
+        ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) - 10),
+      };
+      const txs = d.transactions.map((t) =>
+        t.id === fr.id ? { ...t, status: "completed" as const, vault_expires_at: null } : t,
+      );
+      const vaultItems = d.vaultItems.map((x) => (x.id === id ? { ...x, status: "approved" as const } : x));
+      return { ...d, userState: us, transactions: txs, vaultItems };
     });
+    toast.success("Purchase confirmed from vault.");
   };
 
   const discardVault = (id: string) => {
     mutate((d) => {
       if (!d.userState) return d;
-      const us = applyDPGain(d.userState, 50);
+      const v = d.vaultItems.find((x) => x.id === id);
+      let us = applyDPGain(d.userState, 40);
+      let txs = d.transactions;
+      if (v?.frozenTransactionId) {
+        txs = txs.map((t) =>
+          t.id === v.frozenTransactionId && (t.status ?? "completed") === "frozen"
+            ? { ...t, status: "rejected" as const, vault_expires_at: null }
+            : t,
+        );
+      }
       return {
         ...d,
-        vaultItems: d.vaultItems.map((v) => (v.id === id ? { ...v, status: "discarded" } : v)),
+        vaultItems: d.vaultItems.map((x) =>
+          x.id === id
+            ? { ...x, status: "discarded" as const, discardedAt: new Date().toISOString() }
+            : x,
+        ),
         userState: us,
+        transactions: txs,
       };
     });
-    toast.success("🏆 Impulse defeated. +50 DP — Total Victory.");
+    toast.success("🏆 Impulse defeated. +40 DP — Total Victory.");
   };
 
   const spendDP: AppContextValue["spendDP"] = (amount) => {
@@ -606,8 +703,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const tx = d.transactions.find((t) => t.id === id);
       if (!tx || !d.userState) return d;
       const newUS = { ...d.userState };
-      if (!tx.isEssential) newUS.currentBalanceVND += tx.amountVND;
-      else newUS.essentialSpentVND = Math.max(0, newUS.essentialSpentVND - tx.amountVND);
+      if (txIsCompleted(tx)) {
+        if (!tx.isEssential) newUS.currentBalanceVND += tx.amountVND;
+        else newUS.essentialSpentVND = Math.max(0, newUS.essentialSpentVND - tx.amountVND);
+      }
       return { ...d, userState: newUS, transactions: d.transactions.filter((t) => t.id !== id) };
     });
     toast("Transaction deleted");
@@ -692,11 +791,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteVaultItem = (id: string) => {
-    mutate((d) => ({
-      ...d,
-      vaultItems: d.vaultItems.filter((v) => v.id !== id),
-    }));
-    toast('Item removed from Vault.');
+    mutate((d) => {
+      const vi = d.vaultItems.find((v) => v.id === id);
+      let txs = d.transactions;
+      let us = d.userState;
+      if (vi?.frozenTransactionId && d.userState) {
+        txs = txs.map((t) =>
+          t.id === vi.frozenTransactionId && (t.status ?? "completed") === "frozen"
+            ? { ...t, status: "rejected" as const, vault_expires_at: null }
+            : t,
+        );
+        us = applyDPGain(d.userState, 40);
+      }
+      return {
+        ...d,
+        userState: us,
+        transactions: txs,
+        vaultItems: d.vaultItems.filter((v) => v.id !== id),
+      };
+    });
+    toast.success("Item removed from vault. +40 DP.");
   };
 
   // ===== Ascension Protocol =====

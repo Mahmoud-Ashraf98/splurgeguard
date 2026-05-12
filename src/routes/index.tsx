@@ -14,7 +14,7 @@ import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { ForfeitModal } from "@/components/splurge/ForfeitModal";
-import { fmtMoney, nextMilestone, weeklyHabitSpent } from "@/lib/splurge-utils";
+import { fmtMoney, nextMilestone, txIsCompleted, weeklyHabitSpent } from "@/lib/splurge-utils";
 import type { DailyContract } from "@/lib/splurge-types";
 
 import { getRankForXP, getNextRank } from "@/lib/ranks";
@@ -273,6 +273,7 @@ function Index() {
               </div>
               <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.smartDailyLimit, cur, rate)}</div>
               {app.data.transactions.some((tx) => {
+                if (!txIsCompleted(tx)) return false;
                 const lifespan = tx.amortizeDays ?? tx.amortizationDays ?? 1;
                 if (lifespan <= 1) return false;
                 const daysSince = Math.floor(

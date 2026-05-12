@@ -1,5 +1,6 @@
 export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
+export type TransactionStatus = "completed" | "frozen" | "rejected";
 
 export interface DailyContract {
   id: string;
@@ -41,6 +42,10 @@ export interface Transaction {
   isEssential: boolean;
   justification: string;
   fromVault: boolean;
+  /** Ledger lifecycle. Omitted in legacy persisted data — treated as completed when read. */
+  status?: TransactionStatus;
+  /** Vault cooling deadline (ISO). Null for non-vault rows. */
+  vault_expires_at?: string | Date | null;
   /** Canonical lifespan field. New transactions write this. */
   amortizeDays?: number;
   /** Legacy field (older entries) — readers fall back to this. */
@@ -56,6 +61,10 @@ export interface VaultItem {
   delayHours: number;
   justification: string;
   status: VaultStatus;
+  /** Frozen `Transaction` row created when the item enters the vault. */
+  frozenTransactionId?: string;
+  /** Set when the user discards an impulse (trophy room). */
+  discardedAt?: string;
 }
 
 export interface Reward {

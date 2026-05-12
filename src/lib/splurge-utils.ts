@@ -1,6 +1,9 @@
 import type { UserState, Transaction } from "./splurge-types";
 import { getDaysSinceFrom } from "./dateUtils";
 
+/** Aggregations and spend curves only include settled (completed) rows. */
+export const txIsCompleted = (t: Transaction): boolean => (t.status ?? "completed") === "completed";
+
 export const fmtVND = (v: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
 
@@ -31,21 +34,26 @@ export const txLifespan = (tx: Transaction): number =>
 
 const dateFromKey = (k: string) => new Date(`${k}T12:00:00`);
 
-export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Transaction[] = []) => {
+/** Hard allowance: flexible pool ÷ days until payday (midnight / streak settlement). */
+export const calcBaseDailyAllowance = (us: UserState, today = new Date()) => {
   const daysUntilPayday = Math.max(1, daysBetween(today, us.paydayDate));
-  const totalCycleDays = Math.max(1, daysBetween(us.cycleStartDate, us.paydayDate));
-  const daysPassed = Math.max(0, daysBetween(us.cycleStartDate, today));
-  const proximityWeighting = Math.min(1.2, 1.0 + 0.2 * (daysPassed / totalCycleDays));
-  const totalUnAmortized = txs.reduce((sum, tx) => {
-    const lifespan = txLifespan(tx);
-    if (lifespan <= 1) return sum;
-    const daysSince = (today.getTime() - new Date(tx.timestamp).getTime()) / 86400000;
-    if (daysSince >= lifespan || daysSince < 0) return sum;
-    return sum + tx.amountVND * (1 - daysSince / lifespan);
-  }, 0);
-  const virtualBalance = us.currentBalanceVND + totalUnAmortized;
-  return Math.floor((virtualBalance / daysUntilPayday) * proximityWeighting);
+  return Math.floor(us.currentBalanceVND / daysUntilPayday);
 };
+
+/** Sum of vault amounts still frozen whose commitment `timestamp` falls on this local day. */
+export const sumFrozenTransactionsToday = (txs: Transaction[], today = new Date()) => {
+  const key = dayKey(today);
+  return txs
+    .filter((t) => (t.status ?? "completed") === "frozen" && dayKey(new Date(t.timestamp)) === key)
+    .reduce((s, t) => s + t.amountVND, 0);
+};
+
+/** UI daily cap: base allowance minus today's frozen vault totals. */
+export const calcVisualDailyAllowance = (us: UserState, today: Date, txs: Transaction[]) =>
+  Math.max(0, calcBaseDailyAllowance(us, today) - sumFrozenTransactionsToday(txs, today));
+
+export const calcSmartDailyLimit = (us: UserState, today = new Date(), txs: Transaction[] = []) =>
+  calcVisualDailyAllowance(us, today, txs);
 
 const matchesHabit = (cat: string, habit?: string) =>
   !!habit && cat.toLowerCase().trim() === habit.toLowerCase().trim();
@@ -57,6 +65,7 @@ const matchesHabit = (cat: string, habit?: string) =>
 export const discretionarySpentOn = (txs: Transaction[], dKey: string, targetHabit?: string) => {
   const anchor = dateFromKey(dKey);
   return txs.reduce((total, tx) => {
+    if (!txIsCompleted(tx)) return total;
     if (tx.isEssential) return total;
     if (matchesHabit(tx.category, targetHabit)) return total;
     const lifespan = txLifespan(tx);
@@ -73,6 +82,7 @@ export const discretionarySpentOn = (txs: Transaction[], dKey: string, targetHab
 export const weeklyHabitSpent = (txs: Transaction[], targetHabit: string, today = new Date()) => {
   const anchor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   return txs.reduce((total, tx) => {
+    if (!txIsCompleted(tx)) return total;
     if (!matchesHabit(tx.category, targetHabit)) return total;
     const lifespan = txLifespan(tx);
     const dailySlice = tx.amountVND / lifespan;
@@ -89,7 +99,12 @@ export const weeklyHabitSpent = (txs: Transaction[], targetHabit: string, today 
 export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, days = 7, today = new Date()) => {
   const cutoff = today.getTime() - days * 86400000;
   return txs
-    .filter((t) => matchesHabit(t.category, targetHabit) && new Date(t.timestamp).getTime() >= cutoff)
+    .filter(
+      (t) =>
+        txIsCompleted(t) &&
+        matchesHabit(t.category, targetHabit) &&
+        new Date(t.timestamp).getTime() >= cutoff,
+    )
     .reduce((s, t) => s + t.amountVND, 0);
 };
 
