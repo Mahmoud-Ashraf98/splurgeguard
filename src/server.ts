@@ -4,7 +4,11 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (
+    request: Request,
+    opts?: { context?: Record<string, unknown> },
+    _ctx?: unknown,
+  ) => Promise<Response> | Response;
 };
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -70,7 +74,9 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request, {
+        context: env && typeof env === "object" ? (env as Record<string, unknown>) : {},
+      });
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);
