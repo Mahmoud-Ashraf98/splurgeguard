@@ -1,4 +1,4 @@
-import type { UserState, Transaction } from "./splurge-types";
+import type { RaidRecord, UserState, Transaction } from "./splurge-types";
 import { getDaysSinceFrom } from "./dateUtils";
 
 /** Aggregations and spend curves only include settled (completed) rows. */
@@ -28,11 +28,96 @@ export const daysBetween = (a: Date | string, b: Date | string) => {
   return Math.round((kb - ka) / 86400000);
 };
 
+export const uuid = () =>
+  (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+
 /** Resolve a transaction's amortization lifespan in days, defaulting to 1. */
 export const txLifespan = (tx: Transaction): number =>
   Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
 
 const dateFromKey = (k: string) => new Date(`${k}T12:00:00`);
+
+/** Net PYF savings locked in the vault (base + sweeps − raided). */
+export const selectNetSavingsCents = (state: UserState) =>
+  state.savings_base_cents + state.savings_sweeps_cents - state.savings_raided_cents;
+
+/** Non-essential completed spend allocated to the current cycle (full transaction amounts). */
+export const totalSpentThisCycleNonEssential = (us: UserState, txs: Transaction[]) => {
+  const cycleStart = new Date(us.cycleStartDate);
+  cycleStart.setHours(0, 0, 0, 0);
+  const c0 = cycleStart.getTime();
+  return txs.reduce((sum, t) => {
+    if (!txIsCompleted(t) || t.isEssential) return sum;
+    const txDate = new Date(t.timestamp);
+    txDate.setHours(0, 0, 0, 0);
+    if (txDate.getTime() < c0) return sum;
+    return sum + Math.abs(t.amountVND ?? 0);
+  }, 0);
+};
+
+/**
+ * Flexible spending pool for the cycle (integer currency units).
+ * current_flexible_pool = income − overhead − savings_base − spent_this_cycle + raided.
+ */
+export const computeCurrentFlexiblePoolCents = (us: UserState, txs: Transaction[]) => {
+  const spent = totalSpentThisCycleNonEssential(us, txs);
+  return (
+    us.total_income_cents -
+    us.fixed_overhead_cents -
+    us.savings_base_cents -
+    spent +
+    us.savings_raided_cents
+  );
+};
+
+/** Pure state transition for a savings raid; throws on invalid input or insufficient savings. */
+export const applyWithdrawFromSavingsState = (
+  us: UserState,
+  amountCents: number,
+  type: "impulse" | "emergency",
+  justification: string | null,
+): UserState => {
+  if (amountCents <= 0) throw new Error("Amount must be greater than zero");
+  const netSavings = us.savings_base_cents + us.savings_sweeps_cents - us.savings_raided_cents;
+  if (amountCents > netSavings) throw new Error("Insufficient savings");
+
+  const cycleId = us.current_cycle_id || uuid();
+  const record: RaidRecord =
+    type === "impulse"
+      ? {
+          type: "impulse",
+          amount_cents: amountCents,
+          justification: null,
+          timestamp: new Date().toISOString(),
+          cycle_id: cycleId,
+        }
+      : {
+          type: "emergency",
+          amount_cents: amountCents,
+          justification: justification ?? "",
+          timestamp: new Date().toISOString(),
+          cycle_id: cycleId,
+        };
+
+  let next: UserState = {
+    ...us,
+    current_cycle_id: cycleId,
+    savings_raided_cents: us.savings_raided_cents + amountCents,
+    raid_history: [...(us.raid_history ?? []), record],
+    currentBalanceVND: us.currentBalanceVND + amountCents,
+  };
+
+  if (type === "impulse") {
+    next = {
+      ...next,
+      totalDP: next.totalDP - 200,
+      ascensionXP: Math.max(0, (next.ascensionXP ?? 0) - 200),
+      currentStreakDays: 0,
+    };
+  }
+
+  return next;
+};
 
 /** Hard allowance: flexible pool ÷ days until payday (midnight / streak settlement). */
 export const calcBaseDailyAllowance = (us: UserState, today = new Date()) => {
@@ -107,9 +192,6 @@ export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, day
     )
     .reduce((s, t) => s + t.amountVND, 0);
 };
-
-export const uuid = () =>
-  (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();
 
 export const dpForAmount = (amountVND: number, category: string, fromVault: boolean, targetHabit?: string) => {
   if (matchesHabit(category, targetHabit) && !fromVault) return 0;

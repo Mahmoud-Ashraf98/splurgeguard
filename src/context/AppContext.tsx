@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import {
   AppData,
@@ -19,6 +20,7 @@ import {
   levelForLifetimeDP,
 } from "@/lib/splurge-types";
 import {
+  applyWithdrawFromSavingsState,
   calcBaseDailyAllowance,
   calcSmartDailyLimit,
   dayKey,
@@ -27,6 +29,7 @@ import {
   dpForAmount,
   milestoneBonus,
   txIsCompleted,
+  totalSpentThisCycleNonEssential,
   uuid,
 } from "@/lib/splurge-utils";
 import { RANKS, getRankForXP } from "@/lib/ranks";
@@ -41,13 +44,21 @@ interface AppContextValue {
   data: AppData;
   initUser: (us: {
     userName: string;
-    currentBalanceVND: number;
+    total_income_cents: number;
+    fixed_overhead_cents: number;
+    savings_base_cents: number;
     paydayDate: string;
     targetHabit: string;
     weeklyHabitLimitVND: number;
     usdExchangeRate?: number;
     displayCurrency?: "VND" | "USD";
   }) => void;
+  withdrawFromSavings: (
+    amountCents: number,
+    type: "impulse" | "emergency",
+    justification: string | null,
+  ) => boolean;
+  startNewCycle: () => void;
   updateUserState: (patch: Partial<UserState>) => void;
   logExpense: (input: {
     amountVND: number;
@@ -109,7 +120,27 @@ const migrate = (parsed: AppData): AppData => {
     // Daily Protocol migration
     if (!Array.isArray(us.dailyContracts)) us.dailyContracts = [];
     if (typeof us.lastContractRefreshDate !== "string") us.lastContractRefreshDate = "";
-    data.userState = us;
+    // Pay-yourself-first (PYF) migration
+    if (typeof us.total_income_cents !== "number") {
+      const cycleStart = new Date(us.cycleStartDate as string);
+      cycleStart.setHours(0, 0, 0, 0);
+      const c0 = cycleStart.getTime();
+      const totalFunSpent = (data.transactions ?? []).reduce((sum, t) => {
+        if (!txIsCompleted(t) || t.isEssential) return sum;
+        const txDate = new Date(t.timestamp);
+        txDate.setHours(0, 0, 0, 0);
+        if (txDate.getTime() < c0) return sum;
+        return sum + Math.abs(t.amountVND ?? 0);
+      }, 0);
+      us.total_income_cents = (us.currentBalanceVND ?? 0) + totalFunSpent;
+    }
+    if (typeof us.fixed_overhead_cents !== "number") us.fixed_overhead_cents = 0;
+    if (typeof us.savings_base_cents !== "number") us.savings_base_cents = 0;
+    if (typeof us.savings_sweeps_cents !== "number") us.savings_sweeps_cents = 0;
+    if (typeof us.savings_raided_cents !== "number") us.savings_raided_cents = 0;
+    if (!Array.isArray(us.raid_history)) us.raid_history = [];
+    if (typeof us.current_cycle_id !== "string" || !us.current_cycle_id) us.current_cycle_id = uuid();
+    data.userState = us as UserState;
   }
   if (Array.isArray(data.transactions)) {
     for (const t of data.transactions) {
@@ -433,12 +464,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const initUser: AppContextValue["initUser"] = (input) => {
     const today = new Date();
+    const pool = Math.max(
+      0,
+      input.total_income_cents - input.fixed_overhead_cents - input.savings_base_cents,
+    );
+    try {
+      localStorage.setItem("sg_last_savings_base_cents", String(input.savings_base_cents));
+    } catch {
+      /* noop */
+    }
     const us: UserState = {
       userName: input.userName || "Master",
-      currentBalanceVND: input.currentBalanceVND ?? 0,
+      currentBalanceVND: pool,
       essentialSpentVND: 0,
       cycleStartDate: today.toISOString(),
       paydayDate: input.paydayDate,
+      total_income_cents: Math.max(0, Math.floor(input.total_income_cents)),
+      fixed_overhead_cents: Math.max(0, Math.floor(input.fixed_overhead_cents)),
+      savings_base_cents: Math.max(0, Math.floor(input.savings_base_cents)),
+      savings_sweeps_cents: 0,
+      savings_raided_cents: 0,
+      raid_history: [],
+      current_cycle_id: uuid(),
       totalDP: 0,
       lifetimeDP: 0,
       currentLevel: 1,
@@ -453,6 +500,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       lastContractRefreshDate: "",
     };
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
+  };
+
+  const withdrawFromSavings: AppContextValue["withdrawFromSavings"] = (amountCents, type, justification) => {
+    let success = false;
+    flushSync(() => {
+      setData((prev) => {
+        if (!prev.userState) return prev;
+        try {
+          const next = applyWithdrawFromSavingsState(prev.userState, amountCents, type, justification);
+          success = true;
+          return { ...prev, userState: next };
+        } catch (e) {
+          toast.error((e as Error).message);
+          return prev;
+        }
+      });
+    });
+    return success;
+  };
+
+  const startNewCycle: AppContextValue["startNewCycle"] = () => {
+    mutate((d) => {
+      if (!d.userState) return d;
+      const us = d.userState;
+      const pool = Math.max(0, us.total_income_cents - us.fixed_overhead_cents);
+      return {
+        ...d,
+        userState: {
+          ...us,
+          cycleStartDate: new Date().toISOString(),
+          savings_sweeps_cents: 0,
+          savings_raided_cents: 0,
+          savings_base_cents: 0,
+          raid_history: [],
+          current_cycle_id: uuid(),
+          currentBalanceVND: pool,
+        },
+      };
+    });
+    toast.success("New cycle started. PYF savings counters reset.");
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
@@ -848,6 +935,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     deleteReward,
     pendingAscension,
     clearPendingAscension,
+    withdrawFromSavings,
+    startNewCycle,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

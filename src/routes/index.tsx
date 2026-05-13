@@ -14,7 +14,8 @@ import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { ForfeitModal } from "@/components/splurge/ForfeitModal";
-import { fmtMoney, nextMilestone, txIsCompleted, weeklyHabitSpent } from "@/lib/splurge-utils";
+import { fmtMoney, nextMilestone, selectNetSavingsCents, txIsCompleted, weeklyHabitSpent } from "@/lib/splurge-utils";
+import { SavingsRaidModal } from "@/components/splurge/SavingsRaidModal";
 import type { DailyContract } from "@/lib/splurge-types";
 
 import { getRankForXP, getNextRank } from "@/lib/ranks";
@@ -39,6 +40,7 @@ function Index() {
   const [forfeitTarget, setForfeitTarget] = useState<DailyContract | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement | null>(null);
+  const [raidOpen, setRaidOpen] = useState(false);
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
@@ -469,6 +471,15 @@ function Index() {
                 </span>
               </div>
             </div>
+            {selectNetSavingsCents(us) > 0 && (
+              <button
+                type="button"
+                onClick={() => setRaidOpen(true)}
+                className="mt-3 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-500/20 transition-colors"
+              >
+                Raid savings (emergency)
+              </button>
+            )}
             {/* Cycle elapsed bar */}
             <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-slate-800/60">
               <div
@@ -661,6 +672,14 @@ function Index() {
           if (forfeitTarget) forfeitProtocol(forfeitTarget.id);
           setForfeitTarget(null);
         }}
+      />
+      <SavingsRaidModal
+        open={raidOpen}
+        onClose={() => setRaidOpen(false)}
+        withdrawFromSavings={app.withdrawFromSavings}
+        maxRaidCents={selectNetSavingsCents(us)}
+        displayCurrency={us.displayCurrency}
+        usdExchangeRate={us.usdExchangeRate}
       />
     </div>
   );

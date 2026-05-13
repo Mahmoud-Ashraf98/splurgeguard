@@ -150,6 +150,26 @@ function SettingsPage() {
             <Sliders className="h-4 w-4" /> Budget & Limits
           </h2>
           <Field
+            label="Cycle total income (VND)"
+            type="number"
+            value={us.total_income_cents}
+            onChange={(e) =>
+              app.updateUserState({ total_income_cents: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="Gross take-home allocated to this budget cycle (used for PYF math)."
+            Icon={Wallet}
+          />
+          <Field
+            label="Fixed overhead this cycle (VND)"
+            type="number"
+            value={us.fixed_overhead_cents ?? 0}
+            onChange={(e) =>
+              app.updateUserState({ fixed_overhead_cents: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="Rent, subscriptions, and other non-negotiables subtracted before flexible pool."
+            Icon={Wallet}
+          />
+          <Field
             label="Available Splurge Budget (VND)"
             type="number"
             value={us.currentBalanceVND}
@@ -172,6 +192,17 @@ function SettingsPage() {
             Icon={Calendar}
             extraInputClass="pr-10"
           />
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Start a new cycle? PYF savings counters reset; flexible pool refills to income minus overhead.")) {
+                app.startNewCycle();
+              }
+            }}
+            className="w-full rounded-xl border border-cyan-500/30 bg-slate-950/60 py-3 font-mono text-xs font-bold uppercase tracking-widest text-cyan-300 hover:bg-cyan-500/10 transition-colors mb-2"
+          >
+            Start new budget cycle
+          </button>
           <Field
             label="Target Habit Name"
             value={us.targetHabit ?? ""}
