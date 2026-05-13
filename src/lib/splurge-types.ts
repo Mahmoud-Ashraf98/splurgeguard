@@ -4,6 +4,23 @@ export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
 export type TransactionStatus = "completed" | "frozen" | "rejected";
 
+/** Ledger entry for savings withdrawals (impulse vs genuine emergency). */
+export type RaidRecord =
+  | {
+      type: "impulse";
+      amount_cents: number;
+      justification: null;
+      timestamp: string;
+      cycle_id: string;
+    }
+  | {
+      type: "emergency";
+      amount_cents: number;
+      justification: string;
+      timestamp: string;
+      cycle_id: string;
+    };
+
 export interface DailyContract {
   id: string;
   title: string;
@@ -20,6 +37,19 @@ export interface UserState {
   essentialSpentVND: number;
   cycleStartDate: string;
   paydayDate: string;
+  /** Gross take-home allocated to this cycle (integer currency units, same scale as VND). */
+  total_income_cents: number;
+  /** Fixed unavoidable costs for the cycle (same scale). */
+  fixed_overhead_cents: number;
+  /** Pay-yourself-first: amount pledged to savings this cycle. */
+  savings_base_cents: number;
+  /** Optional sweeps into savings (e.g. automated); net savings includes this. */
+  savings_sweeps_cents: number;
+  /** Cumulative withdrawn from savings back into the spending pool this cycle. */
+  savings_raided_cents: number;
+  raid_history: RaidRecord[];
+  /** Stable id for the active budget cycle (raids, exports). */
+  current_cycle_id: string;
   totalDP: number;
   lifetimeDP: number;
   currentLevel: number;
@@ -32,7 +62,12 @@ export interface UserState {
   displayCurrency: Currency;
   dailyContracts: DailyContract[];
   lastContractRefreshDate: string;
+  /** Set by migration when `total_income_cents` was inferred from legacy data — user should verify in Settings. */
+  pyfIncomeInferred?: boolean;
 }
+
+/** Alias for budget-cycle shape (same as `UserState`). */
+export type CycleState = UserState;
 
 export interface Transaction {
   id: string;
@@ -117,6 +152,8 @@ export const ALL_CATEGORIES = [...ESSENTIAL_CATEGORIES, ...DISCRETIONARY_CATEGOR
 export const isEssentialCategory = (cat: string) => ESSENTIAL_CATEGORIES.includes(cat);
 
 export const STORAGE_KEY = "splurgeGuardData_v1";
+
+export const DEFAULT_USD_EXCHANGE_RATE = 26310;
 
 export interface LevelDef {
   level: number;

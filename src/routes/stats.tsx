@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { fmtMoney, txIsCompleted } from "@/lib/splurge-utils";
+import { fmtMoney, txIsCompleted, selectNetSavingsCents } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
 import type { Subscription, SubscriptionViewModel } from "@/lib/schemas";
 import { getSubscriptions } from "@/utils/subscriptions.functions";
@@ -375,6 +375,25 @@ function StatsPage() {
                   {discardedCount} Impulse{discardedCount === 1 ? '' : 's'} Neutralized
                 </span>
               </div>
+
+              {(() => {
+                const currentNetSavings = selectNetSavingsCents(us);
+                const current_day_of_cycle = Math.max(1, daysElapsed);
+                const dailyWealthGrowthCents = Math.floor(currentNetSavings / current_day_of_cycle);
+                return (
+                  <div className="mb-5 w-full rounded-xl border border-emerald-500/25 bg-slate-950/50 p-4 text-left ring-1 ring-emerald-500/10">
+                    <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-emerald-400/80 mb-2">
+                      Daily wealth growth
+                    </p>
+                    <p className="font-mono text-2xl font-black tabular-nums text-emerald-300 drop-shadow-[0_0_12px_rgba(52,211,153,0.45)]">
+                      {fmtMoney(dailyWealthGrowthCents, cur, rate)}
+                    </p>
+                    <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-slate-600">
+                      Net savings ÷ day {current_day_of_cycle} of cycle
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* ── Cinematic Milestone Cards ────────────────────────────── */}
               {currentMilestone && (
