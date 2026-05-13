@@ -28,6 +28,7 @@ import {
   discretionarySpentOn,
   dpForAmount,
   milestoneBonus,
+  subscriptionDailyOverheadVND,
   txIsCompleted,
   uuid,
 } from "@/lib/splurge-utils";
@@ -99,6 +100,7 @@ const defaultData: AppData = {
   transactions: [],
   vaultItems: [],
   rewards: [],
+  subscriptions: [],
 };
 
 const Ctx = createContext<AppContextValue | null>(null);
@@ -106,6 +108,7 @@ const Ctx = createContext<AppContextValue | null>(null);
 const migrate = (parsed: AppData): AppData => {
   const data: AppData = { ...defaultData, ...parsed };
   if (!Array.isArray(data.rewards)) data.rewards = [];
+  if (!Array.isArray(data.subscriptions)) data.subscriptions = [];
   if (data.userState) {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
@@ -257,7 +260,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const yKey = us.lastLoginDate;
       const yDate = new Date(us.lastLoginDate + "T12:00:00");
       const ySpent = discretionarySpentOn(data.transactions, yKey);
-      const yLimit = calcBaseDailyAllowance(us, yDate);
+      const subDaily = subscriptionDailyOverheadVND(data.subscriptions);
+      const yLimit = Math.max(0, calcBaseDailyAllowance(us, yDate) - subDaily);
       if (ySpent <= yLimit) {
         dpGain += 50;
         newStreak += 1;
@@ -315,7 +319,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else toast(m.msg);
       });
     }, 400);
-  }, [hydrated, data.userState, data.transactions, mutate]);
+  }, [hydrated, data.userState, data.transactions, data.subscriptions, mutate]);
 
   // Daily Protocol contracts refresh
   useEffect(() => {
@@ -456,9 +460,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [data.userState?.ascensionXP, data.userState?.currentLevel, data._isMigrationLoad, hydrated, pendingAscension, mutate, data.userState]);
 
+  const subscriptionDailyOverhead = useMemo(
+    () => subscriptionDailyOverheadVND(data.subscriptions),
+    [data.subscriptions],
+  );
+
   const smartDailyLimit = useMemo(
-    () => (data.userState ? calcSmartDailyLimit(data.userState, new Date(), data.transactions) : 0),
-    [data.userState, data.transactions]
+    () =>
+      data.userState
+        ? calcSmartDailyLimit(data.userState, new Date(), data.transactions, subscriptionDailyOverhead)
+        : 0,
+    [data.userState, data.transactions, subscriptionDailyOverhead],
   );
 
   const todayDiscretionary = useMemo(
@@ -500,7 +512,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       dailyContracts: [],
       lastContractRefreshDate: "",
     };
-    setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
+    setData({ userState: us, transactions: [], vaultItems: [], rewards: [], subscriptions: [] });
   };
 
   const withdrawFromSavings: AppContextValue["withdrawFromSavings"] = (amountCents, type, justification, options) => {
