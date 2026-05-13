@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { STORAGE_KEY } from "@/lib/splurge-types";
+import { paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type NotifPermissionState = NotificationPermission | "unsupported";
 
@@ -149,12 +150,27 @@ function SettingsPage() {
           <h2 className={headerClass}>
             <Sliders className="h-4 w-4" /> Budget & Limits
           </h2>
+          {us.pyfIncomeInferred && (
+            <div
+              role="status"
+              className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100"
+            >
+              <p className="font-semibold text-amber-200">Cycle income was estimated from legacy data</p>
+              <p className="mt-2 text-xs text-amber-100/85 leading-relaxed">
+                Please verify &quot;Cycle total income&quot; matches your real take-home. Editing that field clears
+                this notice.
+              </p>
+            </div>
+          )}
           <Field
             label="Cycle total income (VND)"
             type="number"
             value={us.total_income_cents}
             onChange={(e) =>
-              app.updateUserState({ total_income_cents: Math.floor(Number(e.target.value) || 0) })
+              app.updateUserState({
+                total_income_cents: Math.floor(Number(e.target.value) || 0),
+                pyfIncomeInferred: false,
+              })
             }
             helper="Gross take-home allocated to this budget cycle (used for PYF math)."
             Icon={Wallet}
@@ -185,7 +201,7 @@ function SettingsPage() {
             value={paydayInputValue}
             onChange={(e) =>
               app.updateUserState({
-                paydayDate: new Date(e.target.value + "T23:59:59").toISOString(),
+                paydayDate: paydayInputToIsoEndOfLocalDay(e.target.value),
               })
             }
             helper="When your splurge budget refills and the cycle starts over."

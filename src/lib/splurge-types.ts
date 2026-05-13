@@ -60,6 +60,8 @@ export interface UserState {
   displayCurrency: Currency;
   dailyContracts: DailyContract[];
   lastContractRefreshDate: string;
+  /** Set by migration when `total_income_cents` was inferred from legacy data — user should verify in Settings. */
+  pyfIncomeInferred?: boolean;
 }
 
 /** Alias for budget-cycle shape (same as `UserState`). */
@@ -146,6 +148,8 @@ export const ALL_CATEGORIES = [...ESSENTIAL_CATEGORIES, ...DISCRETIONARY_CATEGOR
 export const isEssentialCategory = (cat: string) => ESSENTIAL_CATEGORIES.includes(cat);
 
 export const STORAGE_KEY = "splurgeGuardData_v1";
+
+export const DEFAULT_USD_EXCHANGE_RATE = 26310;
 
 export interface LevelDef {
   level: number;

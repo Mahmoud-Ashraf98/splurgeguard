@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
 import { toast } from "sonner";
 import {
   AppData,
@@ -18,6 +17,7 @@ import {
   Reward,
   isEssentialCategory,
   levelForLifetimeDP,
+  DEFAULT_USD_EXCHANGE_RATE,
 } from "@/lib/splurge-types";
 import {
   applyWithdrawFromSavingsState,
@@ -29,7 +29,6 @@ import {
   dpForAmount,
   milestoneBonus,
   txIsCompleted,
-  totalSpentThisCycleNonEssential,
   uuid,
 } from "@/lib/splurge-utils";
 import { RANKS, getRankForXP } from "@/lib/ranks";
@@ -47,6 +46,7 @@ interface AppContextValue {
     total_income_cents: number;
     fixed_overhead_cents: number;
     savings_base_cents: number;
+    currentBalanceVND: number;
     paydayDate: string;
     targetHabit: string;
     weeklyHabitLimitVND: number;
@@ -57,7 +57,8 @@ interface AppContextValue {
     amountCents: number,
     type: "impulse" | "emergency",
     justification: string | null,
-  ) => boolean;
+    options?: { onSuccess?: () => void },
+  ) => void;
   startNewCycle: () => void;
   updateUserState: (patch: Partial<UserState>) => void;
   logExpense: (input: {
@@ -133,6 +134,9 @@ const migrate = (parsed: AppData): AppData => {
         return sum + Math.abs(t.amountVND ?? 0);
       }, 0);
       us.total_income_cents = (us.currentBalanceVND ?? 0) + totalFunSpent;
+      us.pyfIncomeInferred = true;
+    } else if (typeof us.pyfIncomeInferred !== "boolean") {
+      us.pyfIncomeInferred = false;
     }
     if (typeof us.fixed_overhead_cents !== "number") us.fixed_overhead_cents = 0;
     if (typeof us.savings_base_cents !== "number") us.savings_base_cents = 0;
@@ -464,10 +468,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const initUser: AppContextValue["initUser"] = (input) => {
     const today = new Date();
-    const pool = Math.max(
-      0,
-      input.total_income_cents - input.fixed_overhead_cents - input.savings_base_cents,
-    );
     try {
       localStorage.setItem("sg_last_savings_base_cents", String(input.savings_base_cents));
     } catch {
@@ -475,7 +475,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     const us: UserState = {
       userName: input.userName || "Master",
-      currentBalanceVND: pool,
+      currentBalanceVND: Math.max(0, Math.floor(input.currentBalanceVND)),
       essentialSpentVND: 0,
       cycleStartDate: today.toISOString(),
       paydayDate: input.paydayDate,
@@ -486,6 +486,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       savings_raided_cents: 0,
       raid_history: [],
       current_cycle_id: uuid(),
+      pyfIncomeInferred: false,
       totalDP: 0,
       lifetimeDP: 0,
       currentLevel: 1,
@@ -494,7 +495,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       lastLoginDate: dayKey(today),
       weeklyHabitLimitVND: input.weeklyHabitLimitVND ?? 0,
       targetHabit: (input.targetHabit ?? "").trim(),
-      usdExchangeRate: input.usdExchangeRate ?? 26310,
+      usdExchangeRate: input.usdExchangeRate ?? DEFAULT_USD_EXCHANGE_RATE,
       displayCurrency: input.displayCurrency ?? "VND",
       dailyContracts: [],
       lastContractRefreshDate: "",
@@ -502,28 +503,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [] });
   };
 
-  const withdrawFromSavings: AppContextValue["withdrawFromSavings"] = (amountCents, type, justification) => {
-    let success = false;
-    flushSync(() => {
-      setData((prev) => {
-        if (!prev.userState) return prev;
-        try {
-          const next = applyWithdrawFromSavingsState(prev.userState, amountCents, type, justification);
-          success = true;
-          return { ...prev, userState: next };
-        } catch (e) {
-          toast.error((e as Error).message);
-          return prev;
-        }
-      });
+  const withdrawFromSavings: AppContextValue["withdrawFromSavings"] = (amountCents, type, justification, options) => {
+    mutate((d) => {
+      if (!d.userState) return d;
+      try {
+        const next = applyWithdrawFromSavingsState(d.userState, amountCents, type, justification);
+        const onSuccess = options?.onSuccess;
+        if (onSuccess) queueMicrotask(onSuccess);
+        return { ...d, userState: next };
+      } catch (e) {
+        toast.error((e as Error).message);
+        return d;
+      }
     });
-    return success;
   };
 
   const startNewCycle: AppContextValue["startNewCycle"] = () => {
     mutate((d) => {
       if (!d.userState) return d;
       const us = d.userState;
+      try {
+        localStorage.setItem("sg_last_savings_base_cents", String(us.savings_base_cents ?? 0));
+      } catch {
+        /* noop */
+      }
       const pool = Math.max(0, us.total_income_cents - us.fixed_overhead_cents);
       return {
         ...d,

@@ -13,7 +13,8 @@ interface Props {
     amountCents: number,
     type: RaidKind,
     justification: string | null,
-  ) => boolean;
+    options?: { onSuccess?: () => void },
+  ) => void;
   maxRaidCents: number;
   displayCurrency: Currency;
   usdExchangeRate: number;
@@ -62,8 +63,7 @@ export function SavingsRaidModal({
   const onConfirm = () => {
     if (confirmDisabled) return;
     const j = kind === "emergency" ? justification.trim() : null;
-    const ok = withdrawFromSavings(amount, kind, j);
-    if (ok) setDone(true);
+    withdrawFromSavings(amount, kind, j, { onSuccess: () => setDone(true) });
   };
 
   return (
@@ -124,6 +124,7 @@ export function SavingsRaidModal({
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value.replace(/\D/g, ""))}
                   placeholder="0"
+                  aria-label="Raid amount in whole currency units"
                   className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-950/80 p-3 font-mono text-sm text-slate-100 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40"
                 />
 

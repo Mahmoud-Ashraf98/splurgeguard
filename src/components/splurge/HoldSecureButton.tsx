@@ -6,6 +6,8 @@ interface Props {
   onSecure: () => void;
   durationMs?: number;
   label?: string;
+  /** When true, the control is inert (e.g. invalid savings / allowance). */
+  disabled?: boolean;
 }
 
 const SIZE = 44;
@@ -13,7 +15,7 @@ const STROKE = 3;
 const R = (SIZE - STROKE) / 2;
 const C = 2 * Math.PI * R;
 
-export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT" }: Props) {
+export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT", disabled = false }: Props) {
   const [holding, setHolding] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
   const [flash, setFlash] = useState(false);
@@ -52,7 +54,7 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT"
 
   const start = (e: React.PointerEvent) => {
     e.preventDefault();
-    if (holding) return;
+    if (disabled || holding) return;
     completedRef.current = false;
     setHolding(true);
     setProgress(0);
@@ -77,6 +79,7 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT"
 
   return (
     <motion.button
+      disabled={disabled}
       animate={controls}
       onPointerDown={start}
       onPointerUp={cancel}
@@ -84,7 +87,9 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT"
       onPointerCancel={cancel}
       onContextMenu={(e) => e.preventDefault()}
       className={`relative flex-grow flex items-center justify-center gap-2 py-3 rounded-xl border font-mono text-[10px] font-bold uppercase tracking-widest transition-colors touch-none select-none ${
-        flash
+        disabled
+          ? "cursor-not-allowed opacity-40 bg-slate-800/40 border-slate-700 text-slate-500"
+          : flash
           ? "bg-cyan-400/40 border-cyan-300 text-white"
           : holding
           ? "bg-cyan-500/20 border-cyan-400/60 text-cyan-200 shadow-[0_0_20px_rgba(0,212,255,0.45)] animate-pulse"

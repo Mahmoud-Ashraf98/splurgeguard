@@ -1,28 +1,58 @@
-import { useEffect, useMemo, useState } from "react";
-import { Terminal, User, Wallet, Calendar, Target, Landmark, PiggyBank } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Terminal,
+  User,
+  Wallet,
+  Calendar,
+  Target,
+  Landmark,
+  PiggyBank,
+  Coins,
+} from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { daysBetween, fmtMoney } from "@/lib/splurge-utils";
+import { DEFAULT_USD_EXCHANGE_RATE } from "@/lib/splurge-types";
+import { isPaydayStrictlyInFuture, paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type Phase = "profile" | "savings";
 
 export function Onboarding() {
   const { initUser } = useApp();
   const [phase, setPhase] = useState<Phase>("profile");
-  const [userName, setUserName] = useState("Mahmoud");
+  const [userName, setUserName] = useState("");
   const [totalIncome, setTotalIncome] = useState("");
   const [fixedOverhead, setFixedOverhead] = useState("");
+  const [flexibleBalance, setFlexibleBalance] = useState("");
   const [payday, setPayday] = useState("");
   const [targetHabit, setTargetHabit] = useState("");
   const [habitLimit, setHabitLimit] = useState("");
   const [savingsDraft, setSavingsDraft] = useState(0);
 
+  const hasInitializedSavingsSlider = useRef(false);
+  const lastProfileTotals = useRef<{ income: number; overhead: number } | null>(null);
+
   const incomeNum = Math.max(0, Math.floor(Number(totalIncome.replace(/\D/g, "")) || 0));
   const overheadNum = Math.max(0, Math.floor(Number(fixedOverhead.replace(/\D/g, "")) || 0));
+  const flexBalanceNum = Math.max(0, Math.floor(Number(flexibleBalance.replace(/\D/g, "")) || 0));
   const maxSavingsPool = Math.max(0, incomeNum - overheadNum);
+  const rate = DEFAULT_USD_EXCHANGE_RATE;
 
   useEffect(() => {
-    if (phase !== "savings") return;
+    if (phase !== "profile") return;
+    const prev = lastProfileTotals.current;
+    if (
+      prev &&
+      (prev.income !== incomeNum || prev.overhead !== overheadNum)
+    ) {
+      hasInitializedSavingsSlider.current = false;
+    }
+    lastProfileTotals.current = { income: incomeNum, overhead: overheadNum };
+  }, [phase, incomeNum, overheadNum]);
+
+  useEffect(() => {
+    if (phase !== "savings" || hasInitializedSavingsSlider.current) return;
+    hasInitializedSavingsSlider.current = true;
     try {
       const raw = localStorage.getItem("sg_last_savings_base_cents");
       const suggested = raw != null ? Math.floor(Number(raw)) : 0;
@@ -34,32 +64,45 @@ export function Onboarding() {
 
   const daysUntilPayday = useMemo(() => {
     if (!payday) return 1;
-    return Math.max(1, daysBetween(new Date(), new Date(payday + "T23:59:59")));
+    const parts = payday.split("-").map((x) => parseInt(x, 10));
+    if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return 1;
+    const [y, m, d] = parts;
+    const end = new Date(y, m - 1, d, 23, 59, 59, 999);
+    return Math.max(1, daysBetween(new Date(), end));
   }, [payday]);
 
   const poolAfterSavings = Math.max(0, incomeNum - overheadNum - savingsDraft);
   const dailyAllowancePreview = Math.floor(poolAfterSavings / daysUntilPayday);
   const showAllowanceWarning = dailyAllowancePreview <= 0 && maxSavingsPool > 0;
+  const commitBlocked = showAllowanceWarning;
+
+  const habitWeeklyNum = Math.floor(Number(habitLimit.replace(/\D/g, "")) || 0);
+  const habitLimitProvided = /\d/.test(habitLimit);
 
   const canContinueProfile =
     userName.trim().length > 0 &&
     incomeNum > 0 &&
-    overheadNum >= 0 &&
-    incomeNum > overheadNum &&
-    !!payday &&
+    incomeNum >= overheadNum &&
+    flexBalanceNum > 0 &&
+    isPaydayStrictlyInFuture(payday) &&
     targetHabit.trim().length > 0 &&
-    Number(habitLimit.replace(/\D/g, "")) >= 0;
+    habitLimitProvided &&
+    habitWeeklyNum >= 0;
+
+  const incomeOverheadInvalid = incomeNum > 0 && overheadNum > 0 && incomeNum < overheadNum;
+  const zeroSavingsCapacity = maxSavingsPool === 0 && incomeNum > 0 && incomeNum >= overheadNum;
 
   const submitSavings = () => {
-    if (!canContinueProfile || !payday) return;
+    if (!canContinueProfile || !payday || commitBlocked) return;
     initUser({
       userName: userName.trim(),
       total_income_cents: incomeNum,
       fixed_overhead_cents: overheadNum,
       savings_base_cents: savingsDraft,
-      paydayDate: new Date(payday + "T23:59:59").toISOString(),
+      currentBalanceVND: flexBalanceNum,
+      paydayDate: paydayInputToIsoEndOfLocalDay(payday),
       targetHabit: targetHabit.trim(),
-      weeklyHabitLimitVND: Math.floor(Number(habitLimit.replace(/\D/g, "")) || 0),
+      weeklyHabitLimitVND: habitWeeklyNum,
     });
   };
 
@@ -86,7 +129,7 @@ export function Onboarding() {
           <h1 className="mb-2 text-4xl font-black text-white">Welcome to SplurgeGuard</h1>
           <p className="text-sm text-slate-400">
             {phase === "profile"
-              ? "Income, fixed costs, then pay-yourself-first savings."
+              ? "Income, fixed costs, wallet balance, then pay-yourself-first savings."
               : "Lock in savings — hold to commit your pledge."}
           </p>
         </div>
@@ -95,38 +138,49 @@ export function Onboarding() {
           {phase === "profile" ? (
             <>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">What should we call you?</label>
+                <label htmlFor="onboarding-user-name" className="mb-2 block text-sm text-slate-300">
+                  What should we call you?
+                </label>
                 <div className="relative">
-                  <User className={iconClass} />
+                  <User className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-user-name"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="e.g., Mahmoud"
                     className={inputClass}
+                    autoComplete="nickname"
                   />
                 </div>
               </div>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">Total take-home for this cycle (VND)</label>
+                <label htmlFor="onboarding-total-income" className="mb-2 block text-sm text-slate-300">
+                  Total take-home for this cycle (VND)
+                </label>
                 <div className="relative">
-                  <Landmark className={iconClass} />
+                  <Landmark className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-total-income"
                     inputMode="numeric"
                     value={totalIncome}
                     onChange={(e) => setTotalIncome(e.target.value.replace(/\D/g, ""))}
                     placeholder="8000000"
                     className={inputClass}
+                    aria-describedby="onboarding-total-income-hint"
                   />
                 </div>
-                <p className="mt-1 text-[10px] text-slate-500">
+                <p id="onboarding-total-income-hint" className="mt-1 text-[10px] text-slate-500">
                   Gross amount you are allocating across savings, fixed bills, and flexible spending until payday.
                 </p>
               </div>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">Fixed overhead (rent, debt minimums, etc.)</label>
+                <label htmlFor="onboarding-overhead" className="mb-2 block text-sm text-slate-300">
+                  Fixed overhead (rent, debt minimums, etc.)
+                </label>
                 <div className="relative">
-                  <Wallet className={iconClass} />
+                  <Wallet className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-overhead"
                     inputMode="numeric"
                     value={fixedOverhead}
                     onChange={(e) => setFixedOverhead(e.target.value.replace(/\D/g, ""))}
@@ -134,24 +188,67 @@ export function Onboarding() {
                     className={inputClass}
                   />
                 </div>
+                {incomeOverheadInvalid && (
+                  <p className="mt-2 text-xs font-medium text-rose-400" role="alert">
+                    Overhead cannot exceed total income. Reduce overhead or raise income.
+                  </p>
+                )}
+                {incomeNum > 0 && overheadNum > 0 && incomeNum === overheadNum && (
+                  <p className="mt-2 text-xs text-amber-300/90" role="status">
+                    Income equals overhead — you will have no room for PYF savings until income is higher than
+                    overhead.
+                  </p>
+                )}
               </div>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">When is your next payday?</label>
+                <label htmlFor="onboarding-flex-balance" className="mb-2 block text-sm text-slate-300">
+                  Current flexible balance (VND)
+                </label>
                 <div className="relative">
-                  <Calendar className={iconClass} />
+                  <Wallet className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-flex-balance"
+                    inputMode="numeric"
+                    value={flexibleBalance}
+                    onChange={(e) => setFlexibleBalance(e.target.value.replace(/\D/g, ""))}
+                    placeholder="5000000"
+                    className={inputClass}
+                    aria-describedby="onboarding-flex-balance-hint"
+                  />
+                </div>
+                <p id="onboarding-flex-balance-hint" className="mt-1 text-[10px] text-slate-500">
+                  How much you can spend on non-essentials right now (may differ from the theoretical budget after
+                  savings).
+                </p>
+              </div>
+              <div>
+                <label htmlFor="onboarding-payday" className="mb-2 block text-sm text-slate-300">
+                  Next payday (must be in the future)
+                </label>
+                <div className="relative">
+                  <Calendar className={iconClass} aria-hidden />
+                  <input
+                    id="onboarding-payday"
                     type="date"
                     value={payday}
                     onChange={(e) => setPayday(e.target.value)}
                     className={inputClass}
                   />
                 </div>
+                {payday && !isPaydayStrictlyInFuture(payday) && (
+                  <p className="mt-2 text-xs font-medium text-rose-400" role="alert">
+                    Choose a payday after today so the cycle length is valid.
+                  </p>
+                )}
               </div>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">What habit do you want to control/reduce?</label>
+                <label htmlFor="onboarding-habit" className="mb-2 block text-sm text-slate-300">
+                  What habit do you want to control/reduce?
+                </label>
                 <div className="relative">
-                  <Target className={iconClass} />
+                  <Target className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-habit"
                     value={targetHabit}
                     onChange={(e) => setTargetHabit(e.target.value)}
                     placeholder="e.g., Fast food, In-app purchases, Vaping"
@@ -160,17 +257,24 @@ export function Onboarding() {
                 </div>
               </div>
               <div>
-                <label className="mb-2 block text-sm text-slate-300">Weekly Limit for this habit (VND)</label>
+                <label htmlFor="onboarding-habit-limit" className="mb-2 block text-sm text-slate-300">
+                  Weekly limit for this habit (VND) <span className="text-slate-500 font-normal">(digits required)</span>
+                </label>
                 <div className="relative">
-                  <Target className={iconClass} />
+                  <Coins className={iconClass} aria-hidden />
                   <input
+                    id="onboarding-habit-limit"
                     inputMode="numeric"
                     value={habitLimit}
                     onChange={(e) => setHabitLimit(e.target.value.replace(/\D/g, ""))}
-                    placeholder="500000"
+                    placeholder="0 for none"
                     className={inputClass}
+                    aria-describedby="onboarding-habit-limit-hint"
                   />
                 </div>
+                <p id="onboarding-habit-limit-hint" className="mt-1 text-[10px] text-slate-500">
+                  Enter at least one digit (use 0 if you are not capping this habit weekly).
+                </p>
               </div>
               <button
                 type="button"
@@ -184,34 +288,48 @@ export function Onboarding() {
           ) : (
             <>
               <div className="flex items-center gap-2 text-cyan-400/90">
-                <PiggyBank className="h-5 w-5" />
+                <PiggyBank className="h-5 w-5" aria-hidden />
                 <span className="font-mono text-xs font-bold uppercase tracking-widest">Set your savings</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Slide to pledge part of your cycle income into PYF savings (still tracked in-app). Maximum is your
                 income minus fixed overhead.
               </p>
-              <div className="pt-2">
-                <input
-                  type="range"
-                  min={0}
-                  max={maxSavingsPool}
-                  step={10000}
-                  value={Math.min(savingsDraft, maxSavingsPool)}
-                  onChange={(e) => setSavingsDraft(Number(e.target.value))}
-                  className="w-full accent-cyan-400"
-                />
-                <div className="mt-2 flex justify-between font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                  <span>{fmtMoney(0, "VND", 26310)}</span>
-                  <span>{fmtMoney(maxSavingsPool, "VND", 26310)}</span>
+              {zeroSavingsCapacity ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-100"
+                >
+                  No savings capacity — income minus overhead is zero. Increase income or reduce overhead on the
+                  previous step, then return here.
                 </div>
-              </div>
+              ) : (
+                <div className="pt-2">
+                  <label htmlFor="onboarding-savings-range" className="sr-only">
+                    Savings pledge amount
+                  </label>
+                  <input
+                    id="onboarding-savings-range"
+                    type="range"
+                    min={0}
+                    max={maxSavingsPool}
+                    step={10000}
+                    value={Math.min(savingsDraft, maxSavingsPool)}
+                    onChange={(e) => setSavingsDraft(Number(e.target.value))}
+                    className="w-full accent-cyan-400"
+                  />
+                  <div className="mt-2 flex justify-between font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                    <span>{fmtMoney(0, "VND", rate)}</span>
+                    <span>{fmtMoney(maxSavingsPool, "VND", rate)}</span>
+                  </div>
+                </div>
+              )}
               <p className="rounded-xl border border-slate-700/80 bg-slate-950/40 p-3 text-sm text-slate-200 leading-relaxed">
                 If you save{" "}
-                <span className="font-mono font-bold text-cyan-300">{fmtMoney(savingsDraft, "VND", 26310)}</span>,
+                <span className="font-mono font-bold text-cyan-300">{fmtMoney(savingsDraft, "VND", rate)}</span>,
                 your daily allowance will be{" "}
                 <span className="font-mono font-bold text-emerald-300">
-                  {fmtMoney(dailyAllowancePreview, "VND", 26310)}
+                  {fmtMoney(dailyAllowancePreview, "VND", rate)}
                 </span>
                 .
               </p>
@@ -220,7 +338,8 @@ export function Onboarding() {
                   role="alert"
                   className="rounded-xl border-2 border-amber-500/70 bg-amber-500/10 p-4 text-sm font-semibold text-amber-100 shadow-[0_0_20px_rgba(245,158,11,0.25)]"
                 >
-                  Warning: This savings rate leaves you with no daily spending allowance.
+                  Warning: This savings rate leaves you with no daily spending allowance. Adjust the slider or go
+                  back — commit is disabled until allowance is above zero.
                 </div>
               )}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -231,7 +350,11 @@ export function Onboarding() {
                 >
                   ← Back
                 </button>
-                <HoldSecureButton onSecure={submitSavings} label="COMMIT SAVINGS" />
+                <HoldSecureButton
+                  onSecure={submitSavings}
+                  label="COMMIT SAVINGS"
+                  disabled={commitBlocked}
+                />
               </div>
             </>
           )}
