@@ -142,31 +142,27 @@ function Index() {
             {us.currentLevel}
           </div>
 
-          <div className="p-5 flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-4 min-w-0">
+          <div className="p-5 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 relative z-10">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
               {/* Targeting Reticle Avatar */}
               <div className="w-16 h-16 flex-shrink-0 relative">
                 <svg
-                  className="absolute text-cyan-500/40"
+                  className="absolute text-cyan-500/40 animate-[spin_10s_linear_infinite] will-change-transform"
                   style={{
                     inset: "-4px",
                     width: "calc(100% + 8px)",
                     height: "calc(100% + 8px)",
-                    animation: "spin 10s linear infinite",
-                    willChange: "transform",
                   }}
                   viewBox="0 0 100 100"
                 >
                   <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="5 5" />
                 </svg>
                 <svg
-                  className="absolute text-white/10"
+                  className="absolute text-white/10 animate-[spin_16s_linear_infinite_reverse] will-change-transform"
                   style={{
                     inset: "-8px",
                     width: "calc(100% + 16px)",
                     height: "calc(100% + 16px)",
-                    animation: "spin 16s linear infinite reverse",
-                    willChange: "transform",
                   }}
                   viewBox="0 0 100 100"
                 >
@@ -192,7 +188,7 @@ function Index() {
                   Mindset: Focused
                 </p>
                 <h1
-                  className="text-2xl font-black uppercase tracking-widest truncate"
+                  className="text-2xl font-black uppercase tracking-widest break-words"
                   style={{
                     background: "linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)",
                     WebkitBackgroundClip: "text",
