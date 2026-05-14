@@ -21,6 +21,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#0a0e1a" },
       { title: "SplurgeGuard — Fight Impulse Spending" },
       { name: "description", content: "A behavioral finance PWA: cooling-off vault, smart daily limit, discipline points." },
+      { property: "og:site_name", content: "SplurgeGuard" },
       { property: "og:title", content: "SplurgeGuard — Fight Impulse Spending" },
       { name: "twitter:title", content: "SplurgeGuard — Fight Impulse Spending" },
       { property: "og:description", content: "A behavioral finance PWA: cooling-off vault, smart daily limit, discipline points." },
@@ -37,6 +38,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.json" },
       { rel: "icon", type: "image/png", href: "/icon.png" },
       { rel: "apple-touch-icon", href: "/icon.png" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "SplurgeGuard",
+          url: "https://splurgeguard.lovable.app",
+          logo: "https://splurgeguard.lovable.app/icon.png",
+          description: "A behavioral finance PWA that helps you fight impulse spending.",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "SplurgeGuard",
+          url: "https://splurgeguard.lovable.app",
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -70,9 +93,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
-        <div className="mx-auto min-h-screen max-w-md bg-slate-950 pb-20">
+        <main className="mx-auto min-h-screen max-w-md bg-slate-950 pb-20">
           <Outlet />
-        </div>
+        </main>
         <BottomNav />
         <BreachModal />
         <AscensionCinematic />
