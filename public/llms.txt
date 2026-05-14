@@ -1,0 +1,13 @@
+# SplurgeGuard
+
+> A 100% offline, gamified personal finance PWA that helps you fight impulse spending through a cooling-off vault, smart daily limits, and discipline points.
+
+SplurgeGuard runs entirely in your browser via localStorage — no accounts, no servers, no tracking. It uses behavioral friction (cooling-off periods, daily limits, streaks) to help you build financial discipline.
+
+## Pages
+
+- [Dashboard](/): Daily limit ring, active challenges, streak, and rank progress.
+- [Vault](/vault): Cooling-off queue for impulse purchases — items unlock after a delay so you can decide rationally.
+- [Stats](/stats): Spending breakdown, burn rate, vice firewall, and the Freedom Engine (preserved capital).
+- [Rewards](/exchange): Spend earned Discipline Points on real-world rewards you've defined.
+- [Settings](/settings): Identity, budget cycle, notifications, backup/restore, and DP rules.
