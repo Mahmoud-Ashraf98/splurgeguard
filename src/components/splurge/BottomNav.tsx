@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, BarChart3, Lock, Settings as SettingsIcon, ShoppingBag } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -19,7 +20,10 @@ export function BottomNav() {
     (r) => r.status === "active" && r.costDP <= totalDP
   );
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur-md">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur-md"
+      style={{ "--bottom-nav-height": "4.25rem" } as CSSProperties}
+    >
       <div className="mx-auto flex max-w-md items-stretch justify-around">
         {items.map(({ to, label, Icon }) => {
           const active = loc.pathname === to;
@@ -59,6 +63,12 @@ export function BottomNav() {
                 )}
               </span>
               <span className="font-mono">{label}</span>
+              {active && (
+                <span
+                  className="absolute -bottom-2.5 h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]"
+                  aria-hidden="true"
+                />
+              )}
             </Link>
           );
         })}

@@ -113,6 +113,7 @@ function StatsPage() {
     .filter((t) => !t.isEssential && txIsCompleted(t))
     .reduce((s, t) => s + t.amountVND, 0);
   const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
+  const funMoneyDonutTotal = breakdown.reduce((s, b) => s + b.amt, 0);
 
   // === Freedom Engine: Total Preserved Capital ===
   const totalPreservedCapital: number = (app.data.vaultItems ?? [])
@@ -556,28 +557,42 @@ function StatsPage() {
           <p className="py-6 text-center text-xs text-slate-500">No discretionary spending yet.</p>
         ) : (
           <div className="flex items-center gap-5">
-            <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
-              <circle cx="70" cy="70" r={radius} fill="none" stroke="#1e293b" strokeWidth="20" />
-              {breakdown.map((b) => {
-                const portion = b.amt / totalBreakdown;
-                const dash = circ * portion;
-                const offset = circ * cumulative;
-                cumulative += portion;
-                return (
-                  <circle
-                    key={b.cat}
-                    cx="70"
-                    cy="70"
-                    r={radius}
-                    fill="none"
-                    stroke={b.color}
-                    strokeWidth="20"
-                    strokeDasharray={`${dash} ${circ}`}
-                    strokeDashoffset={-offset}
-                  />
-                );
-              })}
-            </svg>
+            <div className="relative h-[140px] w-[140px] shrink-0">
+              <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
+                <circle cx="70" cy="70" r={radius} fill="none" stroke="#1e293b" strokeWidth="20" />
+                {breakdown.map((b) => {
+                  const portion = b.amt / totalBreakdown;
+                  const dash = circ * portion;
+                  const offset = circ * cumulative;
+                  cumulative += portion;
+                  return (
+                    <circle
+                      key={b.cat}
+                      cx="70"
+                      cy="70"
+                      r={radius}
+                      fill="none"
+                      stroke={b.color}
+                      strokeWidth="20"
+                      strokeDasharray={`${dash} ${circ}`}
+                      strokeDashoffset={-offset}
+                    />
+                  );
+                })}
+              </svg>
+              <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center">
+                <span className="mb-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  Total
+                </span>
+                <span className="text-lg font-bold tabular-nums leading-none text-white">
+                  {new Intl.NumberFormat("vi-VN", {
+                    style: "currency",
+                    currency: "VND",
+                    maximumFractionDigits: 0,
+                  }).format(funMoneyDonutTotal)}
+                </span>
+              </div>
+            </div>
             <div className="flex-1 space-y-1.5">
               {breakdown.map((b) => (
                 <div key={b.cat} className="flex items-center gap-2 text-xs">
@@ -713,8 +728,8 @@ function StatsPage() {
                     </p>
                   </div>
 
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
-                    {`[DRAIN: -${fmtMoney(dailyDrain, cur, rate)} / DAY]`}
+                  <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-cyan-600/50">
+                    {`[-${fmtMoney(dailyDrain, cur, rate)}/d]`}
                   </p>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">

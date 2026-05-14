@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -6,12 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
 import { BottomNav } from "@/components/splurge/BottomNav";
 import { BreachModal } from "@/components/splurge/BreachModal";
 import { AscensionCinematic } from "@/components/splurge/AscensionCinematic";
+import { LogSheet } from "@/components/splurge/LogSheet";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -88,30 +91,75 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const shellChromeStyle = {
+  "--bottom-nav-height": "4.25rem",
+} as CSSProperties;
+
+function AppShell() {
+  const app = useApp();
+  const us = app.data.userState;
+
+  return (
+    <div className="relative min-h-screen" style={shellChromeStyle}>
+      <main className="mx-auto min-h-screen max-w-md bg-slate-950 pb-[calc(var(--bottom-nav-height,4rem)+4.5rem)]">
+        <Outlet />
+      </main>
+      {us && (
+        <>
+          <LogSheet open={app.logSheetOpen} onClose={() => app.setLogSheetOpen(false)} />
+          <div
+            className="fixed left-0 right-0 z-50 flex justify-center pointer-events-none"
+            style={{ bottom: `calc(var(--bottom-nav-height, 4rem) + 1.25rem)` }}
+          >
+            <button
+              type="button"
+              onClick={() => app.setLogSheetOpen(true)}
+              className="
+                pointer-events-auto
+                flex items-center gap-2
+                px-6 py-3
+                bg-cyan-500 hover:bg-cyan-400
+                text-slate-950 font-mono font-bold text-sm tracking-widest uppercase
+                rounded-full
+                shadow-[0_0_20px_rgba(34,211,238,0.35),0_4px_24px_rgba(0,0,0,0.5)]
+                hover:shadow-[0_0_30px_rgba(34,211,238,0.55),0_4px_24px_rgba(0,0,0,0.6)]
+                active:scale-95
+                transition-all duration-150
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80
+              "
+            >
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
+              LOG EXPENSE
+            </button>
+          </div>
+        </>
+      )}
+      <BottomNav />
+      <BreachModal />
+      <AscensionCinematic />
+      <Toaster
+        theme="dark"
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: "#111827",
+            border: "1px solid #1e293b",
+            color: "#f1f5f9",
+            fontFamily: "JetBrains Mono, monospace",
+            fontSize: "13px",
+          },
+        }}
+      />
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>
-        <main className="mx-auto min-h-screen max-w-md bg-slate-950 pb-20">
-          <Outlet />
-        </main>
-        <BottomNav />
-        <BreachModal />
-        <AscensionCinematic />
-        <Toaster
-          theme="dark"
-          position="top-center"
-          toastOptions={{
-            style: {
-              background: "#111827",
-              border: "1px solid #1e293b",
-              color: "#f1f5f9",
-              fontFamily: "JetBrains Mono, monospace",
-              fontSize: "13px",
-            },
-          }}
-        />
+        <AppShell />
       </AppProvider>
     </QueryClientProvider>
   );

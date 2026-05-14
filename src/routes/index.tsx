@@ -10,7 +10,6 @@ import {
 import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
-import { LogSheet } from "@/components/splurge/LogSheet";
 import { LevelGuideModal } from "@/components/splurge/LevelGuideModal";
 import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { ForfeitModal } from "@/components/splurge/ForfeitModal";
@@ -44,7 +43,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const app = useApp();
   const navigate = useNavigate();
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [showLevelGuide, setShowLevelGuide] = useState(false);
   const [showLimitInfo, setShowLimitInfo] = useState(false);
   const [forfeitTarget, setForfeitTarget] = useState<DailyContract | null>(null);
@@ -117,7 +115,7 @@ function Index() {
   const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon..6=Sun
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-32 pt-6">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-8 pt-6">
       {/* ── 1. SOVEREIGN BLACK CARD (OPERATOR ID) ──────────────────────── */}
       <div className="relative mt-4 mb-8 group">
         <div
@@ -441,13 +439,15 @@ function Index() {
           })}
         </div>
         {/* Dots */}
-        <div className="px-5 flex items-center justify-center gap-1.5">
+        <div className="mt-3 flex items-center justify-center gap-2.5 px-5">
           {dailyContracts.map((_, i) => (
             <span
               key={i}
-              className={`h-1 rounded-full transition-all ${
-                i === carouselIndex ? "w-5 bg-cyan-400 shadow-[0_0_8px_rgba(0,212,255,0.6)]" : "w-1.5 bg-slate-700"
-              }`}
+              className={
+                i === carouselIndex
+                  ? "h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)] transition-all duration-300"
+                  : "h-1.5 w-1.5 rounded-full bg-slate-700 transition-all duration-300"
+              }
             />
           ))}
         </div>
@@ -657,21 +657,6 @@ function Index() {
       </div>
       </div>
 
-      {/* CTA */}
-      <div className="fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5">
-        <button
-          onClick={() => setSheetOpen(true)}
-          className="cta-ripple relative overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_28px_-6px_#00FFA3] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite]"
-          style={{
-            backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)",
-            willChange: "transform",
-          }}
-        >
-          <Plus className="cta-plus h-5 w-5" /> Log Expense
-        </button>
-      </div>
-
-      <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       {showLevelGuide && <LevelGuideModal onClose={() => setShowLevelGuide(false)} />}
       <ForfeitModal
         open={!!forfeitTarget}

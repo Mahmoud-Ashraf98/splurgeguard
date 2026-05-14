@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { Lock, CheckCircle2, Shield, Trash2, Trophy, Clock } from 'lucide-react';
+import { Lock, CheckCircle2, Trash2, Trophy, Clock } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { fmtMoney } from '@/lib/splurge-utils';
 import type { VaultItem } from '@/lib/splurge-types';
@@ -26,50 +26,6 @@ function formatHMS(ms: number) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-2xl border border-dashed border-white/5 bg-slate-900/20 p-12 text-center backdrop-blur-xl">
-      <div className="relative mx-auto mb-6 flex h-32 w-32 items-center justify-center">
-        <svg
-          className="absolute inset-0 animate-spin"
-          style={{ animationDuration: '12s' }}
-          viewBox="0 0 128 128"
-          fill="none"
-        >
-          <circle
-            cx="64"
-            cy="64"
-            r="60"
-            stroke="rgba(0,212,255,0.3)"
-            strokeWidth="1.5"
-            strokeDasharray="8 6"
-            strokeLinecap="round"
-          />
-        </svg>
-        <svg className="absolute inset-0" viewBox="0 0 128 128" fill="none">
-          <circle cx="64" cy="64" r="48" stroke="rgba(0,212,255,0.1)" strokeWidth="1" />
-        </svg>
-        <Shield
-          className="relative h-14 w-14 text-cyan-400/40"
-          style={{ animation: 'vault-pulse 4s ease-in-out infinite' }}
-        />
-      </div>
-      <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-400/60">
-        Containment Status
-      </p>
-      <p className="mt-1 font-mono text-sm uppercase tracking-widest text-slate-300">
-        Perimeter Secure.
-      </p>
-      <p className="mt-4 px-4 text-xs italic text-slate-500">
-        "The gap between stimulus and response is where your power lies. Lock it."
-      </p>
-      <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.3em] text-slate-600">
-        Zero impulses detected.
-      </p>
-    </div>
-  );
 }
 
 function SectionLabel({
@@ -347,7 +303,28 @@ function VaultPage() {
         </p>
       </header>
 
-      {items.length === 0 && <EmptyState />}
+      {cooling.length === 0 && ready.length === 0 && (
+        <div
+          className="
+            mx-4 mt-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-700/80
+            bg-slate-900/40 p-8 text-center
+          "
+        >
+          <div
+            className="
+              mb-1 flex h-12 w-12 items-center justify-center rounded-full
+              border border-slate-700 bg-slate-800
+            "
+          >
+            <Lock className="h-5 w-5 text-slate-500" />
+          </div>
+          <p className="font-mono text-sm tracking-wide text-slate-300">VAULT EMPTY</p>
+          <p className="max-w-[220px] text-xs leading-relaxed text-slate-500">
+            Resist an impulse purchase and stash it here.{' '}
+            <span className="text-slate-400">Build your Freedom Engine.</span>
+          </p>
+        </div>
+      )}
 
       {cooling.length > 0 && (
         <section className="mb-8">
