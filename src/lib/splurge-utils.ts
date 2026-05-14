@@ -1,5 +1,4 @@
 import type { RaidRecord, UserState, Transaction } from "./splurge-types";
-import type { UserState, Transaction } from "./splurge-types";
 import type { Subscription } from "./schemas";
 import { getDaysSinceFrom } from "./dateUtils";
 
