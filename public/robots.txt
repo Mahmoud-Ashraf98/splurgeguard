@@ -1,4 +1,70 @@
+# public/robots.txt
+
 User-agent: *
-Allow: /
+
+# Allow only the marketing entry points
+Allow: /$
+Allow: /manifest.json
+Allow: /favicon.ico
+Allow: /assets/
+Allow: /icons/
+
+# Block all localStorage-dependent PWA routes
+Disallow: /vault
+Disallow: /vault/
+Disallow: /exchange
+Disallow: /exchange/
+Disallow: /log
+Disallow: /log/
+Disallow: /settings
+Disallow: /settings/
+Disallow: /onboarding
+Disallow: /onboarding/
+
+# --- AI Crawlers (bandwidth protection) ---
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Omgilibot
+Disallow: /
 
 Sitemap: https://splurgeguard.lovable.app/sitemap.xml
