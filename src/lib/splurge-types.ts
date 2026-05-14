@@ -1,4 +1,4 @@
-import type { Subscription } from "./schemas";
+import type { Subscription, TransactionMetadata } from "./schemas";
 
 export type Currency = "VND" | "USD";
 export type VaultStatus = "cooling" | "ready" | "approved" | "discarded";
@@ -87,6 +87,8 @@ export interface Transaction {
   amortizeDays?: number;
   /** Legacy field (older entries) — readers fall back to this. */
   amortizationDays?: number;
+  /** Parsed agent metadata (optional). Legacy rows rely on amortizeDays / amortizationDays only. */
+  metadata?: TransactionMetadata;
 }
 
 export interface VaultItem {

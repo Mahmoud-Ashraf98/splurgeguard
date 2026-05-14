@@ -32,6 +32,8 @@ import {
   txIsCompleted,
   uuid,
 } from "@/lib/splurge-utils";
+import { buildIdempotencyKey, buildIdempotencyKeyFromPending } from "@/lib/amortization";
+import { transactionMetadataSchema } from "@/lib/schemas";
 import { RANKS, getRankForXP } from "@/lib/ranks";
 import { generateDailyContracts } from "@/lib/contracts";
 
@@ -581,8 +583,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logExpense: AppContextValue["logExpense"] = (input) => {
     if (!data.userState) return false;
+    const plannedTimestamp = new Date().toISOString();
+    const dupKey = buildIdempotencyKeyFromPending(input, plannedTimestamp);
+    if (data.transactions.some((t) => buildIdempotencyKey(t) === dupKey)) {
+      console.warn("[INGESTION] Duplicate transaction blocked:", dupKey);
+      return false;
+    }
+
     const isEss = isEssentialCategory(input.category);
     const amortDays = input.amortizationDays && input.amortizationDays > 1 ? Math.floor(input.amortizationDays) : undefined;
+    const metadataCandidate =
+      amortDays !== undefined
+        ? ({
+            is_recurring_subscription: false as const,
+            amortization_schedule: {
+              spread_days: amortDays,
+              amortization_start_date: plannedTimestamp,
+            },
+          } as const)
+        : ({ is_recurring_subscription: false as const } as const);
+    const metadataParsed = transactionMetadataSchema.safeParse(metadataCandidate);
+    const metadata = metadataParsed.success
+      ? metadataParsed.data
+      : ({ is_recurring_subscription: false as const });
     const habit = data.userState.targetHabit;
     const habitLower = habit?.toLowerCase().trim();
     const isHabit = !!habitLower && input.category.toLowerCase().trim() === habitLower;
@@ -600,7 +623,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           if (!d.userState) return d;
           const tx: Transaction = {
             id: uuid(),
-            timestamp: new Date().toISOString(),
+            timestamp: plannedTimestamp,
             amountVND: input.amountVND,
             originalAmount: input.originalAmount,
             originalCurrency: input.originalCurrency,
@@ -612,6 +635,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             vault_expires_at: null,
             amortizeDays: amortDays,
             amortizationDays: amortDays,
+            metadata,
           };
           // -25 penalty (does NOT subtract from lifetime), then add the small dpForAmount gain
           const gain = dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
@@ -645,7 +669,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!d.userState) return d;
       const tx: Transaction = {
         id: uuid(),
-        timestamp: new Date().toISOString(),
+        timestamp: plannedTimestamp,
         amountVND: input.amountVND,
         originalAmount: input.originalAmount,
         originalCurrency: input.originalCurrency,
@@ -657,6 +681,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         vault_expires_at: null,
         amortizeDays: amortDays,
         amortizationDays: amortDays,
+        metadata,
       };
       const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
       let us = applyDPGain(d.userState, dpEarned);
