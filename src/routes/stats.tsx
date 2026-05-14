@@ -42,6 +42,16 @@ import { getSubscriptions } from "@/utils/subscriptions.functions";
 import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
 
 export const Route = createFileRoute("/stats")({
+  head: () => ({
+    meta: [
+      { title: "Stats — SplurgeGuard" },
+      { name: "description", content: "Spending breakdown, tactical burn rate, vice firewall, and the Freedom Engine — see how much capital you've preserved." },
+      { property: "og:title", content: "Stats — Watch your discipline compound" },
+      { property: "og:description", content: "Cycle pacing, category breakdown, and total preserved capital." },
+      { property: "og:url", content: "https://splurgeguard.lovable.app/stats" },
+    ],
+    links: [{ rel: "canonical", href: "https://splurgeguard.lovable.app/stats" }],
+  }),
   component: StatsPage,
   loader: async () => {
     const subscriptions = await getSubscriptions();
@@ -346,20 +356,21 @@ function StatsPage() {
                     The Freedom Engine
                   </p>
                 </div>
-                <span
-                  className="text-xs font-bold tracking-widest uppercase cursor-pointer text-slate-400 hover:text-cyan-400 transition-colors duration-200 underline-offset-2 hover:underline select-none"
+                <button
+                  type="button"
+                  className="text-xs font-bold tracking-widest uppercase cursor-pointer text-slate-400 hover:text-cyan-400 transition-colors duration-200 underline-offset-2 hover:underline select-none bg-transparent border-0 p-0"
                   onClick={() => setTrophyRoomOpen(true)}
                 >
                   Trophy Room
-                </span>
+                </button>
               </div>
 
               {/* ── Capital Core — Hero Metric ───────────────────────────── */}
               <div className="flex flex-col items-center text-center py-3 sm:py-5 mb-5">
-                <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.45em] text-emerald-400/70 mb-2">
+                <h2 className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.45em] text-emerald-400/70 mb-2">
                   Total Capital Preserved
-                </span>
-                <h2
+                </h2>
+                <p
                   className="font-mono font-black tabular-nums text-white tracking-tight leading-none break-all"
                   style={{
                     fontSize: 'clamp(2rem, 9vw, 4.25rem)',
@@ -370,7 +381,7 @@ function StatsPage() {
                   }}
                 >
                   {fmtMoney(totalPreservedCapital, cur, rate)}
-                </h2>
+                </p>
                 <span className="mt-3 font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
                   {discardedCount} Impulse{discardedCount === 1 ? '' : 's'} Neutralized
                 </span>
