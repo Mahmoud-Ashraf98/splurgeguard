@@ -1,7 +1,6 @@
 import type { RaidRecord, UserState, Transaction } from "./splurge-types";
 import type { UserState, Transaction } from "./splurge-types";
 import type { Subscription } from "./schemas";
-main
 import { getDaysSinceFrom } from "./dateUtils";
 
 /** Sum of active subscriptions expressed as an equivalent monthly total (integer minor units / VND). */
@@ -9,8 +8,7 @@ export function calculateSubscriptionMonthlyTotalCents(subs: Subscription[]): nu
   return subs
     .filter((s) => s.isActive)
     .reduce((total, sub) => {
-      const monthlyEquivalent =
-        sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
+      const monthlyEquivalent = sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
       return total + monthlyEquivalent;
     }, 0);
 }
@@ -52,8 +50,7 @@ export const uuid = () =>
   (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();
 
 /** Resolve a transaction's amortization lifespan in days, defaulting to 1. */
-export const txLifespan = (tx: Transaction): number =>
-  Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
+export const txLifespan = (tx: Transaction): number => Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
 
 const dateFromKey = (k: string) => new Date(`${k}T12:00:00`);
 
@@ -81,13 +78,7 @@ export const totalSpentThisCycleNonEssential = (us: UserState, txs: Transaction[
  */
 export const computeCurrentFlexiblePoolCents = (us: UserState, txs: Transaction[]) => {
   const spent = totalSpentThisCycleNonEssential(us, txs);
-  return (
-    us.total_income_cents -
-    us.fixed_overhead_cents -
-    us.savings_base_cents -
-    spent +
-    us.savings_raided_cents
-  );
+  return us.total_income_cents - us.fixed_overhead_cents - us.savings_base_cents - spent + us.savings_raided_cents;
 };
 
 /** Pure state transition for a savings raid; throws on invalid input or insufficient savings. */
@@ -213,10 +204,7 @@ export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, day
   const cutoff = today.getTime() - days * 86400000;
   return txs
     .filter(
-      (t) =>
-        txIsCompleted(t) &&
-        matchesHabit(t.category, targetHabit) &&
-        new Date(t.timestamp).getTime() >= cutoff,
+      (t) => txIsCompleted(t) && matchesHabit(t.category, targetHabit) && new Date(t.timestamp).getTime() >= cutoff,
     )
     .reduce((s, t) => s + t.amountVND, 0);
 };
