@@ -7,6 +7,16 @@ import type { VaultItem } from '@/lib/splurge-types';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/vault')({
+  head: () => ({
+    meta: [
+      { title: 'Vault — SplurgeGuard' },
+      { name: 'description', content: 'Cooling-off queue for impulse purchases. Items unlock after a delay so you can decide rationally.' },
+      { property: 'og:title', content: 'The Vault — Cool off your impulse buys' },
+      { property: 'og:description', content: 'Behavioral friction that turns impulse into intention.' },
+      { property: 'og:url', content: 'https://splurgeguard.lovable.app/vault' },
+    ],
+    links: [{ rel: 'canonical', href: 'https://splurgeguard.lovable.app/vault' }],
+  }),
   component: VaultPage,
 });
 
@@ -74,7 +84,7 @@ function SectionLabel({
   return (
     <div className={`flex items-center gap-2 mb-3 ${color}`}>
       {icon}
-      <p className="font-mono text-[9px] uppercase tracking-[0.4em]">{label}</p>
+      <h2 className="font-mono text-[9px] uppercase tracking-[0.4em]">{label}</h2>
     </div>
   );
 }

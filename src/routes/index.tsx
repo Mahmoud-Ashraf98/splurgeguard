@@ -27,6 +27,16 @@ const CONTRACT_ICON_MAP: Record<string, LucideIcon> = {
 const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard — SplurgeGuard" },
+      { name: "description", content: "Your daily impulse-spending control center: smart limit ring, active challenges, streak, and rank progress." },
+      { property: "og:title", content: "SplurgeGuard Dashboard — Stay in control today" },
+      { property: "og:description", content: "Track your daily limit, challenges, and ascension rank in one glance." },
+      { property: "og:url", content: "https://splurgeguard.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://splurgeguard.lovable.app/" }],
+  }),
   component: Index,
 });
 
@@ -193,7 +203,7 @@ function Index() {
                     filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.15))",
                   }}
                 >
-                  {us.userName || "Master"}
+                  {us.userName || "Master"} — Splurge Control Center
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <button

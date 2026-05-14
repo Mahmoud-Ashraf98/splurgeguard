@@ -11,6 +11,16 @@ export const Route = createFileRoute("/exchange")({
   validateSearch: (s: Record<string, unknown>): ExchangeSearch => ({
     new: s.new === true || s.new === "true",
   }),
+  head: () => ({
+    meta: [
+      { title: "Rewards — SplurgeGuard" },
+      { name: "description", content: "Spend your earned Discipline Points on real-world rewards you've defined for yourself." },
+      { property: "og:title", content: "Rewards — Cash in your Discipline Points" },
+      { property: "og:description", content: "Turn delayed gratification into guilt-free rewards." },
+      { property: "og:url", content: "https://splurgeguard.lovable.app/exchange" },
+    ],
+    links: [{ rel: "canonical", href: "https://splurgeguard.lovable.app/exchange" }],
+  }),
   component: ExchangePage,
 });
 
@@ -338,6 +348,7 @@ function Stepper({
           onContextMenu={preventCtx}
           disabled={costDP <= 50}
           style={noSelectStyle}
+          aria-label="Decrease cost"
           className="select-none touch-none flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <Minus className="h-5 w-5" />
@@ -355,6 +366,7 @@ function Stepper({
           {...incHandlers}
           onContextMenu={preventCtx}
           style={noSelectStyle}
+          aria-label="Increase cost"
           className="select-none touch-none flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition-all hover:border-cyan-400/60 hover:text-cyan-300"
         >
           <Plus className="h-5 w-5" />
@@ -382,7 +394,7 @@ function IntegrityModal({ onClose }: { onClose: () => void }) {
         <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.4em] text-amber-300">
           Integrity Check
         </p>
-        <h3 className="mb-4 text-xl font-black text-white">Not enough Discipline Points… yet.</h3>
+        <h2 className="mb-4 text-xl font-black text-white">Not enough Discipline Points… yet.</h2>
         <p className="mb-6 text-sm leading-relaxed text-slate-300">
           We know you want this, and it's tempting to close the app and just go buy it anyway. But your past self set these rules to protect your future self. Earn the points. It will feel so much better when it's real.
         </p>
