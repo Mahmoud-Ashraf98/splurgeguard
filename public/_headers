@@ -1,0 +1,21 @@
+# public/_headers
+
+# Landing page: explicitly indexable
+/
+  X-Robots-Tag: index, follow
+
+# Block indexing on ALL app routes at the HTTP layer
+/vault/*
+  X-Robots-Tag: noindex, nofollow
+
+/exchange/*
+  X-Robots-Tag: noindex, nofollow
+
+/log/*
+  X-Robots-Tag: noindex, nofollow
+
+/settings/*
+  X-Robots-Tag: noindex, nofollow
+
+/onboarding/*
+  X-Robots-Tag: noindex, nofollow
