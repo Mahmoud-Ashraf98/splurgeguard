@@ -95,6 +95,8 @@ interface AppContextValue {
   // Ascension Protocol
   pendingAscension: number | null;
   clearPendingAscension: () => void;
+  logSheetOpen: boolean;
+  setLogSheetOpen: (open: boolean) => void;
 }
 
 const defaultData: AppData = {
@@ -224,6 +226,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
   const [pendingAscension, setPendingAscension] = useState<number | null>(null);
+  const [logSheetOpen, setLogSheetOpen] = useState(false);
   const dailyCheckRan = useRef(false);
   const notifiedReadyRef = useRef<Set<string>>(new Set());
 
@@ -977,6 +980,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearPendingAscension,
     withdrawFromSavings,
     startNewCycle,
+    logSheetOpen,
+    setLogSheetOpen,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

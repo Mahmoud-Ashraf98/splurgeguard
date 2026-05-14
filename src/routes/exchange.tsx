@@ -239,9 +239,9 @@ function ListView({
                       <span>Progress</span>
                       <span className="tabular-nums">{dp} / {r.costDP}</span>
                     </div>
-                    <div className="h-1 overflow-hidden rounded-full bg-slate-800/60">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800/60">
                       <div
-                        className="h-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+                        className="h-full rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
                         style={{ width: `${pct * 100}%` }}
                       />
                     </div>

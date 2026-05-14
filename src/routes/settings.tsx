@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Download,
@@ -60,6 +60,67 @@ export const Route = createFileRoute("/settings")({
   }),
   component: SettingsPage,
 });
+
+function VndDigitsField({
+  label,
+  value,
+  onValueChange,
+  helper,
+  Icon,
+  fieldId,
+}: {
+  label: string;
+  value: number;
+  onValueChange: (n: number) => void;
+  helper?: string;
+  Icon?: React.ElementType;
+  fieldId: string;
+}) {
+  const [displayValue, setDisplayValue] = useState(() =>
+    value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "",
+  );
+
+  useEffect(() => {
+    setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "");
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+    const num = raw === "" ? 0 : parseInt(raw, 10);
+    setDisplayValue(raw === "" ? "" : new Intl.NumberFormat("vi-VN").format(num));
+    onValueChange(num);
+  };
+
+  return (
+    <div className="mb-4">
+      <label
+        htmlFor={fieldId}
+        className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300"
+      >
+        {label}
+      </label>
+      <div className="relative w-full">
+        {Icon && (
+          <Icon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+        )}
+        <input
+          id={fieldId}
+          inputMode="numeric"
+          value={displayValue}
+          onChange={handleChange}
+          onFocus={() =>
+            setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "")
+          }
+          onBlur={() =>
+            setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "")
+          }
+          className={`w-full rounded-lg border border-slate-700 bg-slate-950/50 p-3 font-mono text-sm text-[#f1f5f9] transition-all duration-150 hover:border-slate-600 focus:border-cyan-500 focus:shadow-[0_0_0_3px_rgba(6,182,212,0.1)] focus:outline-none focus:ring-1 focus:ring-cyan-500/70 ${Icon ? "pl-10" : ""}`}
+        />
+      </div>
+      {helper && <p className="mt-1 text-xs text-slate-400">{helper}</p>}
+    </div>
+  );
+}
 
 function SettingsPage() {
   const app = useApp();
@@ -199,28 +260,24 @@ function SettingsPage() {
               </p>
             </div>
           )}
-          <Field
+          <VndDigitsField
             fieldId="f-cycle-total-income-vnd"
             label="TAKE-HOME THIS CYCLE (VND)"
-            type="number"
             value={us.total_income_cents}
-            onChange={(e) =>
+            onValueChange={(num) =>
               app.updateUserState({
-                total_income_cents: Math.floor(Number(e.target.value) || 0),
+                total_income_cents: num,
                 pyfIncomeInferred: false,
               })
             }
             helper="Your income for this cycle — used to calculate how much you can spend"
             Icon={Wallet}
           />
-          <Field
+          <VndDigitsField
             fieldId="f-fixed-overhead-this-cycle-vnd"
             label="BILLS & FIXED COSTS"
-            type="number"
             value={us.fixed_overhead_cents ?? 0}
-            onChange={(e) =>
-              app.updateUserState({ fixed_overhead_cents: Math.floor(Number(e.target.value) || 0) })
-            }
+            onValueChange={(num) => app.updateUserState({ fixed_overhead_cents: num })}
             helper="Regular expenses deducted before your splurge budget is calculated"
             Icon={Wallet}
           />
