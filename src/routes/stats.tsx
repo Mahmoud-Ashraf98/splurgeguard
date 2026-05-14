@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   RotateCcw,
@@ -54,7 +54,10 @@ export const Route = createFileRoute("/stats")({
   component: StatsPage,
 });
 
-const COLORS = ["#00ff87", "#fbbf24", "#00d4ff", "#ff4757", "#a855f7"];
+const COLORS = [
+  "#00ff87", "#fbbf24", "#00d4ff", "#ff4757", "#a855f7",
+  "#f97316", "#06b6d4", "#84cc16", "#ec4899",
+];
 
 const CATEGORY_ICON: Record<string, LucideIcon> = {
   "Meat and chicken": Beef,
@@ -170,10 +173,20 @@ function StatsPage() {
 
   const isBurnWarning = burnPercent > timePercent;
 
-  let cumulative = 0;
   const trophies = vaultItems.filter(item => item.status === 'discarded');
   const radius = 60;
   const circ = 2 * Math.PI * radius;
+
+  const segments = React.useMemo(() => {
+    let offset = 0;
+    return breakdown.map((b) => {
+      const portion = b.amt / totalBreakdown;
+      const dash = circ * portion;
+      const result = { ...b, dash, offset };
+      offset += portion;
+      return result;
+    });
+  }, [breakdown, totalBreakdown, circ]);
 
   // ── PHASE 2: VICE FIREWALL MATRIX ────────────────────────────────────────
   const FIREWALL_DAYS = 14;
@@ -185,30 +198,29 @@ function StatsPage() {
     return d;
   });
 
-  const todayTs = (() => {
-    const t = new Date();
-    t.setHours(0, 0, 0, 0);
-    return t.getTime();
-  })();
+  const todayMs = today.getTime();
 
   const dailyLimit = app.smartDailyLimit ?? 0;
 
-  const matrixData = firewallDays.map((day) => {
-    const dayTs = day.getTime();
-    const spentThatDay = (app.data.transactions ?? [])
-      .filter((t) => {
-        const txDate = new Date(t.timestamp);
-        txDate.setHours(0, 0, 0, 0);
-        return txDate.getTime() === dayTs && t.isEssential === false && txIsCompleted(t);
-      })
-      .reduce((sum, t) => sum + Math.abs(t.amountVND ?? 0), 0);
+  const matrixData = React.useMemo(() => {
+    const spent: Record<string, number> = {};
+    for (const t of app.data.transactions || []) {
+      if (t.isEssential || !txIsCompleted(t)) continue;
+      const key = t.timestamp.slice(0, 10);
+      spent[key] = (spent[key] ?? 0) + Math.abs(t.amountVND ?? 0);
+    }
+    return firewallDays.map((day) => {
+      const dayTs = day.getTime();
+      const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+      const spentThatDay = spent[dayKey] ?? 0;
 
-    let status: 'perfect' | 'controlled' | 'breach' = 'perfect';
-    if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = 'controlled';
-    if (spentThatDay > dailyLimit) status = 'breach';
+      let status: 'perfect' | 'controlled' | 'breach' = 'perfect';
+      if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = 'controlled';
+      if (spentThatDay > dailyLimit) status = 'breach';
 
-    return { date: day, dayTs, spent: spentThatDay, status };
-  });
+      return { date: day, dayTs, spent: spentThatDay, status };
+    });
+  }, [firewallDays, app.data.transactions, dailyLimit]);
 
   const todayMidnightMs = (() => {
     const t = new Date();
@@ -558,27 +570,28 @@ function StatsPage() {
         ) : (
           <div className="flex items-center gap-5">
             <div className="relative h-[152px] w-[152px] shrink-0">
-              <svg width="152" height="152" viewBox="0 0 140 140" className="-rotate-90 h-full w-full">
+              <svg
+                width="152"
+                height="152"
+                viewBox="0 0 140 140"
+                className="-rotate-90 h-full w-full"
+                role="img"
+                aria-label="Fun money spending breakdown by category"
+              >
                 <circle cx="70" cy="70" r={radius} fill="none" stroke="#1e293b" strokeWidth="20" />
-                {breakdown.map((b) => {
-                  const portion = b.amt / totalBreakdown;
-                  const dash = circ * portion;
-                  const offset = circ * cumulative;
-                  cumulative += portion;
-                  return (
-                    <circle
-                      key={b.cat}
-                      cx="70"
-                      cy="70"
-                      r={radius}
-                      fill="none"
-                      stroke={b.color}
-                      strokeWidth="20"
-                      strokeDasharray={`${dash} ${circ}`}
-                      strokeDashoffset={-offset}
-                    />
-                  );
-                })}
+                {segments.map((b) => (
+                  <circle
+                    key={b.cat}
+                    cx="70"
+                    cy="70"
+                    r={radius}
+                    fill="none"
+                    stroke={b.color}
+                    strokeWidth="20"
+                    strokeDasharray={`${b.dash} ${circ}`}
+                    strokeDashoffset={-(circ * b.offset)}
+                  />
+                ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center px-1">
                 <span className="mb-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">
@@ -619,7 +632,7 @@ function StatsPage() {
           {matrixData.map((cell, idx) => {
             let boxClasses =
               'w-full aspect-square rounded border transition-all duration-300 ';
-            if (cell.dayTs > todayTs) {
+            if (cell.dayTs > todayMs) {
               boxClasses += 'bg-slate-800/30 border-slate-700/30';
             } else if (cell.status === 'perfect') {
               boxClasses +=
