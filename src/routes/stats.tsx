@@ -557,8 +557,8 @@ function StatsPage() {
           <p className="py-6 text-center text-xs text-slate-500">No discretionary spending yet.</p>
         ) : (
           <div className="flex items-center gap-5">
-            <div className="relative h-[140px] w-[140px] shrink-0">
-              <svg width="140" height="140" viewBox="0 0 140 140" className="-rotate-90">
+            <div className="relative h-[152px] w-[152px] shrink-0">
+              <svg width="152" height="152" viewBox="0 0 140 140" className="-rotate-90 h-full w-full">
                 <circle cx="70" cy="70" r={radius} fill="none" stroke="#1e293b" strokeWidth="20" />
                 {breakdown.map((b) => {
                   const portion = b.amt / totalBreakdown;
@@ -580,11 +580,11 @@ function StatsPage() {
                   );
                 })}
               </svg>
-              <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center">
-                <span className="mb-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center px-1">
+                <span className="mb-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">
                   Total
                 </span>
-                <span className="text-lg font-bold tabular-nums leading-none text-white">
+                <span className="mt-0.5 text-[11px] font-bold tabular-nums leading-none text-white">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
                     currency: "VND",

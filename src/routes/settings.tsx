@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, type ChangeEvent, type ElementType } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Download,
@@ -61,42 +61,74 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-function VndDigitsField({
-  label,
-  value,
-  onValueChange,
-  helper,
-  Icon,
-  fieldId,
-}: {
-  label: string;
+type CurrencyInputProps = {
   value: number;
-  onValueChange: (n: number) => void;
-  helper?: string;
-  Icon?: React.ElementType;
+  onChange: (n: number) => void;
+  label: string;
+  description?: string;
+  icon?: ElementType;
   fieldId: string;
-}) {
-  const [displayValue, setDisplayValue] = useState(() =>
-    value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "",
-  );
+};
+
+function CurrencyInput({ value, onChange, label, description, icon: Icon, fieldId }: CurrencyInputProps) {
+  const [displayValue, setDisplayValue] = useState("");
 
   useEffect(() => {
-    setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "");
+    setDisplayValue(value ? new Intl.NumberFormat("vi-VN").format(value) : "");
   }, [value]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "");
-    const num = raw === "" ? 0 : parseInt(raw, 10);
-    setDisplayValue(raw === "" ? "" : new Intl.NumberFormat("vi-VN").format(num));
-    onValueChange(num);
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const rawString = e.target.value.replace(/\D/g, "");
+    const rawNum = rawString ? Number(rawString) : 0;
+    setDisplayValue(rawString ? new Intl.NumberFormat("vi-VN").format(rawNum) : "");
+    onChange(rawNum);
   };
 
   return (
     <div className="mb-4">
-      <label
-        htmlFor={fieldId}
-        className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300"
-      >
+      <label htmlFor={fieldId} className="mb-2 block text-xs uppercase tracking-widest text-slate-400">
+        {label}
+      </label>
+      <div className="relative">
+        {Icon && <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />}
+        <input
+          id={fieldId}
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-slate-700 bg-slate-900 py-3 pl-10 pr-4 text-white transition-shadow focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+        />
+      </div>
+      {description && <p className="mt-2 text-[10px] text-slate-500">{description}</p>}
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  type = "text",
+  helper,
+  Icon,
+  extraInputClass = "",
+  fieldId,
+}: {
+  label: string;
+  value: string | number;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  helper?: string;
+  Icon?: ElementType;
+  extraInputClass?: string;
+  fieldId?: string;
+}) {
+  const id =
+    fieldId ?? `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+  return (
+    <div className="mb-4">
+      <label htmlFor={id} className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
         {label}
       </label>
       <div className="relative w-full">
@@ -104,17 +136,11 @@ function VndDigitsField({
           <Icon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
         )}
         <input
-          id={fieldId}
-          inputMode="numeric"
-          value={displayValue}
-          onChange={handleChange}
-          onFocus={() =>
-            setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "")
-          }
-          onBlur={() =>
-            setDisplayValue(value > 0 ? new Intl.NumberFormat("vi-VN").format(value) : "")
-          }
-          className={`w-full rounded-lg border border-slate-700 bg-slate-950/50 p-3 font-mono text-sm text-[#f1f5f9] transition-all duration-150 hover:border-slate-600 focus:border-cyan-500 focus:shadow-[0_0_0_3px_rgba(6,182,212,0.1)] focus:outline-none focus:ring-1 focus:ring-cyan-500/70 ${Icon ? "pl-10" : ""}`}
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          className={`w-full rounded-lg border border-slate-700 bg-slate-950/50 p-3 font-mono text-sm text-[#f1f5f9] transition-all duration-300 hover:border-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 ${Icon ? "pl-10" : ""} ${extraInputClass}`}
         />
       </div>
       {helper && <p className="mt-1 text-xs text-slate-400">{helper}</p>}
@@ -152,49 +178,6 @@ function SettingsPage() {
     r.readAsText(f);
   };
 
-  const Field = ({
-    label,
-    value,
-    onChange,
-    type = "text",
-    helper,
-    Icon,
-    extraInputClass = "",
-    fieldId,
-  }: {
-    label: string;
-    value: any;
-    onChange: (e: any) => void;
-    type?: string;
-    helper?: string;
-    Icon?: React.ElementType;
-    extraInputClass?: string;
-    fieldId?: string;
-  }) => {
-    const id =
-      fieldId ?? `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-    return (
-      <div className="mb-4">
-        <label htmlFor={id} className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
-          {label}
-        </label>
-        <div className="relative w-full">
-          {Icon && (
-            <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none" />
-          )}
-          <input
-            id={id}
-            type={type}
-            value={value}
-            onChange={onChange}
-            className={`w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 ${Icon ? "pl-10" : ""} ${extraInputClass} text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600`}
-          />
-        </div>
-        {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
-      </div>
-    );
-  };
-
   const sectionClass =
     "bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 mb-6 shadow-lg";
   const headerClass =
@@ -202,7 +185,7 @@ function SettingsPage() {
 
   const paydayInputValue = us.paydayDate.split("T")[0];
 
-  const dpRules: { Icon: React.ElementType; color: string; text: string }[] = [
+  const dpRules: { Icon: ElementType; color: string; text: string }[] = [
     { Icon: PenTool, color: "text-cyan-400", text: "Log any splurge: +1 to +5 DP" },
     { Icon: Target, color: "text-emerald-400", text: "Stay under Daily Limit: +50 DP" },
     { Icon: Flame, color: "text-amber-400", text: "Hit 3, 7, 14 day streaks for bonuses" },
@@ -260,37 +243,34 @@ function SettingsPage() {
               </p>
             </div>
           )}
-          <VndDigitsField
+          <CurrencyInput
             fieldId="f-cycle-total-income-vnd"
-            label="TAKE-HOME THIS CYCLE (VND)"
+            label="Take-Home This Cycle (VND)"
             value={us.total_income_cents}
-            onValueChange={(num) =>
+            onChange={(num) =>
               app.updateUserState({
                 total_income_cents: num,
                 pyfIncomeInferred: false,
               })
             }
-            helper="Your income for this cycle — used to calculate how much you can spend"
-            Icon={Wallet}
+            description="Your income for this cycle — used to calculate how much you can spend"
+            icon={Wallet}
           />
-          <VndDigitsField
+          <CurrencyInput
             fieldId="f-fixed-overhead-this-cycle-vnd"
-            label="BILLS & FIXED COSTS"
+            label="Bills & Fixed Costs"
             value={us.fixed_overhead_cents ?? 0}
-            onValueChange={(num) => app.updateUserState({ fixed_overhead_cents: num })}
-            helper="Regular expenses deducted before your splurge budget is calculated"
-            Icon={Wallet}
+            onChange={(num) => app.updateUserState({ fixed_overhead_cents: num })}
+            description="Regular expenses deducted before your splurge budget is calculated"
+            icon={Wallet}
           />
-          <Field
+          <CurrencyInput
             fieldId="f-available-splurge-budget-vnd"
-            label="YOUR SPLURGE BUDGET"
-            type="number"
+            label="Your Splurge Budget"
             value={us.currentBalanceVND}
-            onChange={(e) =>
-              app.updateUserState({ currentBalanceVND: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="The money left for non-essentials until your next payday."
-            Icon={Wallet}
+            onChange={(num) => app.updateUserState({ currentBalanceVND: Math.floor(num) })}
+            description="The money left for non-essentials until your next payday."
+            icon={Wallet}
           />
           <Field
             fieldId="f-next-payday-cycle-reset"
@@ -314,27 +294,21 @@ function SettingsPage() {
             helper="The habit you want to control. Renaming this will update past transactions to keep history consistent."
             Icon={TargetIcon}
           />
-          <Field
+          <CurrencyInput
             fieldId="f-weekly-habit-limit-vnd"
-            label="WEEKLY TARGET"
-            type="number"
+            label="Weekly Target"
             value={us.weeklyHabitLimitVND}
-            onChange={(e) =>
-              app.updateUserState({ weeklyHabitLimitVND: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="Stay under this each week to earn your 250 Discipline Points weekly bonus"
-            Icon={TargetIcon}
+            onChange={(num) => app.updateUserState({ weeklyHabitLimitVND: Math.floor(num) })}
+            description="Stay under this each week to earn your 250 Discipline Points weekly bonus"
+            icon={TargetIcon}
           />
-          <Field
+          <CurrencyInput
             fieldId="f-custom-usd-exchange-rate"
-            label="USD EXCHANGE RATE"
-            type="number"
+            label="USD Exchange Rate"
             value={us.usdExchangeRate}
-            onChange={(e) =>
-              app.updateUserState({ usdExchangeRate: Math.floor(Number(e.target.value) || 1) })
-            }
-            helper="Used when toggling the dashboard between VND and USD."
-            Icon={DollarSign}
+            onChange={(num) => app.updateUserState({ usdExchangeRate: Math.max(1, Math.floor(num)) })}
+            description="Used when toggling the dashboard between VND and USD."
+            icon={DollarSign}
           />
         </section>
 
