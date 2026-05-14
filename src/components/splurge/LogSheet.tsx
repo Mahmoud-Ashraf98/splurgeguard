@@ -173,17 +173,18 @@ export function LogSheet({ open, onClose }: Props) {
               Add to Vault
             </button>
           </div>
-          <button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800">
+          <button onClick={onClose} aria-label="Close log sheet" className="rounded-lg p-2 text-slate-400 hover:bg-slate-800">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {mode === "vault" && (
           <div className="mb-4">
-            <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+            <label htmlFor="ls-item-name" className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
               Item Name
             </label>
             <input
+              id="ls-item-name"
               value={itemName}
               onChange={(e) => setItemName(e.target.value)}
               placeholder="New jacket..."
@@ -193,10 +194,11 @@ export function LogSheet({ open, onClose }: Props) {
         )}
 
         <div className="mb-4">
-          <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+          <label htmlFor="ls-amount" className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
             Amount {showCurrency && `(${currency})`}
           </label>
           <input
+            id="ls-amount"
             inputMode="numeric"
             value={formattedAmount}
             onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
@@ -338,10 +340,11 @@ export function LogSheet({ open, onClose }: Props) {
         )}
 
         <div className="mb-5">
-          <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+          <label htmlFor="ls-justification" className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
             Justification (min 5 chars)
           </label>
           <textarea
+            id="ls-justification"
             value={justification}
             onChange={(e) => setJustification(e.target.value)}
             placeholder="Why are you making this purchase?"
