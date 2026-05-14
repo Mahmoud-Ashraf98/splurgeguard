@@ -104,7 +104,7 @@
     rgba(0, 212, 255, 0.8) 20px
   );
   background-size: 200% 100%;
-  animation: payload-drain 3s linear infinite;
+  animation: payload-drain 8s linear infinite;
 }
 
 /* Hide scrollbar for horizontal bounty board */

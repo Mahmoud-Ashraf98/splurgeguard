@@ -593,12 +593,12 @@ function StatsPage() {
                 </span>
               </div>
             </div>
-            <div className="flex-1 space-y-1.5">
+            <div className="flex-1 min-w-0 space-y-1.5">
               {breakdown.map((b) => (
                 <div key={b.cat} className="flex items-center gap-2 text-xs">
-                  <span className="h-2 w-2 rounded-full" style={{ background: b.color }} />
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: b.color }} />
                   <span className="flex-1 truncate text-slate-300">{b.cat}</span>
-                  <span className="font-mono text-slate-400">{Math.round((b.amt / totalBreakdown) * 100)}%</span>
+                  <span className="flex-shrink-0 font-mono text-slate-400">{Math.round((b.amt / totalBreakdown) * 100)}%</span>
                 </div>
               ))}
             </div>
@@ -734,11 +734,11 @@ function StatsPage() {
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
                     <div
-                      className="h-full bg-slate-600/60"
+                      className="h-full rounded-full bg-slate-600/60"
                       style={{ width: `${progressPct}%` }}
                     />
                     <div
-                      className="payload-decay-bar h-full"
+                      className="payload-decay-bar h-full rounded-full"
                       style={{ width: `${remainingPct}%` }}
                     />
                   </div>
