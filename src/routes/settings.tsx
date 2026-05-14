@@ -25,7 +25,39 @@ import { paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type NotifPermissionState = NotificationPermission | "unsupported";
 
+const DP_FAQ = [
+  { q: "How do I earn DP for logging splurges?", a: "Logging any splurge earns +1 to +5 Discipline Points." },
+  { q: "What happens if I stay under my Daily Limit?", a: "You earn +50 DP each day you stay under your Smart Daily Limit." },
+  { q: "Are there bonuses for streaks?", a: "Yes — hitting 3, 7, and 14 day streaks unlocks bonus Discipline Points." },
+  { q: "What happens if I exceed my Daily Limit?", a: "You lose 25 DP and your current streak resets to zero." },
+  { q: "Can I earn DP from the Vault?", a: "Yes — delaying purchases through the cooling-off Vault earns DP while you wait." },
+];
+
 export const Route = createFileRoute("/settings")({
+  head: () => ({
+    meta: [
+      { title: "Settings — SplurgeGuard" },
+      { name: "description", content: "Configure your identity, budget cycle, target habit, notifications, and back up your data." },
+      { property: "og:title", content: "Settings — Tune your discipline system" },
+      { property: "og:description", content: "Cycle, limits, notifications, backup/restore, and the rules of Discipline Points." },
+      { property: "og:url", content: "https://splurgeguard.lovable.app/settings" },
+    ],
+    links: [{ rel: "canonical", href: "https://splurgeguard.lovable.app/settings" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: DP_FAQ.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
+        }),
+      },
+    ],
+  }),
   component: SettingsPage,
 });
 
@@ -74,25 +106,29 @@ function SettingsPage() {
     helper?: string;
     Icon?: React.ElementType;
     extraInputClass?: string;
-  }) => (
-    <div className="mb-4">
-      <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
-        {label}
-      </label>
-      <div className="relative w-full">
-        {Icon && (
-          <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none" />
-        )}
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          className={`w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 ${Icon ? "pl-10" : ""} ${extraInputClass} text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600`}
-        />
+  }) => {
+    const id = `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+    return (
+      <div className="mb-4">
+        <label htmlFor={id} className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
+          {label}
+        </label>
+        <div className="relative w-full">
+          {Icon && (
+            <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none" />
+          )}
+          <input
+            id={id}
+            type={type}
+            value={value}
+            onChange={onChange}
+            className={`w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 ${Icon ? "pl-10" : ""} ${extraInputClass} text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600`}
+          />
+        </div>
+        {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
       </div>
-      {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
-    </div>
-  );
+    );
+  };
 
   const sectionClass =
     "bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 mb-6 shadow-lg";
