@@ -37,8 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { fmtMoney, txIsCompleted, selectNetSavingsCents } from "@/lib/splurge-utils";
 import { DISCRETIONARY_CATEGORIES } from "@/lib/splurge-types";
-import type { Subscription, SubscriptionViewModel } from "@/lib/schemas";
-import { getSubscriptions } from "@/utils/subscriptions.functions";
+import { getActiveAmortizations, getDailyDrain, MS_PER_DAY } from "@/lib/amortization";
 import { MILESTONES, type FreedomMilestone } from "@/lib/milestones";
 
 export const Route = createFileRoute("/stats")({
@@ -53,10 +52,6 @@ export const Route = createFileRoute("/stats")({
     links: [{ rel: "canonical", href: "https://splurgeguard.lovable.app/stats" }],
   }),
   component: StatsPage,
-  loader: async () => {
-    const subscriptions = await getSubscriptions();
-    return { subscriptions };
-  },
 });
 
 const COLORS = ["#00ff87", "#fbbf24", "#00d4ff", "#ff4757", "#a855f7"];
@@ -86,30 +81,11 @@ function StatsPage() {
   const app = useApp();
   const { vaultItems } = app.data;
   const us = app.data.userState;
-  const loaderData = Route.useLoaderData();
 
-  const mergedSubscriptions = useMemo(() => {
-    const map = new Map<string, Subscription>();
-    for (const s of loaderData?.subscriptions ?? []) map.set(s.id, s);
-    for (const s of app.data.subscriptions ?? []) map.set(s.id, s);
-    return [...map.values()].filter((s) => s.isActive);
-  }, [loaderData?.subscriptions, app.data.subscriptions]);
-
-  const subscriptionViewModels: SubscriptionViewModel[] = useMemo(() => {
-    return mergedSubscriptions.map((sub) => {
-      const dailyDrainCents =
-        sub.billingCycle === "monthly"
-          ? Math.round(sub.amountCents / 30)
-          : Math.round(sub.amountCents / 365);
-      const monthlyEquivalentCents =
-        sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
-      return {
-        ...sub,
-        monthlyEquivalentCents,
-        dailyDrainCents,
-      };
-    });
-  }, [mergedSubscriptions]);
+  const activeAmortizations = useMemo(
+    () => getActiveAmortizations(app.data.transactions ?? []),
+    [app.data.transactions],
+  );
 
   const breakdown = useMemo(() => {
     if (!us) return [];
@@ -167,8 +143,6 @@ function StatsPage() {
 
   const payday = new Date(us.paydayDate);
   payday.setHours(0, 0, 0, 0);
-
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
   const totalCycleDays = Math.max(
     1,
@@ -693,45 +667,54 @@ function StatsPage() {
           <span className="text-xs tracking-widest uppercase text-cyan-500">Spread-Out Costs</span>
         </div>
         <p className="text-[10px] text-slate-500 mb-4 lowercase tracking-wide">Big purchases that are slowly draining your daily limit over time.</p>
-        {subscriptionViewModels.length === 0 ? (
+        {activeAmortizations.length === 0 ? (
           <p className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-xs text-slate-500">
-            No auto-pay subscriptions yet.
+            No spread-out costs active.
           </p>
         ) : (
           <div className="space-y-2">
-            {subscriptionViewModels.map((sub) => {
-              const periodDays = sub.billingCycle === "monthly" ? 30 : 365;
-              const nextDay = new Date(sub.nextBillingDate);
-              nextDay.setHours(0, 0, 0, 0);
-              const nextMs = nextDay.getTime();
-              const periodStartMs = nextMs - periodDays * MS_PER_DAY;
+            {activeAmortizations.map((tx) => {
+              const spreadDays =
+                tx.metadata?.amortization_schedule?.spread_days ??
+                tx.amortizeDays ??
+                tx.amortizationDays ??
+                1;
+              const startLabel = tx.metadata?.amortization_schedule?.amortization_start_date ?? tx.timestamp;
+              const periodStart = new Date(startLabel);
+              periodStart.setHours(0, 0, 0, 0);
+              const periodStartMs = periodStart.getTime();
               const daysElapsedInPeriod = Math.max(
                 0,
-                Math.min(periodDays, Math.round((todayMidnightMs - periodStartMs) / MS_PER_DAY)),
+                Math.min(
+                  spreadDays,
+                  Math.round((todayMidnightMs - periodStartMs) / MS_PER_DAY),
+                ),
               );
-              const progressPct = Math.min(100, (daysElapsedInPeriod / periodDays) * 100);
+              const progressPct = Math.min(100, (daysElapsedInPeriod / spreadDays) * 100);
               const remainingPct = 100 - progressPct;
+              const title = tx.justification?.trim() || tx.category;
+              const dailyDrain = getDailyDrain(tx);
               return (
                 <div
-                  key={sub.id}
+                  key={tx.id}
                   className="border-l-2 border-cyan-500 pl-3 bg-slate-950/30 rounded-r-lg py-2 my-2"
                 >
                   <div className="flex justify-between items-baseline mb-1 gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm text-white truncate">
-                        {sub.name}
+                        {title}
                       </p>
                       <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
-                        {sub.billingCycle} · {periodDays}d
+                        spread · {spreadDays}d
                       </p>
                     </div>
                     <p className="text-cyan-400 font-mono text-sm tabular-nums drop-shadow-[0_0_5px_rgba(34,211,238,0.4)] flex-shrink-0">
-                      {fmtMoney(sub.amountCents, cur, rate)}
+                      {fmtMoney(tx.amountVND, cur, rate)}
                     </p>
                   </div>
 
                   <p className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/70 mb-1">
-                    {`[DRAIN: -${fmtMoney(sub.dailyDrainCents, cur, rate)} / DAY]`}
+                    {`[DRAIN: -${fmtMoney(dailyDrain, cur, rate)} / DAY]`}
                   </p>
 
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800 flex">
