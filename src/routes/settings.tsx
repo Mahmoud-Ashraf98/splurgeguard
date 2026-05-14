@@ -66,6 +66,7 @@ function SettingsPage() {
   const us = app.data.userState;
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [notifPermission, setNotifPermission] = useState<NotifPermissionState>(
     typeof window !== "undefined" && "Notification" in window
       ? Notification.permission
@@ -98,6 +99,7 @@ function SettingsPage() {
     helper,
     Icon,
     extraInputClass = "",
+    fieldId,
   }: {
     label: string;
     value: any;
@@ -106,8 +108,10 @@ function SettingsPage() {
     helper?: string;
     Icon?: React.ElementType;
     extraInputClass?: string;
+    fieldId?: string;
   }) => {
-    const id = `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+    const id =
+      fieldId ?? `f-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
     return (
       <div className="mb-4">
         <label htmlFor={id} className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300">
@@ -149,10 +153,7 @@ function SettingsPage() {
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a]">
       <div className="px-5 pb-24 pt-6">
         <header className="mb-6">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
-            Configuration
-          </p>
-          <h1 className="text-2xl font-bold text-white">Control Panel</h1>
+          <h1 className="text-2xl font-bold text-white">Your Settings</h1>
         </header>
 
         <div className="flex items-start gap-3 bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-4 mb-6 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
@@ -162,9 +163,8 @@ function SettingsPage() {
               Your Data is 100% Private
             </span>
             <span className="text-xs text-emerald-200/70 mt-1 leading-relaxed">
-              SplurgeGuard operates completely offline on your device. Your financial data,
-              justifications, and habits never leave this phone. We cannot access it, and neither
-              can anyone else.
+              Everything stays on your device. Your data never touches a server — not ours, not
+              anyone&apos;s.
             </span>
           </div>
         </div>
@@ -174,10 +174,11 @@ function SettingsPage() {
             <User className="h-4 w-4" /> Identity
           </h2>
           <Field
-            label="Master Name / Alias"
+            fieldId="f-master-name-alias"
+            label="Display Name"
             value={us.userName ?? ""}
             onChange={(e) => app.updateUserState({ userName: e.target.value })}
-            helper="How the app addresses you across the dashboard."
+            helper="We'll use this to greet you throughout the app"
             Icon={User}
           />
         </section>
@@ -191,7 +192,7 @@ function SettingsPage() {
               role="status"
               className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100"
             >
-              <p className="font-semibold text-amber-200">Cycle income was estimated from legacy data</p>
+              <p className="font-semibold text-amber-200">We carried over your income from last cycle — please confirm it&apos;s still accurate</p>
               <p className="mt-2 text-xs text-amber-100/85 leading-relaxed">
                 Please verify &quot;Cycle total income&quot; matches your real take-home. Editing that field clears
                 this notice.
@@ -199,7 +200,8 @@ function SettingsPage() {
             </div>
           )}
           <Field
-            label="Cycle total income (VND)"
+            fieldId="f-cycle-total-income-vnd"
+            label="TAKE-HOME THIS CYCLE (VND)"
             type="number"
             value={us.total_income_cents}
             onChange={(e) =>
@@ -208,21 +210,23 @@ function SettingsPage() {
                 pyfIncomeInferred: false,
               })
             }
-            helper="Gross take-home allocated to this budget cycle (used for PYF math)."
+            helper="Your income for this cycle — used to calculate how much you can spend"
             Icon={Wallet}
           />
           <Field
-            label="Fixed overhead this cycle (VND)"
+            fieldId="f-fixed-overhead-this-cycle-vnd"
+            label="BILLS & FIXED COSTS"
             type="number"
             value={us.fixed_overhead_cents ?? 0}
             onChange={(e) =>
               app.updateUserState({ fixed_overhead_cents: Math.floor(Number(e.target.value) || 0) })
             }
-            helper="Rent, subscriptions, and other non-negotiables subtracted before flexible pool."
+            helper="Regular expenses deducted before your splurge budget is calculated"
             Icon={Wallet}
           />
           <Field
-            label="Available Splurge Budget (VND)"
+            fieldId="f-available-splurge-budget-vnd"
+            label="YOUR SPLURGE BUDGET"
             type="number"
             value={us.currentBalanceVND}
             onChange={(e) =>
@@ -232,7 +236,8 @@ function SettingsPage() {
             Icon={Wallet}
           />
           <Field
-            label="Next Payday / Cycle Reset"
+            fieldId="f-next-payday-cycle-reset"
+            label="NEXT CYCLE DATE"
             type="date"
             value={paydayInputValue}
             onChange={(e) =>
@@ -240,40 +245,32 @@ function SettingsPage() {
                 paydayDate: paydayInputToIsoEndOfLocalDay(e.target.value),
               })
             }
-            helper="When your splurge budget refills and the cycle starts over."
+            helper="Your budget refreshes on this date"
             Icon={Calendar}
             extraInputClass="pr-10"
           />
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm("Start a new cycle? PYF savings counters reset; flexible pool refills to income minus overhead.")) {
-                app.startNewCycle();
-              }
-            }}
-            className="w-full rounded-xl border border-cyan-500/30 bg-slate-950/60 py-3 font-mono text-xs font-bold uppercase tracking-widest text-cyan-300 hover:bg-cyan-500/10 transition-colors mb-2"
-          >
-            Start new budget cycle
-          </button>
           <Field
-            label="Target Habit Name"
+            fieldId="f-target-habit-name"
+            label="HABIT TO TRACK"
             value={us.targetHabit ?? ""}
             onChange={(e) => app.updateUserState({ targetHabit: e.target.value })}
             helper="The habit you want to control. Renaming this will update past transactions to keep history consistent."
             Icon={TargetIcon}
           />
           <Field
-            label="Weekly Habit Limit (VND)"
+            fieldId="f-weekly-habit-limit-vnd"
+            label="WEEKLY TARGET"
             type="number"
             value={us.weeklyHabitLimitVND}
             onChange={(e) =>
               app.updateUserState({ weeklyHabitLimitVND: Math.floor(Number(e.target.value) || 0) })
             }
-            helper="Target maximum spend on this habit per week to earn your 250 DP weekly bonus."
+            helper="Stay under this each week to earn your 250 Discipline Points weekly bonus"
             Icon={TargetIcon}
           />
           <Field
-            label="Custom USD Exchange Rate"
+            fieldId="f-custom-usd-exchange-rate"
+            label="USD EXCHANGE RATE"
             type="number"
             value={us.usdExchangeRate}
             onChange={(e) =>
@@ -402,6 +399,44 @@ function SettingsPage() {
             </div>
           )}
         </section>
+
+        {/* Cycle Management Section */}
+        <div className="mt-8 rounded-xl border border-red-900/40 bg-red-950/20 p-5 space-y-4">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-widest text-red-400">Cycle Management</p>
+            <p className="text-sm text-slate-400 mt-1">This will archive your current cycle and start fresh. Your history is preserved.</p>
+          </div>
+
+          {!isConfirmingReset ? (
+            <button
+              type="button"
+              onClick={() => setIsConfirmingReset(true)}
+              className="w-full rounded-lg bg-slate-800 py-3 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-700"
+            >
+              Reset & Start New Cycle →
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  app.startNewCycle();
+                  setIsConfirmingReset(false);
+                }}
+                className="w-full rounded-lg bg-red-900/60 py-3 text-sm font-medium text-red-200 transition-colors hover:bg-red-900"
+              >
+                Tap again to confirm reset
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsConfirmingReset(false)}
+                className="w-full rounded-lg bg-transparent py-2 text-sm text-slate-500 transition-colors hover:text-slate-300"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
