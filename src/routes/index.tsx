@@ -489,7 +489,7 @@ function Index() {
             {/* Cycle elapsed bar */}
             <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-slate-800/60">
               <div
-                className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_8px_rgba(0,212,255,0.5)]"
+                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-emerald-400 shadow-[0_0_8px_rgba(0,212,255,0.5)]"
                 style={{ width: `${cycleElapsed * 100}%` }}
               />
             </div>
@@ -594,7 +594,7 @@ function Index() {
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-800/60">
               <div
-                className={`h-full bg-gradient-to-r ${barColor} transition-all duration-500`}
+                className={`h-full rounded-full bg-gradient-to-r ${barColor} transition-all duration-500`}
                 style={{ width: `${pct * 100}%` }}
               />
             </div>
