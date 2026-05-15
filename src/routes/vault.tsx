@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { Lock, CheckCircle2, Trash2, Trophy, Clock } from 'lucide-react';
+import { Lock, CheckCircle2, Trash2, Trophy, Clock, Plus } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { fmtMoney } from '@/lib/splurge-utils';
 import type { VaultItem } from '@/lib/splurge-types';
 import { toast } from 'sonner';
+import { LogSheet } from '@/components/splurge/LogSheet';
 
 export const Route = createFileRoute('/vault')({
   head: () => ({
@@ -272,6 +273,7 @@ function ArchivedRow({
 function VaultPage() {
   const app = useApp();
   const [now, setNow] = useState(Date.now());
+  const [vaultSheetOpen, setVaultSheetOpen] = useState(false);
 
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
@@ -395,6 +397,32 @@ function VaultPage() {
           </div>
         </section>
       )}
+
+      {/* Vault FAB — fades out while LogSheet is animating open */}
+      <div
+        className={`fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5 transition-all duration-300 ${
+          vaultSheetOpen
+            ? "opacity-0 pointer-events-none scale-90"
+            : "opacity-100 pointer-events-auto scale-100"
+        }`}
+      >
+        <button
+          onClick={() => setVaultSheetOpen(true)}
+          className="cta-ripple relative overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_28px_-6px_#00d4ff] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite]"
+          style={{
+            backgroundImage: "linear-gradient(90deg, #00C8FF, #00FFA3, #00C8FF)",
+            willChange: "transform",
+          }}
+        >
+          <Plus className="h-5 w-5" /> Delay a Purchase
+        </button>
+      </div>
+
+      <LogSheet
+        open={vaultSheetOpen}
+        onClose={() => setVaultSheetOpen(false)}
+        initialMode="vault"
+      />
     </div>
   );
 }

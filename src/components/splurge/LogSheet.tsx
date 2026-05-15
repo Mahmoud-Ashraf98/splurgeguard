@@ -61,11 +61,12 @@ import { fmtVND, fmtMoney } from "@/lib/splurge-utils";
 interface Props {
   open: boolean;
   onClose: () => void;
+  initialMode?: "log" | "vault";
 }
 
-export function LogSheet({ open, onClose }: Props) {
+export function LogSheet({ open, onClose, initialMode = "log" }: Props) {
   const { logExpense, addToVault, data } = useApp();
-  const [mode, setMode] = useState<"log" | "vault">("log");
+  const [mode, setMode] = useState<"log" | "vault">(initialMode);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [catOpen, setCatOpen] = useState(false);
@@ -85,11 +86,11 @@ export function LogSheet({ open, onClose }: Props) {
       setCurrency("VND");
       setItemName("");
       setDelayHours(24);
-      setMode("log");
+      setMode(initialMode);
       setCatOpen(false);
       setAmortizeDays(1);
     }
-  }, [open]);
+  }, [open, initialMode]);
 
   const targetHabit = data.userState?.targetHabit ?? "";
   const habitLower = targetHabit.toLowerCase().trim();

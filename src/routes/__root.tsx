@@ -7,14 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
-import { AppProvider, useApp } from "@/context/AppContext";
+import { AppProvider } from "@/context/AppContext";
 import { BottomNav } from "@/components/splurge/BottomNav";
 import { BreachModal } from "@/components/splurge/BreachModal";
 import { AscensionCinematic } from "@/components/splurge/AscensionCinematic";
-import { LogSheet } from "@/components/splurge/LogSheet";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -96,37 +94,11 @@ const shellChromeStyle = {
 } as CSSProperties;
 
 function AppShell() {
-  const app = useApp();
-  const us = app.data.userState;
-
   return (
     <div className="relative min-h-screen" style={shellChromeStyle}>
       <main className="mx-auto min-h-screen max-w-md bg-slate-950 pb-[calc(var(--bottom-nav-height,4rem)+4.5rem)]">
         <Outlet />
       </main>
-      {us && (
-        <>
-          <LogSheet open={app.logSheetOpen} onClose={() => app.setLogSheetOpen(false)} />
-          <div
-            className="fixed left-0 right-0 z-50 flex justify-center pointer-events-none"
-            style={{ bottom: `calc(var(--bottom-nav-height, 4rem) + 1.25rem)` }}
-          >
-            <button
-              type="button"
-              onClick={() => app.setLogSheetOpen(true)}
-              className="cta-ripple pointer-events-auto relative group overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-1 active:scale-[0.97] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite] shadow-[0_0_28px_-6px_#00FFA3,0_4px_24px_-8px_rgba(0,255,163,0.4)] hover:shadow-[0_0_40px_-4px_#00FFA3,0_8px_32px_-6px_rgba(0,255,163,0.6)] border border-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80"
-              style={{ backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)", willChange: "transform" }}
-            >
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:[animation:shimmer_1.8s_ease-in-out_infinite]"
-              />
-              <Plus className="relative z-10 w-4 h-4" strokeWidth={2.5} />
-              <span className="relative z-10">LOG EXPENSE</span>
-            </button>
-          </div>
-        </>
-      )}
       <BottomNav />
       <BreachModal />
       <AscensionCinematic />

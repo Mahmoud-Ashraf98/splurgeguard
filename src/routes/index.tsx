@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Flame, Coins, Lock, Target, CheckCircle2, XCircle,
@@ -15,6 +15,7 @@ import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { ForfeitModal } from "@/components/splurge/ForfeitModal";
 import { fmtMoney, nextMilestone, selectNetSavingsCents, txIsCompleted, weeklyHabitSpent } from "@/lib/splurge-utils";
 import { SavingsRaidModal } from "@/components/splurge/SavingsRaidModal";
+import { LogSheet } from "@/components/splurge/LogSheet";
 import type { DailyContract } from "@/lib/splurge-types";
 
 import { getRankForXP, getNextRank } from "@/lib/ranks";
@@ -49,6 +50,10 @@ function Index() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const [raidOpen, setRaidOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const location = useLocation();
+  const isOnHomePage = location.pathname === "/";
 
   if (!app.data.userState) return <Onboarding />;
   const us = app.data.userState;
@@ -652,6 +657,30 @@ function Index() {
         )}
       </div>
       </div>
+
+      {/* CTA — route-gated; fades out smoothly when modals are open */}
+      {isOnHomePage && (
+        <div
+          className={`fixed bottom-20 left-1/2 z-30 w-full max-w-md -translate-x-1/2 px-5 transition-all duration-300 ${
+            sheetOpen || raidOpen
+              ? "opacity-0 pointer-events-none scale-90"
+              : "opacity-100 pointer-events-auto scale-100"
+          }`}
+        >
+          <button
+            onClick={() => setSheetOpen(true)}
+            className="cta-ripple relative overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_28px_-6px_#00FFA3] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite]"
+            style={{
+              backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)",
+              willChange: "transform",
+            }}
+          >
+            <Plus className="cta-plus h-5 w-5" /> Log Expense
+          </button>
+        </div>
+      )}
+
+      <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
       {showLevelGuide && <LevelGuideModal onClose={() => setShowLevelGuide(false)} />}
       <ForfeitModal
