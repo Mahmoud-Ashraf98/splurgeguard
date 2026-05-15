@@ -114,22 +114,15 @@ function AppShell() {
             <button
               type="button"
               onClick={() => app.setLogSheetOpen(true)}
-              className="
-                pointer-events-auto
-                flex items-center gap-2
-                px-6 py-3
-                bg-cyan-500 hover:bg-cyan-400
-                text-slate-950 font-mono font-bold text-sm tracking-widest uppercase
-                rounded-full
-                shadow-[0_0_20px_rgba(34,211,238,0.35),0_4px_24px_rgba(0,0,0,0.5)]
-                hover:shadow-[0_0_30px_rgba(34,211,238,0.55),0_4px_24px_rgba(0,0,0,0.6)]
-                active:scale-95
-                transition-all duration-150
-                focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80
-              "
+              className="cta-ripple pointer-events-auto relative group overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-1 active:scale-[0.97] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite] shadow-[0_0_28px_-6px_#00FFA3,0_4px_24px_-8px_rgba(0,255,163,0.4)] hover:shadow-[0_0_40px_-4px_#00FFA3,0_8px_32px_-6px_rgba(0,255,163,0.6)] border border-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/80"
+              style={{ backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)", willChange: "transform" }}
             >
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-              LOG EXPENSE
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:[animation:shimmer_1.8s_ease-in-out_infinite]"
+              />
+              <Plus className="relative z-10 w-4 h-4" strokeWidth={2.5} />
+              <span className="relative z-10">LOG EXPENSE</span>
             </button>
           </div>
         </>

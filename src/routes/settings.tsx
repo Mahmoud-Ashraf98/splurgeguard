@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, type ChangeEvent, type ElementType } from "react";
+import { useRef, useState, type ChangeEvent, type ElementType } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Download,
@@ -7,7 +7,6 @@ import {
   User,
   Sliders,
   ShieldCheck,
-  Wallet,
   Calendar,
   Target as TargetIcon,
   DollarSign,
@@ -20,7 +19,8 @@ import {
   Bell,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { STORAGE_KEY } from "@/lib/splurge-types";
+import { STORAGE_KEY, type Currency } from "@/lib/splurge-types";
+import { fmtMoney } from "@/lib/splurge-utils";
 import { paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type NotifPermissionState = NotificationPermission | "unsupported";
@@ -61,49 +61,45 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-type CurrencyInputProps = {
-  value: number;
-  onChange: (n: number) => void;
+const CurrencyField = ({
+  label,
+  value,
+  onChange,
+  helper,
+  displayCurrency,
+}: {
   label: string;
-  description?: string;
-  icon?: ElementType;
-  fieldId: string;
-};
-
-function CurrencyInput({ value, onChange, label, description, icon: Icon, fieldId }: CurrencyInputProps) {
-  const [displayValue, setDisplayValue] = useState("");
-
-  useEffect(() => {
-    setDisplayValue(value ? new Intl.NumberFormat("vi-VN").format(value) : "");
-  }, [value]);
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const rawString = e.target.value.replace(/\D/g, "");
-    const rawNum = rawString ? Number(rawString) : 0;
-    setDisplayValue(rawString ? new Intl.NumberFormat("vi-VN").format(rawNum) : "");
-    onChange(rawNum);
-  };
-
+  value: number;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  helper?: string;
+  displayCurrency: Currency;
+}) => {
+  const id = `cf-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+  const ticker = displayCurrency;
   return (
     <div className="mb-4">
-      <label htmlFor={fieldId} className="mb-2 block text-xs uppercase tracking-widest text-slate-400">
+      <label
+        htmlFor={id}
+        className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300"
+      >
         {label}
       </label>
-      <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />}
+      <div className="relative w-full">
         <input
-          id={fieldId}
-          type="text"
-          inputMode="numeric"
-          value={displayValue}
-          onChange={handleChange}
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 py-3 pl-10 pr-4 text-white transition-shadow focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          id={id}
+          type="number"
+          value={value}
+          onChange={onChange}
+          className="w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 pl-4 pr-16 text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-950/80 text-cyan-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60 backdrop-blur-sm shadow-inner pointer-events-none select-none">
+          {ticker}
+        </div>
       </div>
-      {description && <p className="mt-2 text-[10px] text-slate-500">{description}</p>}
+      {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
     </div>
   );
-}
+};
 
 function Field({
   label,
@@ -243,38 +239,101 @@ function SettingsPage() {
               </p>
             </div>
           )}
-          <CurrencyInput
-            fieldId="f-cycle-total-income-vnd"
-            label="Take-Home This Cycle (VND)"
+          <CurrencyField
+            label="Cycle total income (VND)"
             value={us.total_income_cents}
-            onChange={(num) =>
+            displayCurrency={us.displayCurrency}
+            onChange={(e) => {
+              const num = Math.floor(Number(e.target.value) || 0);
               app.updateUserState({
                 total_income_cents: num,
                 pyfIncomeInferred: false,
-              })
-            }
-            description="Your income for this cycle — used to calculate how much you can spend"
-            icon={Wallet}
+              });
+            }}
+            helper="Your income for this cycle — used to calculate how much you can spend"
           />
-          <CurrencyInput
-            fieldId="f-fixed-overhead-this-cycle-vnd"
-            label="Bills & Fixed Costs"
+          <CurrencyField
+            label="Fixed overhead this cycle (VND)"
             value={us.fixed_overhead_cents ?? 0}
-            onChange={(num) => app.updateUserState({ fixed_overhead_cents: num })}
-            description="Regular expenses deducted before your splurge budget is calculated"
-            icon={Wallet}
+            displayCurrency={us.displayCurrency}
+            onChange={(e) =>
+              app.updateUserState({ fixed_overhead_cents: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="Regular expenses deducted before your splurge budget is calculated"
           />
-          <CurrencyInput
-            fieldId="f-available-splurge-budget-vnd"
-            label="Your Splurge Budget"
+          <CurrencyField
+            label="Pay-Yourself-First Savings Target (VND)"
+            value={us.savings_base_cents ?? 0}
+            displayCurrency={us.displayCurrency}
+            onChange={(e) =>
+              app.updateUserState({ savings_base_cents: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="The amount you commit to protecting this cycle before discretionary spending. Editing this adjusts your theoretical splurge pool below — it does NOT directly change your live flexible balance."
+          />
+          {/* Derived Splurge Pool — read-only, computed from income/overhead/savings */}
+          {(() => {
+            const theoreticalPool = Math.max(
+              0,
+              (us.total_income_cents ?? 0) -
+                (us.fixed_overhead_cents ?? 0) -
+                (us.savings_base_cents ?? 0)
+            );
+            const isNegative = theoreticalPool <= 0 && (us.total_income_cents ?? 0) > 0;
+            return (
+              <div
+                className={`mb-4 relative overflow-hidden rounded-xl border p-4 flex justify-between items-center ${
+                  isNegative
+                    ? "border-rose-500/40 bg-rose-950/20"
+                    : "border-cyan-500/30 bg-cyan-950/20"
+                }`}
+              >
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+                    isNegative ? "bg-rose-500" : "bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                  }`}
+                />
+                <div className="pl-2">
+                  <p
+                    className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${
+                      isNegative ? "text-rose-400/80" : "text-cyan-400/80"
+                    }`}
+                  >
+                    Theoretical Splurge Pool
+                  </p>
+                  <p className="text-xs text-slate-400">Income − Overhead − Savings Target</p>
+                  {isNegative && (
+                    <p className="text-xs text-rose-400 mt-1 font-semibold">
+                      Savings target exceeds available pool — reduce savings or raise income.
+                    </p>
+                  )}
+                </div>
+                <div className="text-right shrink-0 ml-4">
+                  <p
+                    className={`text-xl font-bold tabular-nums tracking-tight ${
+                      isNegative ? "text-rose-300" : "text-white"
+                    }`}
+                  >
+                    {fmtMoney(theoreticalPool, us.displayCurrency, us.usdExchangeRate)}
+                  </p>
+                  <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">
+                    Calculated
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+          <CurrencyField
+            label="Current Flexible Balance (VND)"
             value={us.currentBalanceVND}
-            onChange={(num) => app.updateUserState({ currentBalanceVND: Math.floor(num) })}
-            description="The money left for non-essentials until your next payday."
-            icon={Wallet}
+            displayCurrency={us.displayCurrency}
+            onChange={(e) =>
+              app.updateUserState({ currentBalanceVND: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="Your live tracked discretionary balance — what you actually have left to spend until payday. This decreases as you log expenses."
           />
           <Field
             fieldId="f-next-payday-cycle-reset"
-            label="NEXT CYCLE DATE"
+            label="Next Payday / Cycle Reset"
             type="date"
             value={paydayInputValue}
             onChange={(e) =>
@@ -288,27 +347,31 @@ function SettingsPage() {
           />
           <Field
             fieldId="f-target-habit-name"
-            label="HABIT TO TRACK"
+            label="Target Habit Name"
             value={us.targetHabit ?? ""}
             onChange={(e) => app.updateUserState({ targetHabit: e.target.value })}
             helper="The habit you want to control. Renaming this will update past transactions to keep history consistent."
             Icon={TargetIcon}
           />
-          <CurrencyInput
-            fieldId="f-weekly-habit-limit-vnd"
-            label="Weekly Target"
+          <CurrencyField
+            label="Weekly Habit Limit (VND)"
             value={us.weeklyHabitLimitVND}
-            onChange={(num) => app.updateUserState({ weeklyHabitLimitVND: Math.floor(num) })}
-            description="Stay under this each week to earn your 250 Discipline Points weekly bonus"
-            icon={TargetIcon}
+            displayCurrency={us.displayCurrency}
+            onChange={(e) =>
+              app.updateUserState({ weeklyHabitLimitVND: Math.floor(Number(e.target.value) || 0) })
+            }
+            helper="Stay under this each week to earn your 250 Discipline Points weekly bonus"
           />
-          <CurrencyInput
+          <Field
             fieldId="f-custom-usd-exchange-rate"
-            label="USD Exchange Rate"
+            label="Custom USD Exchange Rate"
+            type="number"
             value={us.usdExchangeRate}
-            onChange={(num) => app.updateUserState({ usdExchangeRate: Math.max(1, Math.floor(num)) })}
-            description="Used when toggling the dashboard between VND and USD."
-            icon={DollarSign}
+            onChange={(e) =>
+              app.updateUserState({ usdExchangeRate: Math.max(1, Math.floor(Number(e.target.value) || 0)) })
+            }
+            helper="Used when toggling the dashboard between VND and USD."
+            Icon={DollarSign}
           />
         </section>
 
