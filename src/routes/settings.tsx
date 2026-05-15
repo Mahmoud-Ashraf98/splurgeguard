@@ -168,10 +168,12 @@ function Field({
           type={type}
           value={value}
           onChange={onChange}
-          className={`w-full rounded-lg border border-slate-700 bg-slate-950/50 p-3 font-mono text-sm text-[#f1f5f9] transition-all duration-300 hover:border-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 ${Icon ? "pl-10" : ""} ${extraInputClass}`}
+          className={`w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 ${
+            Icon ? "pl-10" : ""
+          } ${extraInputClass} text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600`}
         />
       </div>
-      {helper && <p className="mt-1 text-xs text-slate-400">{helper}</p>}
+      {helper && <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{helper}</p>}
     </div>
   );
 }
@@ -208,7 +210,7 @@ function SettingsPage() {
   const sectionClass =
     "bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 mb-6 shadow-lg";
   const headerClass =
-    "flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-cyan-500 mb-4 pb-2 border-b border-slate-700/50";
+    "flex items-center gap-2 text-xs font-black tracking-[0.25em] uppercase mb-4 pb-2 border-b border-slate-800/80";
 
   const paydayInputValue = us.paydayDate.split("T")[0];
 
@@ -242,7 +244,13 @@ function SettingsPage() {
 
         <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
-            <User className="h-4 w-4" /> Identity
+            <User
+              className="h-4 w-4 text-cyan-400"
+              style={{ filter: "drop-shadow(0 0 4px rgba(34,211,238,0.6))" }}
+            />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
+              Identity
+            </span>
           </h2>
           <Field
             fieldId="f-master-name-alias"
@@ -256,7 +264,13 @@ function SettingsPage() {
 
         <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
-            <Sliders className="h-4 w-4" /> Budget & Limits
+            <Sliders
+              className="h-4 w-4 text-cyan-400"
+              style={{ filter: "drop-shadow(0 0 4px rgba(34,211,238,0.6))" }}
+            />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
+              Budget & Limits
+            </span>
           </h2>
           {us.pyfIncomeInferred && (
             <div
@@ -327,9 +341,7 @@ function SettingsPage() {
               color?: string;
               bold?: boolean;
             }) => (
-              <div
-                className={`flex items-center justify-between py-1.5 ${bold ? "border-t border-slate-700/60 mt-1 pt-2.5" : ""}`}
-              >
+              <div className="flex items-center justify-between py-1.5">
                 <div className="flex items-center gap-2">
                   {sign && (
                     <span
@@ -347,6 +359,13 @@ function SettingsPage() {
                 </div>
                 <span
                   className={`font-mono tabular-nums ${bold ? "text-lg font-black" : "text-sm"} ${color ?? "text-slate-300"}`}
+                  style={
+                    bold && !isRed
+                      ? { textShadow: "0 0 12px rgba(52,211,153,0.55)" }
+                      : bold && isRed
+                        ? { textShadow: "0 0 12px rgba(251,113,133,0.55)" }
+                        : undefined
+                  }
                 >
                   {fmtMoney(Math.abs(value), us.displayCurrency, us.usdExchangeRate)}
                 </span>
@@ -355,14 +374,27 @@ function SettingsPage() {
 
             return (
               <div
-                className={`mb-5 rounded-2xl border overflow-hidden transition-colors duration-300 ${
-                  isRed ? "border-rose-500/40 bg-rose-950/15" : "border-slate-700/60 bg-slate-950/40"
+                className={`mb-5 rounded-2xl border overflow-hidden transition-colors duration-300 backdrop-blur-md ${
+                  isRed
+                    ? "border-rose-500/40 bg-rose-950/15 shadow-[0_0_20px_rgba(244,63,94,0.08)]"
+                    : "border-cyan-500/20 bg-slate-950/80 shadow-[0_0_20px_rgba(34,211,238,0.08)]"
                 }`}
               >
-                {/* Header */}
                 <div
-                  className={`px-4 py-2.5 border-b ${isRed ? "border-rose-500/20 bg-rose-950/20" : "border-slate-800/60 bg-slate-900/40"}`}
+                  className={`px-4 py-3 border-b flex items-center gap-2 ${
+                    isRed ? "border-rose-500/20 bg-rose-950/20" : "border-cyan-500/10 bg-slate-900/60"
+                  }`}
                 >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      isRed ? "bg-rose-400" : "bg-cyan-400"
+                    }`}
+                    style={{
+                      boxShadow: isRed
+                        ? "0 0 6px rgba(251,113,133,0.8)"
+                        : "0 0 6px rgba(34,211,238,0.8)",
+                    }}
+                  />
                   <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
                     Live Budget Breakdown
                   </p>
@@ -371,8 +403,9 @@ function SettingsPage() {
                 {/* Math rows */}
                 <div className="px-4 py-3">
                   <Row label="Monthly Income" value={income} sign="+" color="text-emerald-400" />
-                  <Row label="Needs & Bills" value={bills} sign="−" color="text-amber-400" />
-                  <Row label="Wealth Shield" value={shield} sign="−" color="text-cyan-400" />
+                  <Row label="Needs & Bills" value={bills} sign="−" color="text-amber-400/80" />
+                  <Row label="Wealth Shield" value={shield} sign="−" color="text-cyan-400/80" />
+                  <div className="border-t border-dashed border-slate-700/60 my-2" />
                   <Row
                     label="Guilt-Free Allowance"
                     value={Math.max(0, pool)}
@@ -384,14 +417,23 @@ function SettingsPage() {
 
                 {/* Result footer */}
                 {!isRed && dailySlice > 0 && (
-                  <div className="px-4 pb-3 pt-0">
-                    <div className="rounded-xl bg-slate-900/60 border border-slate-700/40 px-3 py-2 flex items-center justify-between">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
-                        Daily Allowance ({daysLeft}d left)
-                      </span>
+                  <div className="px-4 pb-4 pt-0">
+                    <div className="flex items-center justify-between rounded-xl border border-cyan-800/30 bg-cyan-950/30 px-4 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-1 h-4 rounded-full bg-emerald-400"
+                          style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }}
+                        />
+                        <span className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-500">
+                          Daily Allowance
+                        </span>
+                        <span className="font-mono text-[9px] text-slate-600">
+                          ({daysLeft}d left)
+                        </span>
+                      </div>
                       <span
                         className="font-mono text-sm font-black tabular-nums text-emerald-300"
-                        style={{ textShadow: "0 0 10px rgba(52,211,153,0.4)" }}
+                        style={{ textShadow: "0 0 10px rgba(52,211,153,0.5)" }}
                       >
                         {fmtMoney(dailySlice, us.displayCurrency, us.usdExchangeRate)}/day
                       </span>
@@ -525,7 +567,13 @@ function SettingsPage() {
 
         <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
-            <Bell className="h-4 w-4" /> Notifications
+            <Bell
+              className="h-4 w-4 text-cyan-400"
+              style={{ filter: "drop-shadow(0 0 4px rgba(34,211,238,0.6))" }}
+            />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
+              Notifications
+            </span>
           </h2>
           {notifPermission === "unsupported" ? (
             <p className="text-xs text-slate-400">
@@ -555,7 +603,13 @@ function SettingsPage() {
 
         <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
-            <ShieldCheck className="h-4 w-4" /> Backup & Security
+            <ShieldCheck
+              className="h-4 w-4 text-cyan-400"
+              style={{ filter: "drop-shadow(0 0 4px rgba(34,211,238,0.6))" }}
+            />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
+              Backup & Security
+            </span>
           </h2>
           <p className="text-xs text-slate-400 mb-4">
             Your data lives only on this device. Save a backup file you can restore later.
@@ -584,8 +638,12 @@ function SettingsPage() {
         <hr className="border-slate-800 my-8" />
 
         <section className="bg-rose-950/10 backdrop-blur-xl border border-rose-500/30 rounded-2xl p-5 mb-6 shadow-lg scroll-mt-4">
-          <h2 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-rose-400 mb-4 pb-2 border-b border-rose-500/30">
-            <Trash2 className="h-4 w-4" /> Danger Zone
+          <h2 className="flex items-center gap-2 text-xs font-black tracking-[0.25em] uppercase mb-4 pb-2 border-b border-rose-900/50 text-rose-400">
+            <Trash2
+              className="h-4 w-4 text-rose-400"
+              style={{ filter: "drop-shadow(0 0 4px rgba(251,113,133,0.6))" }}
+            />
+            Danger Zone
           </h2>
           <p className="text-xs text-slate-400 mb-5 leading-relaxed">
             Permanently erases all transactions, discipline points, and settings from this device.
