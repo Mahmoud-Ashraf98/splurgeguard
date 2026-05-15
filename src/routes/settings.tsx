@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type ElementType } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import {
   Download,
   Upload,
@@ -19,7 +20,7 @@ import {
   Bell,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { STORAGE_KEY, type Currency } from "@/lib/splurge-types";
+import { STORAGE_KEY } from "@/lib/splurge-types";
 import { fmtMoney } from "@/lib/splurge-utils";
 import { paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
@@ -61,23 +62,24 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-const CurrencyField = ({
-  label,
-  value,
-  onChange,
-  helper,
-  displayCurrency,
-}: {
+// ─── MODULE-LEVEL — outside SettingsPage ─────────────────────────────────
+interface CurrencyFieldProps {
   label: string;
   value: number;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onCommit: (n: number) => void;
   helper?: string;
-  displayCurrency: Currency;
-}) => {
+  ticker?: string;
+}
+
+function CurrencyField({ label, value, onCommit, helper, ticker = "VND" }: CurrencyFieldProps) {
   const id = `cf-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
-  const ticker = displayCurrency;
+  const { displayValue, humanBadge, handleFocus, handleChange, handleBlur } = useCurrencyInput(
+    value,
+    onCommit,
+  );
+
   return (
-    <div className="mb-4">
+    <div className="mb-5">
       <label
         htmlFor={id}
         className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-300"
@@ -87,19 +89,36 @@ const CurrencyField = ({
       <div className="relative w-full">
         <input
           id={id}
-          type="number"
-          value={value}
-          onChange={onChange}
-          className="w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 pl-4 pr-16 text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          onFocus={handleFocus}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder="0"
+          className="w-full bg-slate-950/50 border border-slate-700 rounded-lg py-3 pl-4 pr-[108px] text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600"
         />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-950/80 text-cyan-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60 backdrop-blur-sm shadow-inner pointer-events-none select-none">
-          {ticker}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none select-none">
+          {humanBadge && (
+            <span
+              className="px-2 py-0.5 bg-cyan-950/70 text-cyan-300 text-[10px] font-black rounded border border-cyan-700/50"
+              style={{ boxShadow: "0 0 8px rgba(34,211,238,0.2)" }}
+            >
+              {humanBadge}
+            </span>
+          )}
+          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
+            {ticker}
+          </span>
         </div>
       </div>
-      {helper && <p className="text-xs text-slate-400 mt-1">{helper}</p>}
+      {helper && (
+        <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{helper}</p>
+      )}
     </div>
   );
-};
+}
+// ─────────────────────────────────────────────────────────────────────────
 
 function Field({
   label,
@@ -234,102 +253,91 @@ function SettingsPage() {
             >
               <p className="font-semibold text-amber-200">We carried over your income from last cycle — please confirm it&apos;s still accurate</p>
               <p className="mt-2 text-xs text-amber-100/85 leading-relaxed">
-                Please verify &quot;Cycle total income&quot; matches your real take-home. Editing that field clears
+                Please verify &quot;Monthly Income (VND)&quot; matches your real take-home. Editing that field clears
                 this notice.
               </p>
             </div>
           )}
+          {/* ── MONTHLY INCOME ── */}
           <CurrencyField
-            label="Cycle total income (VND)"
+            label="Monthly Income (VND)"
             value={us.total_income_cents}
-            displayCurrency={us.displayCurrency}
-            onChange={(e) => {
-              const num = Math.floor(Number(e.target.value) || 0);
-              app.updateUserState({
-                total_income_cents: num,
-                pyfIncomeInferred: false,
-              });
-            }}
-            helper="Your income for this cycle — used to calculate how much you can spend"
+            onCommit={(n) =>
+              app.updateUserState({ total_income_cents: n, pyfIncomeInferred: false })
+            }
+            helper="Your take-home pay for this month."
+            ticker={us.displayCurrency}
           />
+
+          {/* ── NEEDS & BILLS ── */}
           <CurrencyField
-            label="Fixed overhead this cycle (VND)"
+            label="Needs & Bills (VND)"
             value={us.fixed_overhead_cents ?? 0}
-            displayCurrency={us.displayCurrency}
-            onChange={(e) =>
-              app.updateUserState({ fixed_overhead_cents: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="Regular expenses deducted before your splurge budget is calculated"
+            onCommit={(n) => app.updateUserState({ fixed_overhead_cents: n })}
+            helper="Rent, groceries, utilities, transport — everything you need to stay alive and comfortable."
+            ticker={us.displayCurrency}
           />
+
+          {/* ── WEALTH SHIELD (Savings) ── */}
           <CurrencyField
-            label="Pay-Yourself-First Savings Target (VND)"
-            value={us.savings_base_cents ?? 0}
-            displayCurrency={us.displayCurrency}
-            onChange={(e) =>
-              app.updateUserState({ savings_base_cents: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="The amount you commit to protecting this cycle before discretionary spending. Editing this adjusts your theoretical splurge pool below — it does NOT directly change your live flexible balance."
+            label="Wealth Shield — Savings Target (VND)"
+            value={us.savings_base_cents}
+            onCommit={(n) => app.updateUserState({ savings_base_cents: n })}
+            helper="Pay yourself first. This gets locked away before your fun money is calculated."
+            ticker={us.displayCurrency}
           />
-          {/* Derived Splurge Pool — read-only, computed from income/overhead/savings */}
+
+          {/* ── GUILT-FREE ALLOWANCE CARD ── */}
           {(() => {
-            const theoreticalPool = Math.max(
+            const pool = Math.max(
               0,
               (us.total_income_cents ?? 0) -
                 (us.fixed_overhead_cents ?? 0) -
-                (us.savings_base_cents ?? 0)
+                (us.savings_base_cents ?? 0),
             );
-            const isNegative = theoreticalPool <= 0 && (us.total_income_cents ?? 0) > 0;
+            const isNegative =
+              (us.total_income_cents ?? 0) -
+                (us.fixed_overhead_cents ?? 0) -
+                (us.savings_base_cents ?? 0) <
+              0;
             return (
               <div
-                className={`mb-4 relative overflow-hidden rounded-xl border p-4 flex justify-between items-center ${
+                className={`mb-5 rounded-xl border p-4 ${
                   isNegative
-                    ? "border-rose-500/40 bg-rose-950/20"
-                    : "border-cyan-500/30 bg-cyan-950/20"
+                    ? "border-rose-500/50 bg-rose-950/20"
+                    : "border-emerald-500/30 bg-emerald-950/10"
                 }`}
               >
-                <div
-                  className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
-                    isNegative ? "bg-rose-500" : "bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                <p
+                  className={`font-mono text-[10px] uppercase tracking-[0.3em] mb-1 ${
+                    isNegative ? "text-rose-400" : "text-emerald-400"
                   }`}
-                />
-                <div className="pl-2">
-                  <p
-                    className={`text-[10px] uppercase tracking-widest font-bold mb-1 ${
-                      isNegative ? "text-rose-400/80" : "text-cyan-400/80"
-                    }`}
-                  >
-                    Theoretical Splurge Pool
+                >
+                  Guilt-Free Allowance
+                </p>
+                <p className="text-[10px] text-slate-500 mb-2">Income − Needs − Savings</p>
+                <p
+                  className={`font-mono text-2xl font-black tabular-nums ${
+                    isNegative ? "text-rose-400" : "text-emerald-300"
+                  }`}
+                >
+                  {fmtMoney(pool, us.displayCurrency, us.usdExchangeRate)}
+                </p>
+                {isNegative && (
+                  <p className="mt-2 text-xs text-rose-300 font-semibold leading-relaxed">
+                    ⚠️ You&apos;re in the red! Lower your savings target or reduce your bills estimate.
                   </p>
-                  <p className="text-xs text-slate-400">Income − Overhead − Savings Target</p>
-                  {isNegative && (
-                    <p className="text-xs text-rose-400 mt-1 font-semibold">
-                      Savings target exceeds available pool — reduce savings or raise income.
-                    </p>
-                  )}
-                </div>
-                <div className="text-right shrink-0 ml-4">
-                  <p
-                    className={`text-xl font-bold tabular-nums tracking-tight ${
-                      isNegative ? "text-rose-300" : "text-white"
-                    }`}
-                  >
-                    {fmtMoney(theoreticalPool, us.displayCurrency, us.usdExchangeRate)}
-                  </p>
-                  <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500 mt-0.5">
-                    Calculated
-                  </p>
-                </div>
+                )}
               </div>
             );
           })()}
+
           <CurrencyField
-            label="Current Flexible Balance (VND)"
+            label="Live Fun Money Balance (VND)"
             value={us.currentBalanceVND}
-            displayCurrency={us.displayCurrency}
-            onChange={(e) =>
-              app.updateUserState({ currentBalanceVND: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="Your live tracked discretionary balance — what you actually have left to spend until payday. This decreases as you log expenses."
+            onCommit={(n) => app.updateUserState({ currentBalanceVND: n })}
+            helper="What you actually have left to spend right now — shrinks every time you log an expense."
+            ticker={us.displayCurrency}
           />
           <Field
             fieldId="f-next-payday-cycle-reset"
@@ -354,13 +362,11 @@ function SettingsPage() {
             Icon={TargetIcon}
           />
           <CurrencyField
-            label="Weekly Habit Limit (VND)"
+            label="Weekly Habit Cap (VND)"
             value={us.weeklyHabitLimitVND}
-            displayCurrency={us.displayCurrency}
-            onChange={(e) =>
-              app.updateUserState({ weeklyHabitLimitVND: Math.floor(Number(e.target.value) || 0) })
-            }
-            helper="Stay under this each week to earn your 250 Discipline Points weekly bonus"
+            onCommit={(n) => app.updateUserState({ weeklyHabitLimitVND: n })}
+            helper="Stay under this each week to earn your +250 DP Monday bonus."
+            ticker={us.displayCurrency}
           />
           <Field
             fieldId="f-custom-usd-exchange-rate"
