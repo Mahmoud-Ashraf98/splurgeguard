@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type ElementType } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import {
   Download,
@@ -120,6 +121,18 @@ function CurrencyField({ label, value, onCommit, helper, ticker = "VND" }: Curre
 }
 // ─────────────────────────────────────────────────────────────────────────
 
+/** Returns human-readable days-until string for the payday badge. */
+function daysUntilLabel(isoDate: string): { days: number; label: string; urgent: boolean } {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(isoDate);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - now.getTime()) / 86400000);
+  if (diff <= 0) return { days: 0, label: "Today", urgent: true };
+  if (diff === 1) return { days: 1, label: "Tomorrow", urgent: true };
+  return { days: diff, label: `${diff} days`, urgent: diff <= 5 };
+}
+
 function Field({
   label,
   value,
@@ -167,7 +180,6 @@ function SettingsPage() {
   const app = useApp();
   const us = app.data.userState;
   const fileRef = useRef<HTMLInputElement>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [notifPermission, setNotifPermission] = useState<NotifPermissionState>(
     typeof window !== "undefined" && "Notification" in window
@@ -228,7 +240,7 @@ function SettingsPage() {
           </div>
         </div>
 
-        <section className={sectionClass}>
+        <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
             <User className="h-4 w-4" /> Identity
           </h2>
@@ -242,7 +254,7 @@ function SettingsPage() {
           />
         </section>
 
-        <section className={sectionClass}>
+        <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
             <Sliders className="h-4 w-4" /> Budget & Limits
           </h2>
@@ -287,46 +299,118 @@ function SettingsPage() {
             ticker={us.displayCurrency}
           />
 
-          {/* ── GUILT-FREE ALLOWANCE CARD ── */}
+          {/* ── LIVE BUDGET MATH PANEL ── */}
           {(() => {
-            const pool = Math.max(
-              0,
-              (us.total_income_cents ?? 0) -
-                (us.fixed_overhead_cents ?? 0) -
-                (us.savings_base_cents ?? 0),
+            const income = us.total_income_cents ?? 0;
+            const bills = us.fixed_overhead_cents ?? 0;
+            const shield = us.savings_base_cents ?? 0;
+            const pool = income - bills - shield;
+            const isRed = pool < 0;
+
+            const end = new Date(us.paydayDate);
+            end.setHours(0, 0, 0, 0);
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const daysLeft = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000));
+            const dailySlice = pool > 0 ? Math.floor(pool / daysLeft) : 0;
+
+            const Row = ({
+              label,
+              value,
+              sign,
+              color,
+              bold,
+            }: {
+              label: string;
+              value: number;
+              sign?: "+" | "−" | "=";
+              color?: string;
+              bold?: boolean;
+            }) => (
+              <div
+                className={`flex items-center justify-between py-1.5 ${bold ? "border-t border-slate-700/60 mt-1 pt-2.5" : ""}`}
+              >
+                <div className="flex items-center gap-2">
+                  {sign && (
+                    <span
+                      className={`font-mono text-base w-4 text-center flex-shrink-0 ${color ?? "text-slate-500"}`}
+                    >
+                      {sign}
+                    </span>
+                  )}
+                  {!sign && <span className="w-4 flex-shrink-0" />}
+                  <span
+                    className={`font-mono text-[11px] uppercase tracking-widest ${bold ? "text-slate-200 font-bold" : "text-slate-400"}`}
+                  >
+                    {label}
+                  </span>
+                </div>
+                <span
+                  className={`font-mono tabular-nums ${bold ? "text-lg font-black" : "text-sm"} ${color ?? "text-slate-300"}`}
+                >
+                  {fmtMoney(Math.abs(value), us.displayCurrency, us.usdExchangeRate)}
+                </span>
+              </div>
             );
-            const isNegative =
-              (us.total_income_cents ?? 0) -
-                (us.fixed_overhead_cents ?? 0) -
-                (us.savings_base_cents ?? 0) <
-              0;
+
             return (
               <div
-                className={`mb-5 rounded-xl border p-4 ${
-                  isNegative
-                    ? "border-rose-500/50 bg-rose-950/20"
-                    : "border-emerald-500/30 bg-emerald-950/10"
+                className={`mb-5 rounded-2xl border overflow-hidden transition-colors duration-300 ${
+                  isRed ? "border-rose-500/40 bg-rose-950/15" : "border-slate-700/60 bg-slate-950/40"
                 }`}
               >
-                <p
-                  className={`font-mono text-[10px] uppercase tracking-[0.3em] mb-1 ${
-                    isNegative ? "text-rose-400" : "text-emerald-400"
-                  }`}
+                {/* Header */}
+                <div
+                  className={`px-4 py-2.5 border-b ${isRed ? "border-rose-500/20 bg-rose-950/20" : "border-slate-800/60 bg-slate-900/40"}`}
                 >
-                  Guilt-Free Allowance
-                </p>
-                <p className="text-[10px] text-slate-500 mb-2">Income − Needs − Savings</p>
-                <p
-                  className={`font-mono text-2xl font-black tabular-nums ${
-                    isNegative ? "text-rose-400" : "text-emerald-300"
-                  }`}
-                >
-                  {fmtMoney(pool, us.displayCurrency, us.usdExchangeRate)}
-                </p>
-                {isNegative && (
-                  <p className="mt-2 text-xs text-rose-300 font-semibold leading-relaxed">
-                    ⚠️ You&apos;re in the red! Lower your savings target or reduce your bills estimate.
+                  <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
+                    Live Budget Breakdown
                   </p>
+                </div>
+
+                {/* Math rows */}
+                <div className="px-4 py-3">
+                  <Row label="Monthly Income" value={income} sign="+" color="text-emerald-400" />
+                  <Row label="Needs & Bills" value={bills} sign="−" color="text-amber-400" />
+                  <Row label="Wealth Shield" value={shield} sign="−" color="text-cyan-400" />
+                  <Row
+                    label="Guilt-Free Allowance"
+                    value={Math.max(0, pool)}
+                    sign="="
+                    color={isRed ? "text-rose-400" : "text-emerald-300"}
+                    bold
+                  />
+                </div>
+
+                {/* Result footer */}
+                {!isRed && dailySlice > 0 && (
+                  <div className="px-4 pb-3 pt-0">
+                    <div className="rounded-xl bg-slate-900/60 border border-slate-700/40 px-3 py-2 flex items-center justify-between">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                        Daily Allowance ({daysLeft}d left)
+                      </span>
+                      <span
+                        className="font-mono text-sm font-black tabular-nums text-emerald-300"
+                        style={{ textShadow: "0 0 10px rgba(52,211,153,0.4)" }}
+                      >
+                        {fmtMoney(dailySlice, us.displayCurrency, us.usdExchangeRate)}/day
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Red state warning */}
+                {isRed && (
+                  <div className="px-4 pb-4">
+                    <div className="rounded-xl bg-rose-950/30 border border-rose-500/30 px-3 py-2.5 text-center">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-rose-300 font-bold">
+                        ⚠️ You&apos;re in the red
+                      </p>
+                      <p className="text-xs text-rose-400/80 mt-1">
+                        Lower your savings target or reduce bills to unlock your fun budget.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             );
@@ -339,20 +423,48 @@ function SettingsPage() {
             helper="What you actually have left to spend right now — shrinks every time you log an expense."
             ticker={us.displayCurrency}
           />
-          <Field
-            fieldId="f-next-payday-cycle-reset"
-            label="Next Payday / Cycle Reset"
-            type="date"
-            value={paydayInputValue}
-            onChange={(e) =>
-              app.updateUserState({
-                paydayDate: paydayInputToIsoEndOfLocalDay(e.target.value),
-              })
-            }
-            helper="Your budget refreshes on this date"
-            Icon={Calendar}
-            extraInputClass="pr-10"
-          />
+          {/* ── NEXT PAYDAY / CYCLE RESET ── */}
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-1.5">
+              <label
+                htmlFor="f-next-payday-cycle-reset"
+                className="font-mono text-[10px] uppercase tracking-wider text-slate-300"
+              >
+                Next Payday / Cycle Reset
+              </label>
+              {(() => {
+                const { label, urgent } = daysUntilLabel(us.paydayDate);
+                return (
+                  <span
+                    className={`font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                      urgent
+                        ? "text-amber-300 bg-amber-900/30 border-amber-600/40"
+                        : "text-cyan-400 bg-cyan-900/20 border-cyan-700/30"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                );
+              })()}
+            </div>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none" />
+              <input
+                id="f-next-payday-cycle-reset"
+                type="date"
+                value={paydayInputValue}
+                onChange={(e) =>
+                  app.updateUserState({
+                    paydayDate: paydayInputToIsoEndOfLocalDay(e.target.value),
+                  })
+                }
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-lg p-3 pl-10 pr-4 text-[#f1f5f9] font-mono text-sm transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 hover:border-slate-600"
+              />
+            </div>
+            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              Your fun budget refreshes on this date and the cycle starts over.
+            </p>
+          </div>
           <Field
             fieldId="f-target-habit-name"
             label="Target Habit Name"
@@ -381,27 +493,37 @@ function SettingsPage() {
           />
         </section>
 
-        <section className={sectionClass}>
+        <section className={sectionClass + " scroll-mt-4"}>
           <h2 className="flex items-center mb-2 pb-2 border-b border-slate-700/50">
             <Gamepad2 className="w-5 h-5 inline-block mr-2 text-cyan-500" />
             <span className="text-xs font-bold tracking-widest uppercase text-cyan-500">
               How Discipline Points (DP) Work
             </span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <div className="mt-4 space-y-2">
             {dpRules.map((r, i) => (
               <div
                 key={i}
-                className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex items-center gap-3"
+                className="flex items-center gap-3 rounded-xl border border-slate-800/80 bg-slate-950/50 px-4 py-3"
               >
-                <r.Icon className={`w-5 h-5 shrink-0 ${r.color}`} />
-                <span className="text-xs text-slate-300">{r.text}</span>
+                <div
+                  className={`flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg border ${
+                    r.color === "text-rose-500"
+                      ? "bg-rose-500/10 border-rose-500/20"
+                      : r.color === "text-amber-400"
+                        ? "bg-amber-400/10 border-amber-400/20"
+                        : "bg-cyan-500/10 border-cyan-500/20"
+                  }`}
+                >
+                  <r.Icon className={`w-4 h-4 ${r.color}`} />
+                </div>
+                <span className="text-xs text-slate-300 leading-snug flex-1">{r.text}</span>
               </div>
             ))}
           </div>
         </section>
 
-        <section className={sectionClass}>
+        <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
             <Bell className="h-4 w-4" /> Notifications
           </h2>
@@ -431,7 +553,7 @@ function SettingsPage() {
           )}
         </section>
 
-        <section className={sectionClass}>
+        <section className={sectionClass + " scroll-mt-4"}>
           <h2 className={headerClass}>
             <ShieldCheck className="h-4 w-4" /> Backup & Security
           </h2>
@@ -461,43 +583,24 @@ function SettingsPage() {
 
         <hr className="border-slate-800 my-8" />
 
-        <section className="bg-rose-950/10 backdrop-blur-xl border border-rose-500/30 rounded-2xl p-5 mb-6 shadow-lg">
+        <section className="bg-rose-950/10 backdrop-blur-xl border border-rose-500/30 rounded-2xl p-5 mb-6 shadow-lg scroll-mt-4">
           <h2 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-rose-400 mb-4 pb-2 border-b border-rose-500/30">
             <Trash2 className="h-4 w-4" /> Danger Zone
           </h2>
-          <p className="text-xs text-slate-400 mb-4">
-            Warning: This will permanently wipe all transactions, points, and settings from this
-            device.
+          <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+            Permanently erases all transactions, discipline points, and settings from this device.
+            There is no undo.
           </p>
-          {!confirmClear ? (
-            <button
-              onClick={() => setConfirmClear(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg border border-rose-500/50 text-rose-400 bg-rose-950/20 transition-all hover:bg-rose-900/60 hover:border-rose-500 hover:shadow-[0_0_15px_rgba(244,63,94,0.4)] font-mono text-xs uppercase tracking-wider"
-            >
-              <Trash2 className="h-4 w-4" /> Clear All Data
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs text-rose-300">This wipes everything. Sure?</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setConfirmClear(false)}
-                  className="rounded-lg border border-slate-700 py-2.5 font-mono text-xs uppercase text-slate-400 hover:bg-slate-800/50 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    app.clearData();
-                    setConfirmClear(false);
-                  }}
-                  className="rounded-lg bg-rose-500 py-2.5 font-mono text-xs font-bold uppercase text-white hover:bg-rose-600 transition-all"
-                >
-                  Wipe
-                </button>
-              </div>
-            </div>
-          )}
+          <HoldSecureButton
+            onSecure={() => {
+              app.clearData();
+            }}
+            durationMs={3000}
+            label="Hold 3s to wipe all data"
+          />
+          <p className="mt-3 text-center font-mono text-[9px] uppercase tracking-widest text-slate-600">
+            Hold for 3 seconds to confirm permanent deletion
+          </p>
         </section>
 
         {/* Cycle Management Section */}
