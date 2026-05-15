@@ -46,6 +46,7 @@ function OnboardingCurrencyInput({
           id={id}
           type="text"
           inputMode="numeric"
+          autoComplete="off"
           value={displayValue}
           onFocus={handleFocus}
           onChange={handleChange}
@@ -204,9 +205,9 @@ export function Onboarding() {
                     id="onboarding-user-name"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
-                    placeholder="e.g., Mahmoud"
+                    placeholder="e.g., Your name"
                     className={inputClass}
-                    autoComplete="nickname"
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -216,7 +217,7 @@ export function Onboarding() {
                   label="Monthly Take-Home (VND)"
                   value={Number(totalIncome) || 0}
                   onCommit={(n) => setTotalIncome(String(n))}
-                  placeholder="28900000"
+                  placeholder="15000000"
                   helper="Your full income for this month — we'll subtract bills and savings to find your fun budget."
                 />
               </div>
@@ -226,7 +227,7 @@ export function Onboarding() {
                   label="Needs & Bills (VND)"
                   value={Number(fixedOverhead) || 0}
                   onCommit={(n) => setFixedOverhead(String(n))}
-                  placeholder="6000000"
+                  placeholder="5000000"
                   helper="Rent, groceries, utilities, transport — everything you need to live comfortably."
                 />
                 {incomeOverheadInvalid && (
@@ -247,7 +248,7 @@ export function Onboarding() {
                   label="Current Fun Money Balance (VND)"
                   value={Number(flexibleBalance) || 0}
                   onCommit={(n) => setFlexibleBalance(String(n))}
-                  placeholder="5000000"
+                  placeholder="2000000"
                   helper="What's in your account right now that's available to spend on non-essentials."
                 />
               </div>
@@ -292,7 +293,7 @@ export function Onboarding() {
                   label="Weekly Habit Cap (VND)"
                   value={Number(habitLimit) || 0}
                   onCommit={(n) => setHabitLimit(n > 0 ? String(n) : "0")}
-                  placeholder="750000"
+                  placeholder="500000"
                   helper="Max you'll spend on this habit per week. Hit the cap and earn +250 DP every Monday."
                 />
               </div>

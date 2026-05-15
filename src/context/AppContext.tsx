@@ -855,7 +855,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearData = () => {
+    // Remove all SplurgeGuard-owned localStorage keys, not just the main store
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("sg_last_savings_base_cents");
+    localStorage.removeItem("sg_eod_notif_sent");
     setData(defaultData);
     toast("All data cleared");
   };
