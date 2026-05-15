@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import {
   Terminal,
   User,
-  Wallet,
   Calendar,
   Target,
-  Landmark,
   PiggyBank,
-  Coins,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { HoldSecureButton } from "@/components/splurge/HoldSecureButton";
@@ -16,6 +14,65 @@ import { DEFAULT_USD_EXCHANGE_RATE } from "@/lib/splurge-types";
 import { isPaydayStrictlyInFuture, paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type Phase = "profile" | "savings";
+
+// MODULE-LEVEL — outside Onboarding component
+interface OnboardingCurrencyInputProps {
+  id: string;
+  label: string;
+  value: number;
+  onCommit: (n: number) => void;
+  placeholder?: string;
+  helper?: string;
+}
+
+function OnboardingCurrencyInput({
+  id,
+  label,
+  value,
+  onCommit,
+  placeholder = "0",
+  helper,
+}: OnboardingCurrencyInputProps) {
+  const { displayValue, humanBadge, handleFocus, handleChange, handleBlur } =
+    useCurrencyInput(value, onCommit);
+
+  return (
+    <div>
+      <label htmlFor={id} className="mb-2 block text-sm text-slate-300">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          onFocus={handleFocus}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className="w-full bg-slate-950/50 border border-slate-700 rounded-xl p-4 pr-[108px] text-[#f1f5f9] font-mono transition-all duration-300 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50"
+        />
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none select-none">
+          {humanBadge && (
+            <span
+              className="px-2 py-0.5 bg-cyan-950/70 text-cyan-300 text-[10px] font-black rounded border border-cyan-700/50"
+              style={{ boxShadow: "0 0 8px rgba(34,211,238,0.2)" }}
+            >
+              {humanBadge}
+            </span>
+          )}
+          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
+            VND
+          </span>
+        </div>
+      </div>
+      {helper && (
+        <p className="mt-1 text-[10px] text-slate-500 leading-relaxed">{helper}</p>
+      )}
+    </div>
+  );
+}
 
 export function Onboarding() {
   const { initUser } = useApp();
@@ -154,40 +211,24 @@ export function Onboarding() {
                 </div>
               </div>
               <div>
-                <label htmlFor="onboarding-total-income" className="mb-2 block text-sm text-slate-300">
-                  Total take-home for this cycle (VND)
-                </label>
-                <div className="relative">
-                  <Landmark className={iconClass} aria-hidden />
-                  <input
-                    id="onboarding-total-income"
-                    inputMode="numeric"
-                    value={totalIncome}
-                    onChange={(e) => setTotalIncome(e.target.value.replace(/\D/g, ""))}
-                    placeholder="8000000"
-                    className={inputClass}
-                    aria-describedby="onboarding-total-income-hint"
-                  />
-                </div>
-                <p id="onboarding-total-income-hint" className="mt-1 text-[10px] text-slate-500">
-                  Gross amount you are allocating across savings, fixed bills, and flexible spending until payday.
-                </p>
+                <OnboardingCurrencyInput
+                  id="onboarding-total-income"
+                  label="Monthly Take-Home (VND)"
+                  value={Number(totalIncome) || 0}
+                  onCommit={(n) => setTotalIncome(String(n))}
+                  placeholder="28900000"
+                  helper="Your full income for this month — we'll subtract bills and savings to find your fun budget."
+                />
               </div>
               <div>
-                <label htmlFor="onboarding-overhead" className="mb-2 block text-sm text-slate-300">
-                  Fixed overhead (rent, debt minimums, etc.)
-                </label>
-                <div className="relative">
-                  <Wallet className={iconClass} aria-hidden />
-                  <input
-                    id="onboarding-overhead"
-                    inputMode="numeric"
-                    value={fixedOverhead}
-                    onChange={(e) => setFixedOverhead(e.target.value.replace(/\D/g, ""))}
-                    placeholder="0"
-                    className={inputClass}
-                  />
-                </div>
+                <OnboardingCurrencyInput
+                  id="onboarding-overhead"
+                  label="Needs & Bills (VND)"
+                  value={Number(fixedOverhead) || 0}
+                  onCommit={(n) => setFixedOverhead(String(n))}
+                  placeholder="6000000"
+                  helper="Rent, groceries, utilities, transport — everything you need to live comfortably."
+                />
                 {incomeOverheadInvalid && (
                   <p className="mt-2 text-xs font-medium text-rose-400" role="alert">
                     Overhead cannot exceed total income. Reduce overhead or raise income.
@@ -201,25 +242,14 @@ export function Onboarding() {
                 )}
               </div>
               <div>
-                <label htmlFor="onboarding-flex-balance" className="mb-2 block text-sm text-slate-300">
-                  Current flexible balance (VND)
-                </label>
-                <div className="relative">
-                  <Wallet className={iconClass} aria-hidden />
-                  <input
-                    id="onboarding-flex-balance"
-                    inputMode="numeric"
-                    value={flexibleBalance}
-                    onChange={(e) => setFlexibleBalance(e.target.value.replace(/\D/g, ""))}
-                    placeholder="5000000"
-                    className={inputClass}
-                    aria-describedby="onboarding-flex-balance-hint"
-                  />
-                </div>
-                <p id="onboarding-flex-balance-hint" className="mt-1 text-[10px] text-slate-500">
-                  How much you can spend on non-essentials right now (may differ from the theoretical budget after
-                  savings).
-                </p>
+                <OnboardingCurrencyInput
+                  id="onboarding-flex-balance"
+                  label="Current Fun Money Balance (VND)"
+                  value={Number(flexibleBalance) || 0}
+                  onCommit={(n) => setFlexibleBalance(String(n))}
+                  placeholder="5000000"
+                  helper="What's in your account right now that's available to spend on non-essentials."
+                />
               </div>
               <div>
                 <label htmlFor="onboarding-payday" className="mb-2 block text-sm text-slate-300">
@@ -257,24 +287,14 @@ export function Onboarding() {
                 </div>
               </div>
               <div>
-                <label htmlFor="onboarding-habit-limit" className="mb-2 block text-sm text-slate-300">
-                  Weekly limit for this habit (VND) <span className="text-slate-500 font-normal">(digits required)</span>
-                </label>
-                <div className="relative">
-                  <Coins className={iconClass} aria-hidden />
-                  <input
-                    id="onboarding-habit-limit"
-                    inputMode="numeric"
-                    value={habitLimit}
-                    onChange={(e) => setHabitLimit(e.target.value.replace(/\D/g, ""))}
-                    placeholder="0 for none"
-                    className={inputClass}
-                    aria-describedby="onboarding-habit-limit-hint"
-                  />
-                </div>
-                <p id="onboarding-habit-limit-hint" className="mt-1 text-[10px] text-slate-500">
-                  Enter at least one digit (use 0 if you are not capping this habit weekly).
-                </p>
+                <OnboardingCurrencyInput
+                  id="onboarding-habit-limit"
+                  label="Weekly Habit Cap (VND)"
+                  value={Number(habitLimit) || 0}
+                  onCommit={(n) => setHabitLimit(n > 0 ? String(n) : "0")}
+                  placeholder="750000"
+                  helper="Max you'll spend on this habit per week. Hit the cap and earn +250 DP every Monday."
+                />
               </div>
               <button
                 type="button"
@@ -293,7 +313,7 @@ export function Onboarding() {
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Slide to pledge part of your cycle income into PYF savings (still tracked in-app). Maximum is your
-                income minus fixed overhead.
+                income minus needs &amp; bills.
               </p>
               {zeroSavingsCapacity ? (
                 <div
