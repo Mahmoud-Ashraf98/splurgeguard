@@ -5,6 +5,12 @@ import {
   Plus, Flame, Coins, Lock, Target, CheckCircle2, XCircle,
   ExternalLink, X, Info,
   Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+  Footprints, Bus,
+  Pizza, Droplets, Zap, Package, Beer, Home, Apple,
+  Smartphone, Star, Timer,
+  Gamepad2, Wifi, Tv,
+  Store, Users, Mic,
+  Dumbbell, Clock,
   type LucideIcon,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -21,7 +27,20 @@ import type { DailyContract } from "@/lib/splurge-types";
 import { getRankForXP, getNextRank } from "@/lib/ranks";
 
 const CONTRACT_ICON_MAP: Record<string, LucideIcon> = {
+  // original
   Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+  // transport
+  Footprints, Bus,
+  // food & drinks
+  Pizza, Droplets, Zap, Package, Beer, Home, Apple,
+  // shopping
+  Smartphone, Lock, Star, Timer,
+  // digital & gaming
+  Gamepad2, Wifi, Tv,
+  // convenience & social
+  Store, Users, Mic,
+  // high-stakes
+  Dumbbell, Target, Clock,
 };
 
 const DAY_LABELS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];

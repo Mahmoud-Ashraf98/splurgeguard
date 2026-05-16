@@ -1,14 +1,36 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bike, Coffee, ShoppingCart, Utensils, CupSoda, Check, X, Target, type LucideIcon } from 'lucide-react';
+import {
+  Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+  Check, X, Target,
+  Footprints, Bus,
+  Pizza, Droplets, Zap, Package, Beer, Home, Apple,
+  Smartphone, Lock, Star, Timer,
+  Gamepad2, Wifi, Tv,
+  Store,
+  Users, Mic,
+  Dumbbell, Clock,
+  type LucideIcon,
+} from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { DailyContract } from '@/lib/splurge-types';
 
 const ICON_MAP: Record<string, LucideIcon> = {
-  Bike,
-  Coffee,
-  ShoppingCart,
-  Utensils,
-  CupSoda,
+  // original
+  Bike, Coffee, ShoppingCart, Utensils, CupSoda,
+  // transport
+  Footprints, Bus,
+  // food & drinks
+  Pizza, Droplets, Zap, Package, Beer, Home, Apple,
+  // shopping
+  Smartphone, Lock, Star, Timer,
+  // digital & gaming
+  Gamepad2, Wifi, Tv,
+  // convenience
+  Store,
+  // social
+  Users, Mic,
+  // high-stakes
+  Dumbbell, Target, Clock,
 };
 
 function ContractCard({
