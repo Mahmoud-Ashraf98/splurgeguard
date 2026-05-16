@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useLocation } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Plus, Flame, Coins, Lock, Target, CheckCircle2, XCircle,
-  ExternalLink, X, Info,
+  ExternalLink, X,
   Bike, Coffee, ShoppingCart, Utensils, CupSoda,
   Footprints, Bus,
   Pizza, Droplets, Zap, Package, Beer, Home, Apple,
@@ -64,7 +64,6 @@ function Index() {
   const app = useApp();
   const navigate = useNavigate();
   const [showLevelGuide, setShowLevelGuide] = useState(false);
-  const [showLimitInfo, setShowLimitInfo] = useState(false);
   const [forfeitTarget, setForfeitTarget] = useState<DailyContract | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement | null>(null);
@@ -166,10 +165,10 @@ function Index() {
             {us.currentLevel}
           </div>
 
-          <div className="p-5 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 relative z-10">
+          <div className="px-4 py-2.5 flex items-center justify-between gap-x-3 relative z-10">
             <div className="flex min-w-0 flex-1 items-center gap-4">
               {/* Targeting Reticle Avatar */}
-              <div className="w-16 h-16 flex-shrink-0 relative">
+              <div className="w-10 h-10 flex-shrink-0 relative">
                 <svg
                   className="absolute text-cyan-500/40 animate-[spin_10s_linear_infinite] will-change-transform"
                   style={{
@@ -212,7 +211,7 @@ function Index() {
                   Mindset: Focused
                 </p>
                 <h1
-                  className="text-2xl font-black uppercase tracking-widest break-words"
+                  className="text-sm font-black uppercase tracking-widest"
                   style={{
                     background: "linear-gradient(180deg, #ffffff 0%, #94a3b8 100%)",
                     WebkitBackgroundClip: "text",
@@ -221,7 +220,7 @@ function Index() {
                     filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.15))",
                   }}
                 >
-                  {us.userName || "Master"} — Splurge Control Center
+                  {us.userName || "Master"}
                 </h1>
                 <div className="flex items-center gap-2 mt-1">
                   <button
@@ -270,8 +269,9 @@ function Index() {
 
       {/* ── 2. THE CORE REACTOR (DAILY LIMIT) ──────────────────────────── */}
       <div className="px-5">
-        <div className="mb-8 flex flex-col items-center">
+        <div className="mb-8 flex items-center justify-between gap-4">
           <StatusRing
+            size={200}
             used={app.todayDiscretionary}
             limit={app.smartDailyLimit}
             remainingValue={remaining}
@@ -280,54 +280,13 @@ function Index() {
             innerLimit={habitLimit}
           />
 
-          {/* Stats row — frosted cards */}
-          <div className="mt-6 grid w-full grid-cols-2 gap-3">
-            <div className="rounded-xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-md p-3 shadow-inner">
-              <div className="flex items-center gap-1.5">
-                <span aria-hidden>💸</span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-500">Spent Today</span>
-              </div>
-              <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.todayDiscretionary, cur, rate)}</div>
+          <div className="flex flex-col justify-center w-28 p-3 rounded-xl border border-slate-800 bg-slate-900/50">
+            <div className="flex items-center gap-1.5">
+              <span aria-hidden>💸</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-slate-500">Spent Today</span>
             </div>
-            <div className="rounded-xl border border-cyan-500/20 bg-slate-900/40 backdrop-blur-md p-3 shadow-inner">
-              <div className="flex items-center gap-1.5">
-                <span aria-hidden>🎯</span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-slate-500">Daily Limit</span>
-                <button
-                  onClick={() => setShowLimitInfo((v) => !v)}
-                  className="ml-auto text-slate-500 hover:text-cyan-400 transition-colors"
-                  aria-label="What goes into the daily limit?"
-                >
-                  <Info className="h-3 w-3" />
-                </button>
-              </div>
-              <div className="mt-1 font-mono text-base tabular-nums text-slate-100">{fmtMoney(app.smartDailyLimit, cur, rate)}</div>
-              {app.data.transactions.some((tx) => {
-                if (!txIsCompleted(tx)) return false;
-                const lifespan = tx.amortizeDays ?? tx.amortizationDays ?? 1;
-                if (lifespan <= 1) return false;
-                const daysSince = Math.floor(
-                  (new Date().setHours(0, 0, 0, 0) - new Date(tx.timestamp).setHours(0, 0, 0, 0)) /
-                    86400000,
-                );
-                return daysSince >= 0 && daysSince < lifespan;
-              }) && (
-                <p className="text-[8px] mt-1 font-mono uppercase tracking-widest text-cyan-500/80 text-center w-full">
-                  // INCLUDES ACTIVE AMORTIZATIONS
-                </p>
-              )}
-              <AnimatePresence>
-                {showLimitInfo && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mt-2 font-mono text-[9px] uppercase tracking-widest text-cyan-500/70 leading-relaxed"
-                  >
-                    Counts essentials, habits, and the daily slice of every active amortization.
-                  </motion.p>
-                )}
-              </AnimatePresence>
+            <div className={`mt-1 font-mono text-base font-bold tabular-nums ${app.todayDiscretionary > 0 ? "text-rose-400" : "text-white"}`}>
+              {fmtMoney(app.todayDiscretionary, cur, rate)}
             </div>
           </div>
         </div>
