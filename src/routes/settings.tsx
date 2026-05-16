@@ -416,26 +416,47 @@ function SettingsPage() {
                 </div>
 
                 {/* Result footer */}
-                {!isRed && dailySlice > 0 && (
-                  <div className="px-4 pb-4 pt-0">
+                {!isRed && (dailySlice > 0 || app.smartDailyLimit > 0) && (
+                  <div className="px-4 pb-4 pt-0 space-y-2">
+                    {/* Theoretical daily — planning context only, muted */}
+                    <div className="flex items-center justify-between px-1">
+                      <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
+                        ~ Theoretical daily ({daysLeft}d left)
+                      </span>
+                      <span className="font-mono text-[10px] tabular-nums text-slate-600">
+                        {fmtMoney(dailySlice, us.displayCurrency, us.usdExchangeRate)}/day
+                      </span>
+                    </div>
+                    {/* Warning pill — only when wallet has drifted below plan */}
+                    {app.smartDailyLimit < dailySlice && (
+                      <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5">
+                        <span className="text-amber-400 text-[10px]">⚠</span>
+                        <p className="font-mono text-[9px] uppercase tracking-widest text-amber-300">
+                          Live balance is below income plan
+                        </p>
+                      </div>
+                    )}
+                    {/* Live operative cap — identical to dashboard Daily Limit */}
                     <div className="flex items-center justify-between rounded-xl border border-cyan-800/30 bg-cyan-950/30 px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span
                           className="w-1 h-4 rounded-full bg-emerald-400"
                           style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }}
                         />
-                        <span className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-500">
-                          Daily Allowance
-                        </span>
-                        <span className="font-mono text-[9px] text-slate-600">
-                          ({daysLeft}d left)
-                        </span>
+                        <div>
+                          <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-500">
+                            Live Daily Cap
+                          </p>
+                          <p className="font-mono text-[8px] text-slate-600 mt-0.5">
+                            Matches dashboard
+                          </p>
+                        </div>
                       </div>
                       <span
                         className="font-mono text-sm font-black tabular-nums text-emerald-300"
                         style={{ textShadow: "0 0 10px rgba(52,211,153,0.5)" }}
                       >
-                        {fmtMoney(dailySlice, us.displayCurrency, us.usdExchangeRate)}/day
+                        {fmtMoney(app.smartDailyLimit, us.displayCurrency, us.usdExchangeRate)}/day
                       </span>
                     </div>
                   </div>
