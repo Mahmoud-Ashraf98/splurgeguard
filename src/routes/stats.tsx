@@ -376,7 +376,7 @@ function StatsPage() {
 
               {(() => {
                 const currentNetSavings = selectNetSavingsCents(us);
-                const current_day_of_cycle = Math.max(1, daysElapsed);
+                const current_day_of_cycle = daysElapsed + 1;
                 const dailyWealthGrowthCents = Math.floor(currentNetSavings / current_day_of_cycle);
                 return (
                   <div className="mb-5 w-full rounded-xl border border-emerald-500/25 bg-slate-950/50 p-4 text-left ring-1 ring-emerald-500/10">
