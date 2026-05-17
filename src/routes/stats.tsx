@@ -375,9 +375,24 @@ function StatsPage() {
               </div>
 
               {(() => {
-                const currentNetSavings = selectNetSavingsCents(us);
-                const current_day_of_cycle = daysElapsed + 1;
-                const dailyWealthGrowthCents = Math.floor(currentNetSavings / current_day_of_cycle);
+                // 1-indexed day counter; Math.max(1,...) guards Day-0 divide-by-zero
+                const current_day_of_cycle = Math.max(1, daysElapsed);
+
+                // Variable A — stable daily baseline from the upfront PYF pledge
+                // us.savings_base_cents is guaranteed non-undefined by the migration guard in AppContext
+                const savingsBaselineDaily = (us.savings_base_cents ?? 0) / Math.max(1, totalCycleDays);
+
+                // Variable B — running average of unspent discretionary budget
+                // NOTE: app.smartDailyLimit is today's limit (a moving target); using it here
+                // is an intentional approximation chosen by the product owner.
+                // totalFunSpent is already computed above this IIFE (completed non-essential
+                // transactions since cycleStart).
+                const totalBudgetAllocatedSoFar = app.smartDailyLimit * current_day_of_cycle;
+                const totalUnspentSoFar = Math.max(0, totalBudgetAllocatedSoFar - totalFunSpent);
+                const restraintDailyAverage = totalUnspentSoFar / current_day_of_cycle;
+
+                // Variable C — final display (rounded to nearest integer VND)
+                const dailyWealthGrowthCents = Math.round(savingsBaselineDaily + restraintDailyAverage);
                 return (
                   <div className="mb-5 w-full rounded-xl border border-emerald-500/25 bg-slate-950/50 p-4 text-left ring-1 ring-emerald-500/10">
                     <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-emerald-400/80 mb-2">
@@ -387,7 +402,7 @@ function StatsPage() {
                       {fmtMoney(dailyWealthGrowthCents, cur, rate)}
                     </p>
                     <p className="mt-2 font-mono text-[9px] uppercase tracking-widest text-slate-600">
-                      Net savings ÷ day {current_day_of_cycle} of cycle
+                      Savings baseline + restraint avg · day {current_day_of_cycle} of cycle
                     </p>
                   </div>
                 );
