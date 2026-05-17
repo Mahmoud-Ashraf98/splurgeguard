@@ -541,7 +541,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch {
         /* noop */
       }
-      const pool = Math.max(0, us.total_income_cents - us.fixed_overhead_cents);
       return {
         ...d,
         userState: {
@@ -549,14 +548,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           cycleStartDate: new Date().toISOString(),
           savings_sweeps_cents: 0,
           savings_raided_cents: 0,
-          savings_base_cents: 0,
           raid_history: [],
           current_cycle_id: uuid(),
-          currentBalanceVND: pool,
+          currentBalanceVND: Math.max(
+            0,
+            us.total_income_cents - us.fixed_overhead_cents - us.savings_base_cents,
+          ),
         },
       };
     });
-    toast.success("New cycle started. PYF savings counters reset.");
+    toast.success("New cycle started. Savings pledge carried forward.");
   };
 
   const updateUserState: AppContextValue["updateUserState"] = (patch) => {
