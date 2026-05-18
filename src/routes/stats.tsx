@@ -120,6 +120,51 @@ function StatsPage() {
       .filter((d) => d.amt > 0);
   }, [app.data.transactions, us]);
 
+  const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
+  const radius = 60;
+  const circ = 2 * Math.PI * radius;
+
+  const segments = React.useMemo(() => {
+    let offset = 0;
+    return breakdown.map((b) => {
+      const portion = b.amt / totalBreakdown;
+      const dash = circ * portion;
+      const result = { ...b, dash, offset };
+      offset += portion;
+      return result;
+    });
+  }, [breakdown, totalBreakdown, circ]);
+
+  const FIREWALL_DAYS = 14;
+  const firewallDays = Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
+    return d;
+  });
+
+  const dailyLimit = app.smartDailyLimit ?? 0;
+
+  const matrixData = React.useMemo(() => {
+    const spent: Record<string, number> = {};
+    for (const t of app.data.transactions || []) {
+      if (t.isEssential || !txIsCompleted(t)) continue;
+      const key = t.timestamp.slice(0, 10);
+      spent[key] = (spent[key] ?? 0) + Math.abs(t.amountVND ?? 0);
+    }
+    return firewallDays.map((day) => {
+      const dayTs = day.getTime();
+      const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+      const spentThatDay = spent[dayKey] ?? 0;
+
+      let status: "perfect" | "controlled" | "breach" = "perfect";
+      if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = "controlled";
+      if (spentThatDay > dailyLimit) status = "breach";
+
+      return { date: day, dayTs, spent: spentThatDay, status };
+    });
+  }, [firewallDays, app.data.transactions, dailyLimit]);
+
   if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
   const cur = us.displayCurrency;
   const rate = us.usdExchangeRate;
@@ -127,7 +172,6 @@ function StatsPage() {
   const discretionaryTotal = app.data.transactions
     .filter((t) => !t.isEssential && txIsCompleted(t))
     .reduce((s, t) => s + t.amountVND, 0);
-  const totalBreakdown = breakdown.reduce((s, b) => s + b.amt, 0) || 1;
   const funMoneyDonutTotal = breakdown.reduce((s, b) => s + b.amt, 0);
 
   // === Tactical Burn Rate ===
@@ -193,53 +237,8 @@ function StatsPage() {
   const isBurnWarning = burnPercent > timePercent;
 
   const trophies = vaultItems.filter((item) => item.status === "discarded");
-  const radius = 60;
-  const circ = 2 * Math.PI * radius;
-
-  const segments = React.useMemo(() => {
-    let offset = 0;
-    return breakdown.map((b) => {
-      const portion = b.amt / totalBreakdown;
-      const dash = circ * portion;
-      const result = { ...b, dash, offset };
-      offset += portion;
-      return result;
-    });
-  }, [breakdown, totalBreakdown, circ]);
-
-  // ── PHASE 2: VICE FIREWALL MATRIX ────────────────────────────────────────
-  const FIREWALL_DAYS = 14;
-
-  const firewallDays = Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
-    return d;
-  });
 
   const todayMs = today.getTime();
-
-  const dailyLimit = app.smartDailyLimit ?? 0;
-
-  const matrixData = React.useMemo(() => {
-    const spent: Record<string, number> = {};
-    for (const t of app.data.transactions || []) {
-      if (t.isEssential || !txIsCompleted(t)) continue;
-      const key = t.timestamp.slice(0, 10);
-      spent[key] = (spent[key] ?? 0) + Math.abs(t.amountVND ?? 0);
-    }
-    return firewallDays.map((day) => {
-      const dayTs = day.getTime();
-      const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-      const spentThatDay = spent[dayKey] ?? 0;
-
-      let status: "perfect" | "controlled" | "breach" = "perfect";
-      if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = "controlled";
-      if (spentThatDay > dailyLimit) status = "breach";
-
-      return { date: day, dayTs, spent: spentThatDay, status };
-    });
-  }, [firewallDays, app.data.transactions, dailyLimit]);
 
   const todayMidnightMs = (() => {
     const t = new Date();
