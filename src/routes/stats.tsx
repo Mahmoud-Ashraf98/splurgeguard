@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   RotateCcw,
@@ -90,10 +90,26 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 };
 
 function StatsPage() {
+  const app = useApp();
+  // Gate the heavy stats UI behind a stable userState check. Rendering the heavy
+  // body inside a child component (StatsPageBody) guarantees React mounts a
+  // fresh fiber once userState exists, so the hook list on this outer fiber
+  // never changes shape between renders (it always has exactly one hook:
+  // useApp). This eliminates the class of React #310 ("Rendered more hooks
+  // than during the previous render") that can otherwise surface during the
+  // null -> populated transition on hard refresh / hydration.
+  if (!app.data.userState) {
+    return <div className="p-6 text-slate-400">Set up the app first.</div>;
+  }
+  return <StatsPageBody />;
+}
+
+function StatsPageBody() {
   const [trophyRoomOpen, setTrophyRoomOpen] = useState(false);
   const app = useApp();
   const { vaultItems } = app.data;
-  const us = app.data.userState;
+  // userState is guaranteed by the StatsPage gate; assert non-null for TS.
+  const us = app.data.userState!;
 
   const activeAmortizations = useMemo(
     () => getActiveAmortizations(app.data.transactions ?? []),
@@ -101,9 +117,8 @@ function StatsPage() {
   );
 
   const breakdown = useMemo(() => {
-    if (!us) return [];
     const map: Record<string, number> = {};
-    app.data.transactions
+    (app.data.transactions ?? [])
       .filter((t) => !t.isEssential && txIsCompleted(t))
       .forEach((t) => {
         map[t.category] = (map[t.category] || 0) + t.amountVND;
@@ -124,7 +139,7 @@ function StatsPage() {
   const radius = 60;
   const circ = 2 * Math.PI * radius;
 
-  const segments = React.useMemo(() => {
+  const segments = useMemo(() => {
     let offset = 0;
     return breakdown.map((b) => {
       const portion = b.amt / totalBreakdown;
@@ -136,18 +151,22 @@ function StatsPage() {
   }, [breakdown, totalBreakdown, circ]);
 
   const FIREWALL_DAYS = 14;
-  const firewallDays = Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
-    return d;
-  });
+  // Memoize firewallDays so the matrixData useMemo deps are stable across
+  // renders (otherwise a fresh array every render forces recompute every time).
+  const firewallDays = useMemo(() => {
+    return Array.from({ length: FIREWALL_DAYS }).map((_, i) => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - (FIREWALL_DAYS - 1 - i));
+      return d;
+    });
+  }, []);
 
   const dailyLimit = app.smartDailyLimit ?? 0;
 
-  const matrixData = React.useMemo(() => {
+  const matrixData = useMemo(() => {
     const spent: Record<string, number> = {};
-    for (const t of app.data.transactions || []) {
+    for (const t of app.data.transactions ?? []) {
       if (t.isEssential || !txIsCompleted(t)) continue;
       const key = t.timestamp.slice(0, 10);
       spent[key] = (spent[key] ?? 0) + Math.abs(t.amountVND ?? 0);
@@ -165,7 +184,6 @@ function StatsPage() {
     });
   }, [firewallDays, app.data.transactions, dailyLimit]);
 
-  if (!us) return <div className="p-6 text-slate-400">Set up the app first.</div>;
   const cur = us.displayCurrency;
   const rate = us.usdExchangeRate;
 
