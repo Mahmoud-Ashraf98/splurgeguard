@@ -7,7 +7,8 @@ export function calculateSubscriptionMonthlyTotalCents(subs: Subscription[]): nu
   return subs
     .filter((s) => s.isActive)
     .reduce((total, sub) => {
-      const monthlyEquivalent = sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
+      const monthlyEquivalent =
+        sub.billingCycle === "yearly" ? Math.round(sub.amountCents / 12) : sub.amountCents;
       return total + monthlyEquivalent;
     }, 0);
 }
@@ -22,10 +23,18 @@ export function subscriptionDailyOverheadVND(subs: Subscription[] | undefined): 
 export const txIsCompleted = (t: Transaction): boolean => (t.status ?? "completed") === "completed";
 
 export const fmtVND = (v: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v);
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(v);
 
 export const fmtUSD = (v: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(v);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(v);
 
 export const fmtMoney = (vnd: number, currency: "VND" | "USD", rate: number) => {
   if (currency === "USD") return fmtUSD(vnd / rate);
@@ -46,10 +55,13 @@ export const daysBetween = (a: Date | string, b: Date | string) => {
 };
 
 export const uuid = () =>
-  (crypto as any).randomUUID ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+  (crypto as any).randomUUID
+    ? (crypto as any).randomUUID()
+    : Math.random().toString(36).slice(2) + Date.now();
 
 /** Resolve a transaction's amortization lifespan in days, defaulting to 1. */
-export const txLifespan = (tx: Transaction): number => Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
+export const txLifespan = (tx: Transaction): number =>
+  Math.max(1, tx.amortizeDays ?? tx.amortizationDays ?? 1);
 
 const dateFromKey = (k: string) => new Date(`${k}T12:00:00`);
 
@@ -77,7 +89,13 @@ export const totalSpentThisCycleNonEssential = (us: UserState, txs: Transaction[
  */
 export const computeCurrentFlexiblePoolCents = (us: UserState, txs: Transaction[]) => {
   const spent = totalSpentThisCycleNonEssential(us, txs);
-  return us.total_income_cents - us.fixed_overhead_cents - us.savings_base_cents - spent + us.savings_raided_cents;
+  return (
+    us.total_income_cents -
+    us.fixed_overhead_cents -
+    us.savings_base_cents -
+    spent +
+    us.savings_raided_cents
+  );
 };
 
 /** Pure state transition for a savings raid; throws on invalid input or insufficient savings. */
@@ -158,6 +176,48 @@ export const calcSmartDailyLimit = (
   subscriptionDailyOverheadVND = 0,
 ) => Math.max(0, calcVisualDailyAllowance(us, today, txs) - subscriptionDailyOverheadVND);
 
+/**
+ * Freedom Engine "capital preserved": money still with you this cycle from (1) your PYF-style
+ * savings pledge spread evenly across the cycle, and (2) discretionary allowance you were
+ * given (today's smart cap × elapsed days, an approximation when the cap moves) minus fun
+ * spending counted in `totalFunSpentInCycleVND`.
+ *
+ * `savingsBaseNominal` is `UserState.savings_base_cents` (integer minor units in the model;
+ * displayed as VND like other balances).
+ */
+export function calcFreedomEnginePreservedVND(input: {
+  savingsBaseNominal: number;
+  totalCycleDays: number;
+  daysElapsedSinceCycleStart: number;
+  smartDailyLimitVND: number;
+  totalFunSpentInCycleVND: number;
+}): {
+  total: number;
+  effectiveElapsedDays: number;
+  savingsPortionVND: number;
+  discretionaryUnspentPortionVND: number;
+  savingsDailyShareVND: number;
+} {
+  const cycleDays = Math.max(1, Math.floor(input.totalCycleDays));
+  const rawElapsed = Math.max(0, Math.floor(input.daysElapsedSinceCycleStart));
+  const effectiveElapsedDays = Math.max(1, rawElapsed);
+  const savingsDailyShareVND = input.savingsBaseNominal / cycleDays;
+  const savingsPortionVND = savingsDailyShareVND * effectiveElapsedDays;
+  const discretionaryAllocatedApprox = Math.max(0, input.smartDailyLimitVND * effectiveElapsedDays);
+  const discretionaryUnspentPortionVND = Math.max(
+    0,
+    discretionaryAllocatedApprox - input.totalFunSpentInCycleVND,
+  );
+  const total = Math.round(savingsPortionVND + discretionaryUnspentPortionVND);
+  return {
+    total,
+    effectiveElapsedDays,
+    savingsPortionVND,
+    discretionaryUnspentPortionVND,
+    savingsDailyShareVND,
+  };
+}
+
 const matchesHabit = (cat: string, habit?: string) =>
   !!habit && cat.toLowerCase().trim() === habit.toLowerCase().trim();
 
@@ -199,16 +259,29 @@ export const weeklyHabitSpent = (txs: Transaction[], targetHabit: string, today 
   }, 0);
 };
 
-export const habitSpentLastNDays = (txs: Transaction[], targetHabit: string, days = 7, today = new Date()) => {
+export const habitSpentLastNDays = (
+  txs: Transaction[],
+  targetHabit: string,
+  days = 7,
+  today = new Date(),
+) => {
   const cutoff = today.getTime() - days * 86400000;
   return txs
     .filter(
-      (t) => txIsCompleted(t) && matchesHabit(t.category, targetHabit) && new Date(t.timestamp).getTime() >= cutoff,
+      (t) =>
+        txIsCompleted(t) &&
+        matchesHabit(t.category, targetHabit) &&
+        new Date(t.timestamp).getTime() >= cutoff,
     )
     .reduce((s, t) => s + t.amountVND, 0);
 };
 
-export const dpForAmount = (amountVND: number, category: string, fromVault: boolean, targetHabit?: string) => {
+export const dpForAmount = (
+  amountVND: number,
+  category: string,
+  fromVault: boolean,
+  targetHabit?: string,
+) => {
   if (matchesHabit(category, targetHabit) && !fromVault) return 0;
   if (amountVND < 50000) return 5;
   if (amountVND <= 200000) return 3;
