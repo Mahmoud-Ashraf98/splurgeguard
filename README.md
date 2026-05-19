@@ -168,7 +168,37 @@ bun install
 bun run dev
 ```
 
-**Stack:** React 19 · TanStack Start · TanStack Router · Vite 7 · Tailwind CSS v4 · Radix UI · Sonner · Lucide React · Zod. **Zero backend.**
+**Stack:** React 19 · TanStack Start · TanStack Router · Vite 7 · Tailwind CSS v4 · Radix UI · Sonner · Lucide React · Zod · Framer Motion · Recharts. **Zero backend.**
+
+### Scripts
+
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Vite dev server with HMR on `http://localhost:8080/` |
+| `bun run build` | Production build (client + Cloudflare Workers SSR bundle) |
+| `bun run preview` | Preview the production build locally |
+| `bun run lint` | ESLint + Prettier integration |
+| `bun run format` | Auto-format with Prettier |
+
+### Project Layout
+
+```
+src/
+├── components/
+│   ├── splurge/        # Feature-level UI (Vault, Dashboard, Ascension, Onboarding, …)
+│   └── ui/             # shadcn/Radix primitives
+├── context/
+│   └── AppContext.tsx  # Single source of truth — all game state lives here
+├── hooks/              # useCurrencyInput, useLongPress, use-mobile
+├── lib/                # Pure game logic — ranks, milestones, amortization, schemas
+├── routes/             # TanStack Router file-based routes (index, vault, stats, exchange, settings)
+├── styles.css          # Tailwind v4 entry
+├── router.tsx          # Router setup
+├── server.ts           # Cloudflare Workers SSR entry (production only)
+└── start.ts            # TanStack Start bootstrap
+```
+
+For a deep dive into the data model, algorithms, and copy rules, see [`SplurgeGuard_AI_Context.md`](./SplurgeGuard_AI_Context.md). A packed single-file snapshot of the source tree (great for pasting into LLMs) is committed as [`repomix.xml`](./repomix.xml).
 
 ### Architecture Notes Worth Reading
 
