@@ -95,11 +95,13 @@ export function getActiveAmortizations(transactions: Transaction[]): Transaction
     return now < win.expiryMs;
   });
 
+  // Dedup is keyed on the unique transaction id so that legitimate concurrent
+  // identical purchases (e.g. two tickets at the same price on the same day)
+  // each contribute their own slice to the active cap projection. Rapid
+  // double-clicks are blocked separately at ingestion via `buildIdempotencyKey`.
   const seen = new Map<string, Transaction>();
   for (const tx of valid) {
-    const win = amortizationWindow(tx)!;
-    const dedupeKey = `${tx.category}:${tx.amountVND}:${win.spreadDays}`;
-
+    const dedupeKey = `tx:${tx.id}`;
     const existing = seen.get(dedupeKey);
     if (!existing || Date.parse(tx.timestamp) > Date.parse(existing.timestamp)) {
       seen.set(dedupeKey, tx);

@@ -62,6 +62,13 @@ export interface UserState {
   displayCurrency: Currency;
   dailyContracts: DailyContract[];
   lastContractRefreshDate: string;
+  /**
+   * ISO-8601 year-week key (`YYYY-Www`) of the most recent week for which the
+   * weekly habit reward was evaluated. Decouples the reward from a single
+   * volatile `getDay() === 1` check so Tuesday+ logins can still credit the
+   * Monday boundary that was crossed offline.
+   */
+  lastWeeklyHabitRewardWeek?: string;
   /** Set by migration when `total_income_cents` was inferred from legacy data — user should verify in Settings. */
   pyfIncomeInferred?: boolean;
 }

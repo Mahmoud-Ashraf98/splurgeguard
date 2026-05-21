@@ -102,6 +102,7 @@ function AppShell() {
       <BottomNav />
       <BreachModal />
       <AscensionCinematic />
+      <StorageLockModal />
       <Toaster
         theme="dark"
         position="top-center"

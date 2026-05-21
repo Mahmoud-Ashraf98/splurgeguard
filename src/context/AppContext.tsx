@@ -20,6 +20,7 @@ import {
   DEFAULT_USD_EXCHANGE_RATE,
 } from "@/lib/splurge-types";
 import {
+  advanceBillingDate,
   applyWithdrawFromSavingsState,
   calcBaseDailyAllowance,
   calcSmartDailyLimit,
@@ -27,7 +28,9 @@ import {
   daysBetween,
   discretionarySpentOn,
   dpForAmount,
+  isoWeekKey,
   milestoneBonus,
+  mostRecentMonday,
   subscriptionDailyOverheadVND,
   txIsCompleted,
   uuid,
@@ -95,6 +98,10 @@ interface AppContextValue {
   // Ascension Protocol
   pendingAscension: number | null;
   clearPendingAscension: () => void;
+  // Storage write-lock (set when localStorage quota is exhausted)
+  storageLocked: boolean;
+  pruneTransactionsOlderThan: (days: number) => void;
+  pruneDiscardedVaultItems: () => void;
 }
 
 const defaultData: AppData = {
@@ -126,6 +133,11 @@ const migrate = (parsed: AppData): AppData => {
     // Daily Protocol migration
     if (!Array.isArray(us.dailyContracts)) us.dailyContracts = [];
     if (typeof us.lastContractRefreshDate !== "string") us.lastContractRefreshDate = "";
+    // Weekly habit reward — seed with current ISO week so legacy users don't
+    // retroactively claim past Mondays on first migration load.
+    if (typeof us.lastWeeklyHabitRewardWeek !== "string") {
+      us.lastWeeklyHabitRewardWeek = isoWeekKey(new Date());
+    }
     // Pay-yourself-first (PYF) migration
     if (typeof us.total_income_cents !== "number") {
       const cycleStart = new Date(us.cycleStartDate as string);
@@ -198,16 +210,19 @@ const load = (): AppData => {
   }
 };
 
-const save = (d: AppData) => {
+/**
+ * Persist `AppData` to localStorage. Returns `false` when the browser refuses
+ * the write (most commonly a `QuotaExceededError`), in which case the caller
+ * MUST engage the global storage write-lock — see Task 4 in the remediation
+ * doc. The in-memory state has already mutated by the time this runs; the
+ * write-lock prevents further mutations from widening the desync.
+ */
+const save = (d: AppData): boolean => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-  } catch (error) {
-    try {
-      toast.error(
-        "Device storage full! App data cannot be saved. Please export your data in Settings and clear space.",
-        { duration: Infinity, id: "storage-quota-error" }
-      );
-    } catch {}
+    return true;
+  } catch {
+    return false;
   }
 };
 
@@ -224,8 +239,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
   const [pendingAscension, setPendingAscension] = useState<number | null>(null);
+  const [storageLocked, setStorageLocked] = useState(false);
   const dailyCheckRan = useRef(false);
   const notifiedReadyRef = useRef<Set<string>>(new Set());
+  const storageLockedRef = useRef(false);
+
+  useEffect(() => {
+    storageLockedRef.current = storageLocked;
+  }, [storageLocked]);
 
   useEffect(() => {
     setData(load());
@@ -233,16 +254,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) save(data);
-  }, [data, hydrated]);
+    if (!hydrated) return;
+    const ok = save(data);
+    if (ok) {
+      if (storageLocked) {
+        setStorageLocked(false);
+        toast.dismiss("storage-quota-error");
+        toast.success("Storage cleared. Write-lock released.");
+      }
+    } else {
+      if (!storageLocked) {
+        setStorageLocked(true);
+        try {
+          toast.error(
+            "DEVICE STORAGE FULL — writes frozen. Prune old data to release the lock.",
+            { duration: Infinity, id: "storage-quota-error" },
+          );
+        } catch {
+          /* noop */
+        }
+      }
+    }
+  }, [data, hydrated, storageLocked]);
 
+  // Honors the write-lock: when storage is exhausted, ordinary mutations are
+  // a no-op so volatile React state cannot diverge further from disk.
   const mutate = useCallback((fn: (d: AppData) => AppData) => {
+    if (storageLockedRef.current) {
+      try {
+        toast.error("Storage full — edits are frozen until you prune old data.", {
+          id: "storage-quota-error",
+        });
+      } catch {
+        /* noop */
+      }
+      return;
+    }
     setData((prev) => fn(prev));
+  }, []);
+
+  // Bypasses the write-lock so the user can recover from a quota event. Each
+  // call attempts a fresh persist via the standard effect — success releases
+  // the lock automatically.
+  const pruneTransactionsOlderThan = useCallback((days: number) => {
+    const cutoff = Date.now() - Math.max(0, days) * 86400000;
+    setData((prev) => ({
+      ...prev,
+      transactions: prev.transactions.filter(
+        (t) => new Date(t.timestamp).getTime() >= cutoff,
+      ),
+    }));
+  }, []);
+
+  const pruneDiscardedVaultItems = useCallback(() => {
+    setData((prev) => ({
+      ...prev,
+      vaultItems: prev.vaultItems.filter((v) => v.status !== "discarded"),
+    }));
   }, []);
 
   // Daily login checks
   useEffect(() => {
     if (!hydrated || !data.userState || dailyCheckRan.current) return;
+    if (storageLocked) return;
     dailyCheckRan.current = true;
 
     const today = new Date();
@@ -282,24 +356,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       messages.push({ msg: `⚠️ Missed ${missed} day(s). −${penalty} DP. Streak reset.`, type: "warning" });
     }
 
-    if (today.getDay() === 1) {
+    // ─── Weekly habit reward (Task 3) ─────────────────────────────────────
+    // Reward is anchored to the ISO-week containing the most recent past or
+    // current Monday. If the user skipped Monday and syncs on Tuesday+, the
+    // boundary still counts so long as we have not already credited that week.
+    const lastMonday = mostRecentMonday(today);
+    const weekKey = isoWeekKey(lastMonday);
+    let nextWeeklyRewardWeek = us.lastWeeklyHabitRewardWeek;
+    if (us.lastWeeklyHabitRewardWeek !== weekKey) {
       const habit = us.targetHabit;
       const habitLower = habit?.toLowerCase().trim();
-      const weekAgo = new Date(today.getTime() - 7 * 86400000);
+      const windowEnd = lastMonday.getTime();
+      const windowStart = windowEnd - 7 * 86400000;
       const habitSpent = data.transactions
-        .filter(
-          (t) =>
-            txIsCompleted(t) &&
-            habitLower &&
-            t.category.toLowerCase().trim() === habitLower &&
-            new Date(t.timestamp) >= weekAgo,
-        )
+        .filter((t) => {
+          if (!txIsCompleted(t)) return false;
+          if (!habitLower) return false;
+          if (t.category.toLowerCase().trim() !== habitLower) return false;
+          const ts = new Date(t.timestamp).getTime();
+          return ts >= windowStart && ts < windowEnd;
+        })
         .reduce((s, t) => s + t.amountVND, 0);
       if (us.weeklyHabitLimitVND > 0 && habitSpent < us.weeklyHabitLimitVND) {
         dpGain += 250;
-        messages.push({ msg: `🎯 Weekly ${habit} limit respected! +250 DP`, type: "success" });
+        messages.push({
+          msg: `🎯 Weekly ${habit} limit respected! +250 DP`,
+          type: "success",
+        });
       }
+      nextWeeklyRewardWeek = weekKey;
     }
+
+    // ─── Subscription billing rollover (Task 1) ───────────────────────────
+    // When the active subscription's `nextBillingDate` has elapsed, formally
+    // debit the flexible pool exactly once per cycle and advance the cursor.
+    // The generated transaction carries `is_recurring_subscription: true`
+    // metadata so `getActiveAmortizations` skips it (no double-counting; the
+    // daily overhead reduction continues to be derived from `monthlyEquivalent`).
+    const nowMs = Date.now();
+    const billedTransactions: Transaction[] = [];
+    const nextSubscriptions = data.subscriptions.map((sub) => {
+      if (!sub.isActive) return sub;
+      let cursor = sub.nextBillingDate;
+      let guard = 0;
+      while (Date.parse(cursor) <= nowMs && guard < 24) {
+        billedTransactions.push({
+          id: uuid(),
+          timestamp: cursor,
+          amountVND: sub.amountCents,
+          originalCurrency: "VND",
+          category: "Software & Digital Subscriptions",
+          isEssential: false,
+          justification: `Auto-pay: ${sub.name}`,
+          fromVault: false,
+          status: "completed",
+          vault_expires_at: null,
+          metadata: { is_recurring_subscription: true },
+        });
+        cursor = advanceBillingDate(cursor, sub.billingCycle);
+        guard += 1;
+      }
+      return cursor === sub.nextBillingDate ? sub : { ...sub, nextBillingDate: cursor };
+    });
+    const totalBilledVND = billedTransactions.reduce((s, t) => s + t.amountVND, 0);
 
     mutate((d) => {
       if (!d.userState) return d;
@@ -310,9 +429,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ascensionXP: Math.max(0, (us2.ascensionXP ?? 0) - dpLoss),
         currentStreakDays: newStreak,
         lastLoginDate: todayKey,
+        lastWeeklyHabitRewardWeek: nextWeeklyRewardWeek,
+        currentBalanceVND: us2.currentBalanceVND - totalBilledVND,
       };
-      return { ...d, userState: us2 };
+      return {
+        ...d,
+        userState: us2,
+        transactions:
+          billedTransactions.length > 0
+            ? [...billedTransactions, ...d.transactions]
+            : d.transactions,
+        subscriptions: nextSubscriptions,
+      };
     });
+
+    if (billedTransactions.length > 0) {
+      messages.push({
+        msg: `🔁 Auto-pay processed: ${billedTransactions.length} subscription charge(s) debited.`,
+        type: "info",
+      });
+    }
 
     setTimeout(() => {
       messages.forEach((m) => {
@@ -321,7 +457,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else toast(m.msg);
       });
     }, 400);
-  }, [hydrated, data.userState, data.transactions, data.subscriptions, mutate]);
+  }, [hydrated, data.userState, data.transactions, data.subscriptions, mutate, storageLocked]);
 
   // Daily Protocol contracts refresh
   useEffect(() => {
@@ -513,6 +649,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       displayCurrency: input.displayCurrency ?? "VND",
       dailyContracts: [],
       lastContractRefreshDate: "",
+      lastWeeklyHabitRewardWeek: isoWeekKey(today),
     };
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [], subscriptions: [] });
   };
@@ -769,6 +906,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast.error("Insufficient flexible pool to confirm this purchase.");
       return;
     }
+    // Discipline gate (Task 5): a negative DP ledger means the gamified
+    // 1 DP ≈ 100 VND equivalence is already underwater. Block convenience
+    // approvals until the user restores positive standing via contracts,
+    // streaks, or raid recovery.
+    if (data.userState.totalDP < 0) {
+      toast.error(
+        "Approval denied: DP ledger is in deficit. Restore positive standing before drawing on the vault.",
+      );
+      return;
+    }
     mutate((d) => {
       if (!d.userState) return d;
       const v = d.vaultItems.find((x) => x.id === id);
@@ -776,6 +923,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const fr = d.transactions.find((t) => t.id === v.frozenTransactionId);
       if (!fr || (fr.status ?? "completed") !== "frozen") return d;
       if (fr.amountVND > d.userState.currentBalanceVND) return d;
+      if (d.userState.totalDP < 0) return d;
       const us = {
         ...d.userState,
         currentBalanceVND: d.userState.currentBalanceVND - fr.amountVND,
@@ -889,7 +1037,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const redeemReward: AppContextValue["redeemReward"] = (rewardId) => {
     const reward = data.rewards.find((r) => r.id === rewardId && r.status === "active");
     if (!reward) return "not_found";
-    if (!data.userState || reward.costDP > data.userState.totalDP) return "insufficient_dp";
+    if (!data.userState) return "insufficient_dp";
+    // Negative-wallet guard (Task 5): even zero-cost rewards are blocked while
+    // the ledger is underwater, keeping the Exchange aligned with discipline.
+    if (data.userState.totalDP < 0) return "insufficient_dp";
+    if (reward.costDP > data.userState.totalDP) return "insufficient_dp";
 
     mutate((d) => {
       if (!d.userState) return d;
@@ -981,6 +1133,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearPendingAscension,
     withdrawFromSavings,
     startNewCycle,
+    storageLocked,
+    pruneTransactionsOlderThan,
+    pruneDiscardedVaultItems,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

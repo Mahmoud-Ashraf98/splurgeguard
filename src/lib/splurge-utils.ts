@@ -54,6 +54,39 @@ export const daysBetween = (a: Date | string, b: Date | string) => {
   return Math.round((kb - ka) / 86400000);
 };
 
+/**
+ * ISO-8601 year-week key (`YYYY-Www`). Monday is the first day of the ISO week,
+ * which matches the weekly habit reward's "Monday boundary" semantics.
+ */
+export const isoWeekKey = (d: Date): string => {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+};
+
+/** Most recent Monday at or before `from`, normalized to 00:00 local. */
+export const mostRecentMonday = (from: Date = new Date()): Date => {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const diff = (d.getDay() + 6) % 7; // Mon=0, Sun=6
+  d.setDate(d.getDate() - diff);
+  return d;
+};
+
+/**
+ * Advance an ISO billing date by one full cycle, preserving the original
+ * day-of-month and time-of-day. Uses local-time arithmetic so that DST and
+ * month-length edge cases are handled by the platform Date implementation.
+ */
+export const advanceBillingDate = (iso: string, cycle: "monthly" | "yearly"): string => {
+  const d = new Date(iso);
+  if (cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+};
+
 export const uuid = () =>
   (crypto as any).randomUUID
     ? (crypto as any).randomUUID()
