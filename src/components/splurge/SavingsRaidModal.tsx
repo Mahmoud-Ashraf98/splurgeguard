@@ -47,7 +47,13 @@ export function SavingsRaidModal({
     if (!open || kind !== "impulse") return;
     setCountdown(3);
     const id = setInterval(() => {
-      setCountdown((c) => (c <= 1 ? 0 : c - 1));
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return c - 1;
+      });
     }, 1000);
     return () => clearInterval(id);
   }, [open, kind]);
@@ -55,9 +61,11 @@ export function SavingsRaidModal({
   const amount = Math.floor(Number(amountStr.replace(/\D/g, "")) || 0);
   const impulseReady = countdown === 0;
   const emergencyReady = justification.trim().length >= 50;
+  const amountExceedsMax = amount > maxRaidCents;
+  const amountMissing = amount <= 0;
   const confirmDisabled =
-    amount <= 0 ||
-    amount > maxRaidCents ||
+    amountMissing ||
+    amountExceedsMax ||
     (kind === "impulse" ? !impulseReady : !emergencyReady);
 
   const onConfirm = () => {
@@ -120,17 +128,40 @@ export function SavingsRaidModal({
               </div>
             ) : (
               <>
-                <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
-                  Amount (max {fmtMoney(maxRaidCents, displayCurrency, usdExchangeRate)})
-                </label>
+                <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                  <label className="block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                    Amount (max {fmtMoney(maxRaidCents, displayCurrency, usdExchangeRate)})
+                  </label>
+                  {maxRaidCents > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAmountStr(String(maxRaidCents))}
+                      className="font-mono text-[10px] uppercase tracking-wider text-cyan-400 hover:text-cyan-300"
+                    >
+                      Max
+                    </button>
+                  )}
+                </div>
                 <input
                   inputMode="numeric"
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value.replace(/\D/g, ""))}
                   placeholder="0"
                   aria-label="Raid amount in whole currency units"
-                  className="mb-4 w-full rounded-xl border border-slate-700 bg-slate-950/80 p-3 font-mono text-sm text-slate-100 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/40"
+                  aria-invalid={amountExceedsMax || undefined}
+                  className={`w-full rounded-xl border bg-slate-950/80 p-3 font-mono text-sm text-slate-100 focus:outline-none focus:ring-1 ${
+                    amountExceedsMax
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-500/40"
+                      : "border-slate-700 focus:border-cyan-500 focus:ring-cyan-500/40"
+                  }`}
                 />
+                {amountExceedsMax ? (
+                  <p className="mt-1.5 mb-4 font-mono text-[10px] uppercase tracking-wider text-rose-300">
+                    Exceeds max by {fmtMoney(amount - maxRaidCents, displayCurrency, usdExchangeRate)}
+                  </p>
+                ) : (
+                  <div className="mb-4" />
+                )}
 
                 <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-slate-500">
                   Withdrawal type
@@ -165,9 +196,15 @@ export function SavingsRaidModal({
                     <div className="flex gap-2">
                       <AlertTriangle className="h-4 w-4 flex-shrink-0 text-rose-400" />
                       <p className="text-xs text-rose-200/90 leading-relaxed">
-                        Costs 200 DP &amp; breaks streak. Confirm unlocks after{" "}
-                        <span className="font-mono font-bold text-rose-100">{countdown || "GO"}</span>
-                        {countdown > 0 ? "…" : ""}
+                        Costs 200 DP &amp; breaks streak.{" "}
+                        {countdown > 0 ? (
+                          <>
+                            Confirm unlocks in{" "}
+                            <span className="font-mono font-bold text-rose-100">{countdown}</span>…
+                          </>
+                        ) : (
+                          <span className="font-mono font-bold text-rose-100">Confirm unlocked.</span>
+                        )}
                       </p>
                     </div>
                   </div>
