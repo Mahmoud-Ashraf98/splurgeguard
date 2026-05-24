@@ -83,7 +83,11 @@ export function SavingsRaidModal({
             exit={{ y: 32, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 280 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl border border-slate-700/80 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl outline-none"
+            className="w-full max-w-md rounded-2xl border border-slate-700/40 bg-slate-900/85 backdrop-blur-xl p-5 outline-none"
+            style={{
+              boxShadow:
+                "0 0 50px rgba(245, 158, 11, 0.12), 0 0 100px rgba(244, 63, 94, 0.08)",
+            }}
           >
             <div className="flex items-start gap-3 mb-4">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400">
@@ -135,10 +139,10 @@ export function SavingsRaidModal({
                   <button
                     type="button"
                     onClick={() => setKind("impulse")}
-                    className={`rounded-xl border py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    className={`rounded-xl border py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 ${
                       kind === "impulse"
-                        ? "border-rose-500/60 bg-rose-500/15 text-rose-200"
-                        : "border-slate-700 bg-slate-950/50 text-slate-400"
+                        ? "border-rose-500 bg-rose-500/20 text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.45)] hover:bg-rose-500/25"
+                        : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-rose-500/40 hover:text-rose-300/80"
                     }`}
                   >
                     Impulse
@@ -146,10 +150,10 @@ export function SavingsRaidModal({
                   <button
                     type="button"
                     onClick={() => setKind("emergency")}
-                    className={`rounded-xl border py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                    className={`rounded-xl border py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 ${
                       kind === "emergency"
-                        ? "border-cyan-500/60 bg-cyan-500/15 text-cyan-200"
-                        : "border-slate-700 bg-slate-950/50 text-slate-400"
+                        ? "border-cyan-500 bg-cyan-500/20 text-cyan-100 shadow-[0_0_20px_rgba(6,182,212,0.45)] hover:bg-cyan-500/25"
+                        : "border-slate-700 bg-slate-950/50 text-slate-400 hover:border-cyan-500/40 hover:text-cyan-300/80"
                     }`}
                   >
                     Genuine emergency
@@ -191,7 +195,7 @@ export function SavingsRaidModal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 rounded-xl border border-slate-700 py-3 font-mono text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-800/50"
+                    className="flex-1 rounded-xl border border-slate-700 px-5 py-3 font-mono text-xs uppercase tracking-widest text-slate-400 transition-all hover:bg-slate-800/50 active:scale-95"
                   >
                     Cancel
                   </button>
@@ -199,7 +203,7 @@ export function SavingsRaidModal({
                     type="button"
                     disabled={confirmDisabled}
                     onClick={onConfirm}
-                    className="flex-1 rounded-xl border border-amber-500/50 bg-amber-500/15 py-3 font-mono text-xs font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex-1 rounded-xl border border-amber-500/50 bg-amber-500/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-widest text-amber-200 transition-all hover:bg-amber-500/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
                   >
                     Confirm
                   </button>
