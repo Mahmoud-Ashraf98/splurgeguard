@@ -69,12 +69,15 @@ export function AscensionCinematic() {
       <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-slate-500 mb-3">
         Ascension Protocol
       </p>
-      <h1 className="text-center font-black text-2xl text-white px-8 leading-tight mb-2">
+      <h1
+        className="text-center font-black text-2xl text-white px-8 leading-tight mb-2"
+        style={{ letterSpacing: '-0.02em', lineHeight: '1.1' }}
+      >
         YOUR PAST SELF IS OBSOLETE.
       </h1>
       <h2
         className={`text-center font-black text-3xl px-8 leading-tight mb-2 ${newRank.color}`}
-        style={{ textShadow: `0 0 30px ${newRank.glowColor}` }}
+        style={{ textShadow: `0 0 30px ${newRank.glowColor}`, letterSpacing: '-0.02em', lineHeight: '1.1' }}
       >
         YOU ARE EVOLVING INTO
       </h2>
