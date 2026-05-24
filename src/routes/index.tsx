@@ -140,7 +140,7 @@ function Index() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-8 pt-6">
       {/* ── 1. SOVEREIGN BLACK CARD (OPERATOR ID) ──────────────────────── */}
-      <div className="relative mt-4 mb-8 group">
+      <div className="relative mt-6 mb-10 group">
         <div
           className="absolute inset-0 opacity-20 blur-[50px] transition-opacity duration-700 group-hover:opacity-40 pointer-events-none"
           style={{ backgroundColor: currentRank.glowColor }}
@@ -269,7 +269,7 @@ function Index() {
 
       {/* ── 2. THE CORE REACTOR (DAILY LIMIT) ──────────────────────────── */}
       <div className="px-5">
-        <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="mb-10 flex items-center justify-between gap-4">
           <StatusRing
             size={200}
             used={app.todayDiscretionary}

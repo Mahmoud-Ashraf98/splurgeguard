@@ -90,14 +90,14 @@ export function ForfeitModal({ open, contractName, penalty, onCancel, onConfirm,
             <div className="flex items-center gap-2">
               <button
                 onClick={onCancel}
-                className="flex-1 py-3 rounded-xl bg-slate-800 border border-slate-700 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-200 hover:bg-slate-700 active:scale-95 transition-all"
+                className="flex-1 py-3 rounded-xl bg-transparent border border-slate-700/50 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:bg-slate-800/40 hover:text-slate-200 hover:border-slate-600 active:scale-95 transition-all"
               >
                 Stay Strong
               </button>
               <button
                 disabled={!armed}
                 onClick={onConfirm}
-                className={`flex-1 py-3 rounded-xl font-mono text-[10px] font-bold uppercase tracking-widest transition-all border ${
+                className={`flex-1 py-3 rounded-xl font-mono text-[10px] font-bold uppercase tracking-widest transition-all border disabled:opacity-40 ${
                   armed
                     ? "bg-rose-700 border-rose-500 text-white hover:bg-rose-600 active:scale-95"
                     : "bg-rose-950/60 border-rose-900 text-rose-300/40 cursor-not-allowed"

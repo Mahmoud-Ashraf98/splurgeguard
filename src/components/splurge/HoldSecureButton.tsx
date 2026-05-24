@@ -86,7 +86,7 @@ export function HoldSecureButton({ onSecure, durationMs = 1500, label = "COMMIT"
       onPointerLeave={cancel}
       onPointerCancel={cancel}
       onContextMenu={(e) => e.preventDefault()}
-      className={`relative flex-grow flex items-center justify-center gap-2 py-3 rounded-xl border font-mono text-[10px] font-bold uppercase tracking-widest transition-colors touch-none select-none ${
+      className={`relative flex-grow flex items-center justify-center gap-2 py-4 rounded-xl border font-mono text-[10px] font-bold uppercase tracking-widest transition-colors touch-none select-none ${
         disabled
           ? "cursor-not-allowed opacity-40 bg-slate-800/40 border-slate-700 text-slate-500"
           : flash

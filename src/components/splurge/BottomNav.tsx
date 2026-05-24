@@ -54,7 +54,7 @@ export function BottomNav() {
                   />
                 </>
               )}
-              <span className="relative">
+              <span className="relative flex items-center justify-center h-6 w-6">
                 <Icon
                   className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
                 />

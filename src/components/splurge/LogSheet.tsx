@@ -152,7 +152,7 @@ export function LogSheet({ open, onClose, initialMode = "log" }: Props) {
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-emerald-400/40 bg-slate-900 p-5 shadow-[0_-10px_60px_rgba(0,255,135,0.15)]"
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-emerald-400/40 bg-slate-900/95 backdrop-blur-2xl p-5 shadow-[0_-10px_60px_rgba(0,255,135,0.15)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -397,6 +397,16 @@ export function LogSheet({ open, onClose, initialMode = "log" }: Props) {
         <button
           onClick={mode === "log" ? submitLog : submitVault}
           disabled={mode === "log" ? !canLog : !canVault}
+          style={{
+            boxShadow:
+              mode === "log"
+                ? canLog
+                  ? "0 0 20px rgba(0,255,135,0.25)"
+                  : undefined
+                : canVault
+                  ? "0 0 20px rgba(0,212,255,0.2)"
+                  : undefined,
+          }}
           className={`w-full rounded-xl py-4 font-mono text-sm font-bold uppercase tracking-widest transition-all disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-600 ${
             mode === "log"
               ? "bg-emerald-400 text-slate-950 hover:bg-emerald-300"
