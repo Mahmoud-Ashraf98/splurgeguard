@@ -26,7 +26,9 @@ The only service needed for local development is the Vite dev server — no DB, 
 bun run dev
 ```
 
-Starts Vite on `http://localhost:8080/` with HMR. The port `8080` is configured by `@lovable.dev/vite-tanstack-config`.
+Starts Vite on `http://localhost:8080/` with HMR. The port `8080` is configured by `@lovable.dev/vite-tanstack-config`. Use a persistent tmux session for long-running dev (see cloud-agent tmux conventions).
+
+Onboarding is two phases: profile form → savings slider. Finishing setup requires **holding** `COMMIT SAVINGS` (~1.5s) on `HoldSecureButton` (pointer events, not a plain click).
 
 ### Lint / Format / Build
 
