@@ -62,9 +62,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   initialMode?: "log" | "vault";
+  /** Optional values to pre-fill the "Log Expense" form (e.g. from a receipt scan). */
+  prefill?: { amountVND: number; category: string; justification: string } | null;
 }
 
-export function LogSheet({ open, onClose, initialMode = "log" }: Props) {
+export function LogSheet({ open, onClose, initialMode = "log", prefill = null }: Props) {
   const { logExpense, addToVault, data } = useApp();
   const [mode, setMode] = useState<"log" | "vault">(initialMode);
   const [amount, setAmount] = useState("");
@@ -91,6 +93,17 @@ export function LogSheet({ open, onClose, initialMode = "log" }: Props) {
       setAmortizeDays(1);
     }
   }, [open, initialMode]);
+
+  // Apply receipt-scan values when the sheet opens with a prefill.
+  useEffect(() => {
+    if (open && prefill) {
+      setMode("log");
+      setAmount(prefill.amountVND > 0 ? String(prefill.amountVND) : "");
+      setCategory(prefill.category ?? "");
+      setJustification(prefill.justification ?? "");
+      setCurrency("VND");
+    }
+  }, [open, prefill]);
 
   const targetHabit = data.userState?.targetHabit ?? "";
   const habitLower = targetHabit.toLowerCase().trim();

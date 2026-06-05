@@ -1,0 +1,7 @@
+# Local dev secrets for Cloudflare Workers (loaded by Wrangler / the Vite Cloudflare plugin).
+# Copy to `.dev.vars` (gitignored) and fill in real values. Production uses
+# `bunx wrangler secret put ANTHROPIC_API_KEY` instead.
+
+# Required only for the AI "Scan Receipt" feature. Without it, scanning is disabled
+# and the app falls back to manual expense logging.
+ANTHROPIC_API_KEY=sk-ant-your-key-here

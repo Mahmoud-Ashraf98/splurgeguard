@@ -168,7 +168,26 @@ bun install
 bun run dev
 ```
 
-**Stack:** React 19 · TanStack Start · TanStack Router · Vite 7 · Tailwind CSS v4 · Radix UI · Sonner · Lucide React · Zod · Framer Motion · Recharts. **Zero backend.**
+**Stack:** React 19 · TanStack Start · TanStack Router · Vite 7 · Tailwind CSS v4 · Radix UI · Sonner · Lucide React · Zod · Framer Motion · Recharts. **Offline-first** (one optional server function for receipt scanning).
+
+### 🧾 Receipt Scanning (optional AI feature)
+
+The **Scan Receipt** button on the Dashboard sends a downscaled photo to a Cloudflare
+Worker server function (`src/utils/receipt.functions.ts`), which calls **Claude Haiku 4.5**
+to extract the amount, category, and a short note, then pre-fills the Log sheet for review.
+The API key lives only on the Worker — it is never shipped to the browser. Each scan costs
+roughly **$0.002–0.003**.
+
+This is fully optional: with no key set, the rest of the app works unchanged and the Scan
+button falls back to the manual log form.
+
+```bash
+# Local development — create .dev.vars (gitignored). See .dev.vars.example
+echo 'ANTHROPIC_API_KEY=sk-ant-...' > .dev.vars
+
+# Production — store it as a Cloudflare Worker secret
+bunx wrangler secret put ANTHROPIC_API_KEY
+```
 
 ### Scripts
 
