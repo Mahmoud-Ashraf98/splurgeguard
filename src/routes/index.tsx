@@ -11,8 +11,10 @@ import {
   Gamepad2, Wifi, Tv,
   Store, Users, Mic,
   Dumbbell, Clock,
+  ScanLine, Loader2,
   type LucideIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { Onboarding } from "@/components/splurge/Onboarding";
 import { StatusRing } from "@/components/splurge/StatusRing";
@@ -22,6 +24,8 @@ import { ForfeitModal } from "@/components/splurge/ForfeitModal";
 import { fmtMoney, nextMilestone, selectNetSavingsCents, txIsCompleted, weeklyHabitSpent } from "@/lib/splurge-utils";
 import { SavingsRaidModal } from "@/components/splurge/SavingsRaidModal";
 import { LogSheet } from "@/components/splurge/LogSheet";
+import { extractReceipt } from "@/utils/receipt.functions";
+import { prepareReceiptImage } from "@/lib/receipt-image";
 import type { DailyContract } from "@/lib/splurge-types";
 
 import { getRankForXP, getNextRank } from "@/lib/ranks";
@@ -69,6 +73,33 @@ function Index() {
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const [raidOpen, setRaidOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanPrefill, setScanPrefill] = useState<
+    { amountVND: number; category: string; justification: string } | null
+  >(null);
+  const receiptInputRef = useRef<HTMLInputElement | null>(null);
+
+  const onPickReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    setScanning(true);
+    try {
+      const { base64, mediaType } = await prepareReceiptImage(file);
+      const result = await extractReceipt({ data: { imageBase64: base64, mediaType } });
+      setScanPrefill(result);
+      setSheetOpen(true);
+      toast.success("Receipt scanned — review and confirm.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not scan that receipt.";
+      toast.error(message);
+      // Fall back to the manual form so the user can still log the expense.
+      setScanPrefill(null);
+      setSheetOpen(true);
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const location = useLocation();
   const isOnHomePage = location.pathname === "/";
@@ -646,7 +677,7 @@ function Index() {
           }`}
         >
           <button
-            onClick={() => setSheetOpen(true)}
+            onClick={() => { setScanPrefill(null); setSheetOpen(true); }}
             className="cta-ripple relative overflow-hidden flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-mono text-sm font-bold uppercase tracking-[0.25em] text-slate-950 shadow-[0_0_28px_-6px_#00FFA3] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-[length:200%_200%] animate-[gradient-cycle_4s_linear_infinite]"
             style={{
               backgroundImage: "linear-gradient(90deg, #00FFA3, #00C8FF, #00FFA3)",
@@ -655,10 +686,34 @@ function Index() {
           >
             <Plus className="cta-plus h-5 w-5" /> Log Expense
           </button>
+
+          <button
+            onClick={() => receiptInputRef.current?.click()}
+            disabled={scanning}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-slate-900/70 py-3 font-mono text-xs font-bold uppercase tracking-[0.25em] text-cyan-300 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400/70 hover:text-cyan-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {scanning ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Scanning…</>
+            ) : (
+              <><ScanLine className="h-4 w-4" /> Scan Receipt</>
+            )}
+          </button>
+          <input
+            ref={receiptInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={onPickReceipt}
+          />
         </div>
       )}
 
-      <LogSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <LogSheet
+        open={sheetOpen}
+        onClose={() => { setSheetOpen(false); setScanPrefill(null); }}
+        prefill={scanPrefill}
+      />
 
       {showLevelGuide && <LevelGuideModal onClose={() => setShowLevelGuide(false)} />}
       <ForfeitModal
