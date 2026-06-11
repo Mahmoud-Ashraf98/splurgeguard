@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { RANKS } from '@/lib/ranks';
+import { triggerConfetti } from '@/lib/confetti';
 import { toast } from 'sonner';
 
 export function AscensionCinematic() {
@@ -118,7 +119,7 @@ export function AscensionCinematic() {
         Hold for 3 seconds to confirm
       </p>
       <p
-        className="mt-8 font-mono text-[9px] text-slate-700 uppercase tracking-widest cursor-pointer hover:text-slate-500 transition-colors"
+        className="mt-8 font-mono text-[10px] text-slate-700 uppercase tracking-widest cursor-pointer hover:text-slate-500 transition-colors"
         onClick={() => {
           cancelHold();
           clearPendingAscension();
@@ -128,20 +129,4 @@ export function AscensionCinematic() {
       </p>
     </div>
   );
-}
-
-function triggerConfetti() {
-  const colors = ['#00ff87', '#00d4ff', '#fbbf24', '#f472b6', '#a78bfa'];
-  for (let i = 0; i < 30; i++) {
-    const el = document.createElement('div');
-    el.style.cssText = `position: fixed; width: 8px; height: 8px; border-radius: 50%; background: ${colors[Math.floor(Math.random() * colors.length)]}; left: 50%; top: 50%; pointer-events: none; z-index: 9999; animation: confettiBurst 1.2s ease-out forwards; --tx: ${(Math.random() - 0.5) * 400}px; --ty: ${(Math.random() - 0.5) * 400}px;`;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1300);
-  }
-  if (!document.getElementById('confetti-style')) {
-    const style = document.createElement('style');
-    style.id = 'confetti-style';
-    style.textContent = `@keyframes confettiBurst { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; } }`;
-    document.head.appendChild(style);
-  }
 }

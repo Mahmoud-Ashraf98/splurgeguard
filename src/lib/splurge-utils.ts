@@ -292,6 +292,9 @@ export const milestoneBonus = (streak: number) => {
   if (streak === 3) return 100;
   if (streak === 7) return 300;
   if (streak === 14) return 750;
+  // Past day 14 the streak keeps paying: +250 DP every 7 days (21, 28, ...),
+  // so the "next milestone" targets surfaced by nextMilestone stay honest.
+  if (streak > 14 && streak % 7 === 0) return 250;
   return 0;
 };
 

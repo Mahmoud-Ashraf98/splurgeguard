@@ -19,10 +19,13 @@ import {
   AlertTriangle,
   Lock,
   Bell,
+  CreditCard,
+  Plus,
+  Sparkles,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { STORAGE_KEY } from "@/lib/splurge-types";
-import { fmtMoney } from "@/lib/splurge-utils";
+import { fmtMoney, subscriptionDailyOverheadVND } from "@/lib/splurge-utils";
 import { paydayInputToIsoEndOfLocalDay } from "@/lib/dateUtils";
 
 type NotifPermissionState = NotificationPermission | "unsupported";
@@ -30,9 +33,11 @@ type NotifPermissionState = NotificationPermission | "unsupported";
 const DP_FAQ = [
   { q: "How do I earn DP for logging splurges?", a: "Logging any splurge earns +1 to +5 Discipline Points." },
   { q: "What happens if I stay under my Daily Limit?", a: "You earn +50 DP each day you stay under your Smart Daily Limit." },
-  { q: "Are there bonuses for streaks?", a: "Yes — hitting 3, 7, and 14 day streaks unlocks bonus Discipline Points." },
-  { q: "What happens if I exceed my Daily Limit?", a: "You lose 25 DP and your current streak resets to zero." },
+  { q: "Are there bonuses for streaks?", a: "Yes — hitting 3, 7, and 14 day streaks unlocks bonus Discipline Points, then +250 DP every 7 days after that." },
+  { q: "What happens if I exceed my Daily Limit?", a: "You lose 25 DP and your current streak resets to zero (at most once per day)." },
   { q: "Can I earn DP from the Vault?", a: "Yes — delaying purchases through the cooling-off Vault earns DP while you wait." },
+  { q: "Does spending DP on rewards lower my rank?", a: "No. Rewards spend only your DP wallet. Rank XP (Ascension) is a separate ledger that only drops from penalties like daily-limit breaches or missed days." },
+  { q: "What is 1 DP worth?", a: "The Rewards exchange sizes reward costs at roughly 1 DP ≈ 100₫." },
 ];
 
 export const Route = createFileRoute("/settings")({
@@ -64,6 +69,155 @@ export const Route = createFileRoute("/settings")({
 });
 
 // ─── MODULE-LEVEL — outside SettingsPage ─────────────────────────────────
+
+/**
+ * Auto-pay subscriptions are dailyized and silently subtracted from the Smart
+ * Daily Limit — this section makes that overhead visible and manageable.
+ */
+function SubscriptionsSection({
+  sectionClass,
+  headerClass,
+}: {
+  sectionClass: string;
+  headerClass: string;
+}) {
+  const app = useApp();
+  const us = app.data.userState!;
+  const subs = app.data.subscriptions ?? [];
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
+
+  const amountNum = Math.max(0, Math.floor(Number(amount.replace(/\D/g, "")) || 0));
+  const canAdd = name.trim().length > 0 && amountNum > 0;
+  const dailyOverhead = subscriptionDailyOverheadVND(subs);
+
+  const add = () => {
+    if (!canAdd) return;
+    app.addSubscription({ name: name.trim(), amountCents: amountNum, billingCycle: cycle });
+    setName("");
+    setAmount("");
+    setCycle("monthly");
+  };
+
+  return (
+    <section className={sectionClass + " scroll-mt-4"}>
+      <h2 className={headerClass}>
+        <CreditCard
+          className="h-4 w-4 text-cyan-400"
+          style={{ filter: "drop-shadow(0 0 4px rgba(34,211,238,0.6))" }}
+        />
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-slate-400">
+          Subscriptions
+        </span>
+      </h2>
+      <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+        Auto-pay services you&apos;re committed to. Their daily share is deducted from your Smart
+        Daily Limit so the cap you see is what you can really spend.
+      </p>
+
+      {dailyOverhead > 0 && (
+        <div className="mb-4 flex items-center justify-between rounded-xl border border-cyan-800/30 bg-cyan-950/30 px-4 py-2.5">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+            Daily overhead
+          </span>
+          <span className="font-mono text-sm font-bold tabular-nums text-cyan-300">
+            −{fmtMoney(dailyOverhead, us.displayCurrency, us.usdExchangeRate)}/day
+          </span>
+        </div>
+      )}
+
+      {subs.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {subs.map((s) => (
+            <div
+              key={s.id}
+              className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+                s.isActive
+                  ? "border-slate-700/60 bg-slate-950/50"
+                  : "border-slate-800/60 bg-slate-950/30 opacity-60"
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-200">{s.name}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
+                  {fmtMoney(s.amountCents, us.displayCurrency, us.usdExchangeRate)} /{" "}
+                  {s.billingCycle === "yearly" ? "year" : "month"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => app.toggleSubscription(s.id)}
+                aria-pressed={s.isActive}
+                className={`flex-shrink-0 rounded-lg border px-2.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-widest transition-all ${
+                  s.isActive
+                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
+                    : "border-slate-700 bg-slate-900 text-slate-500 hover:text-slate-300"
+                }`}
+              >
+                {s.isActive ? "Active" : "Paused"}
+              </button>
+              <button
+                type="button"
+                onClick={() => app.deleteSubscription(s.id)}
+                aria-label={`Delete subscription ${s.name}`}
+                className="flex-shrink-0 rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-rose-500/10 hover:text-rose-400"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-3">
+        <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
+          Track a subscription
+        </p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Netflix, Spotify, iCloud…"
+          aria-label="Subscription name"
+          className="mb-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400"
+        />
+        <div className="mb-2 flex gap-2">
+          <input
+            inputMode="numeric"
+            value={amount ? new Intl.NumberFormat("vi-VN").format(Number(amount)) : ""}
+            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+            placeholder="Amount (VND)"
+            aria-label="Subscription amount in VND"
+            className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-cyan-400"
+          />
+          {(["monthly", "yearly"] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCycle(c)}
+              className={`rounded-lg border px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-widest transition-all ${
+                cycle === c
+                  ? "border-cyan-400/50 bg-cyan-950/30 text-cyan-400"
+                  : "border-slate-700/50 bg-slate-950 text-slate-400"
+              }`}
+            >
+              {c === "monthly" ? "Mo" : "Yr"}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={add}
+          disabled={!canAdd}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-950/20 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-cyan-400 transition-all hover:bg-cyan-900/40 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Plus className="h-4 w-4" /> Add Subscription
+        </button>
+      </div>
+    </section>
+  );
+}
+
 interface CurrencyFieldProps {
   label: string;
   value: number;
@@ -108,7 +262,7 @@ function CurrencyField({ label, value, onCommit, helper, ticker = "VND" }: Curre
               {humanBadge}
             </span>
           )}
-          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
+          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[10px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
             {ticker}
           </span>
         </div>
@@ -217,9 +371,11 @@ function SettingsPage() {
   const dpRules: { Icon: ElementType; color: string; text: string }[] = [
     { Icon: PenTool, color: "text-cyan-400", text: "Log any splurge: +1 to +5 DP" },
     { Icon: Target, color: "text-emerald-400", text: "Stay under Daily Limit: +50 DP" },
-    { Icon: Flame, color: "text-amber-400", text: "Hit 3, 7, 14 day streaks for bonuses" },
-    { Icon: AlertTriangle, color: "text-rose-500", text: "Exceed Daily Limit: -25 DP & Streak Resets" },
+    { Icon: Flame, color: "text-amber-400", text: "Hit 3, 7, 14 day streaks for bonuses — then +250 DP every 7 days" },
+    { Icon: AlertTriangle, color: "text-rose-500", text: "Exceed Daily Limit: -25 DP & Streak Resets (once per day)" },
     { Icon: Lock, color: "text-cyan-400", text: "Delay via Vault: Earn DP while waiting" },
+    { Icon: ShieldCheck, color: "text-emerald-400", text: "Spending DP on Rewards never lowers your rank — Rank XP is a separate ledger" },
+    { Icon: Sparkles, color: "text-cyan-400", text: "Reward costs are sized at roughly 1 DP ≈ 100₫" },
   ];
 
   return (
@@ -395,7 +551,7 @@ function SettingsPage() {
                         : "0 0 6px rgba(34,211,238,0.8)",
                     }}
                   />
-                  <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">
                     Live Budget Breakdown
                   </p>
                 </div>
@@ -420,7 +576,7 @@ function SettingsPage() {
                   <div className="px-4 pb-4 pt-0 space-y-2">
                     {/* Theoretical daily — planning context only, muted */}
                     <div className="flex items-center justify-between px-1">
-                      <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-slate-600">
                         ~ Theoretical daily ({daysLeft}d left)
                       </span>
                       <span className="font-mono text-[10px] tabular-nums text-slate-600">
@@ -431,7 +587,7 @@ function SettingsPage() {
                     {app.smartDailyLimit < dailySlice && (
                       <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5">
                         <span className="text-amber-400 text-[10px]">⚠</span>
-                        <p className="font-mono text-[9px] uppercase tracking-widest text-amber-300">
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-amber-300">
                           Live balance is below income plan
                         </p>
                       </div>
@@ -444,10 +600,10 @@ function SettingsPage() {
                           style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }}
                         />
                         <div>
-                          <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-500">
+                          <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-slate-500">
                             Live Daily Cap
                           </p>
-                          <p className="font-mono text-[8px] text-slate-600 mt-0.5">
+                          <p className="font-mono text-[10px] text-slate-600 mt-0.5">
                             Matches dashboard
                           </p>
                         </div>
@@ -499,7 +655,7 @@ function SettingsPage() {
                 const { label, urgent } = daysUntilLabel(us.paydayDate);
                 return (
                   <span
-                    className={`font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                    className={`font-mono text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
                       urgent
                         ? "text-amber-300 bg-amber-900/30 border-amber-600/40"
                         : "text-cyan-400 bg-cyan-900/20 border-cyan-700/30"
@@ -555,6 +711,8 @@ function SettingsPage() {
             Icon={DollarSign}
           />
         </section>
+
+        <SubscriptionsSection sectionClass={sectionClass} headerClass={headerClass} />
 
         <section className={sectionClass + " scroll-mt-4"}>
           <h2 className="flex items-center mb-2 pb-2 border-b border-slate-700/50">
@@ -677,7 +835,7 @@ function SettingsPage() {
             durationMs={3000}
             label="Hold 3s to wipe all data"
           />
-          <p className="mt-3 text-center font-mono text-[9px] uppercase tracking-widest text-slate-600">
+          <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-slate-600">
             Hold for 3 seconds to confirm permanent deletion
           </p>
         </section>

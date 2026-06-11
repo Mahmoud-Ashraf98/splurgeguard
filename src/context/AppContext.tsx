@@ -16,9 +16,9 @@ import {
   VaultItem,
   Reward,
   isEssentialCategory,
-  levelForLifetimeDP,
   DEFAULT_USD_EXCHANGE_RATE,
 } from "@/lib/splurge-types";
+import type { Subscription } from "@/lib/schemas";
 import {
   applyWithdrawFromSavingsState,
   calcBaseDailyAllowance,
@@ -40,6 +40,8 @@ import { generateDailyContracts } from "@/lib/contracts";
 interface BreachInfo {
   amountVND: number;
   limitVND: number;
+  /** True when today's −25 DP / streak-reset penalty was already applied by an earlier breach. */
+  alreadyPenalized: boolean;
 }
 
 interface AppContextValue {
@@ -73,7 +75,9 @@ interface AppContextValue {
     fromVault?: boolean;
     vaultId?: string;
     amortizationDays?: number;
-  }) => boolean;
+    /** Bypass the same-minute idempotency check (used by the explicit "Log anyway" flow). */
+    force?: boolean;
+  }) => "logged" | "duplicate";
   addToVault: (input: Omit<VaultItem, "id" | "createdAt" | "status">) => void;
   markVaultReady: (id: string) => void;
   approveVault: (id: string) => void;
@@ -92,6 +96,17 @@ interface AppContextValue {
   createReward: (r: Omit<Reward, "id" | "createdAt" | "status">) => void;
   redeemReward: (id: string) => "success" | "insufficient_dp" | "not_found";
   deleteReward: (rewardId: string) => void;
+  // Daily contracts
+  secureContract: (id: string) => void;
+  forfeitContract: (id: string) => void;
+  // Subscriptions (reduce the Smart Daily Limit as daily overhead)
+  addSubscription: (input: {
+    name: string;
+    amountCents: number;
+    billingCycle: "monthly" | "yearly";
+  }) => void;
+  toggleSubscription: (id: string) => void;
+  deleteSubscription: (id: string) => void;
   // Ascension Protocol
   pendingAscension: number | null;
   clearPendingAscension: () => void;
@@ -114,7 +129,7 @@ const migrate = (parsed: AppData): AppData => {
   if (data.userState) {
     const us = data.userState as any;
     if (typeof us.lifetimeDP !== "number") us.lifetimeDP = us.totalDP ?? 0;
-    if (typeof us.currentLevel !== "number") us.currentLevel = levelForLifetimeDP(us.lifetimeDP).level;
+    if (typeof us.currentLevel !== "number") us.currentLevel = getRankForXP(us.lifetimeDP).level;
     // Ascension Protocol migration
     if (typeof us.ascensionXP !== "number") {
       const seededXP = us.totalDP ?? 0;
@@ -149,6 +164,8 @@ const migrate = (parsed: AppData): AppData => {
     if (typeof us.savings_raided_cents !== "number") us.savings_raided_cents = 0;
     if (!Array.isArray(us.raid_history)) us.raid_history = [];
     if (typeof us.current_cycle_id !== "string" || !us.current_cycle_id) us.current_cycle_id = uuid();
+    if (typeof us.lastBreachDate !== "string") us.lastBreachDate = "";
+    if (!us.dailyLimitHistory || typeof us.dailyLimitHistory !== "object") us.dailyLimitHistory = {};
     data.userState = us as UserState;
   }
   if (Array.isArray(data.transactions)) {
@@ -224,7 +241,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [breach, setBreach] = useState<BreachInfo | null>(null);
   const [pendingAscension, setPendingAscension] = useState<number | null>(null);
-  const dailyCheckRan = useRef(false);
+  // Tracks the local day so day-scoped effects (login check, contracts) re-run
+  // when the date rolls over while the PWA stays open. Bumped by the global tick.
+  const [todayKey, setTodayKey] = useState(() => dayKey(new Date()));
+  const lastDailyCheckDay = useRef("");
   const notifiedReadyRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -240,13 +260,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData((prev) => fn(prev));
   }, []);
 
-  // Daily login checks
+  // Daily login checks — re-evaluated when the local date rolls over
   useEffect(() => {
-    if (!hydrated || !data.userState || dailyCheckRan.current) return;
-    dailyCheckRan.current = true;
+    if (!hydrated || !data.userState || lastDailyCheckDay.current === todayKey) return;
+    lastDailyCheckDay.current = todayKey;
 
     const today = new Date();
-    const todayKey = dayKey(today);
     const us = data.userState;
     if (us.lastLoginDate === todayKey) return;
 
@@ -321,7 +340,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         else toast(m.msg);
       });
     }, 400);
-  }, [hydrated, data.userState, data.transactions, data.subscriptions, mutate]);
+  }, [hydrated, todayKey, data.userState, data.transactions, data.subscriptions, mutate]);
 
   // Daily Protocol contracts refresh
   useEffect(() => {
@@ -336,13 +355,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         : d.userState,
     }));
     setTimeout(() => toast.success('New daily challenges available.'), 500);
-  }, [hydrated, data.userState?.lastContractRefreshDate, mutate, data.userState]);
+  }, [hydrated, todayKey, data.userState?.lastContractRefreshDate, mutate, data.userState]);
 
   // Vault cooling -> ready (global, battery friendly)
   useEffect(() => {
     if (!hydrated) return;
     const check = () => {
       const now = Date.now();
+      // Keep the day key fresh so day-scoped effects fire on date rollover.
+      setTodayKey((prev) => {
+        const tk = dayKey(new Date());
+        return prev === tk ? prev : tk;
+      });
       const transitions: { id: string; name: string }[] = [];
       setData((prev) => {
         let changed = false;
@@ -480,6 +504,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [data.transactions, data.userState?.targetHabit]
   );
 
+  // Snapshot today's Smart Daily Limit once per day (start-of-day value) so the
+  // Vice Firewall can judge past days against the limit that actually applied,
+  // instead of retro-fitting today's limit onto history. Pruned to 30 days.
+  useEffect(() => {
+    if (!hydrated || !data.userState) return;
+    const hist = data.userState.dailyLimitHistory ?? {};
+    if (hist[todayKey] !== undefined) return;
+    const pruned = Object.entries({ ...hist, [todayKey]: smartDailyLimit })
+      .sort(([a], [b]) => (a < b ? 1 : -1))
+      .slice(0, 30);
+    mutate((d) =>
+      d.userState
+        ? { ...d, userState: { ...d.userState, dailyLimitHistory: Object.fromEntries(pruned) } }
+        : d,
+    );
+  }, [hydrated, todayKey, data.userState, smartDailyLimit, mutate]);
+
   const initUser: AppContextValue["initUser"] = (input) => {
     const today = new Date();
     try {
@@ -513,6 +554,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       displayCurrency: input.displayCurrency ?? "VND",
       dailyContracts: [],
       lastContractRefreshDate: "",
+      lastBreachDate: "",
+      dailyLimitHistory: {},
     };
     setData({ userState: us, transactions: [], vaultItems: [], rewards: [], subscriptions: [] });
   };
@@ -582,13 +625,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Reverses a just-logged expense from the success toast's UNDO action:
+  // removes the row, restores the balance, and takes back the DP it granted.
+  const undoExpense = (txId: string, dpToRevert: number) => {
+    mutate((d) => {
+      const tx = d.transactions.find((t) => t.id === txId);
+      if (!tx || !d.userState || !txIsCompleted(tx)) return d;
+      const us = { ...d.userState };
+      if (!tx.isEssential) us.currentBalanceVND += tx.amountVND;
+      else us.essentialSpentVND = Math.max(0, us.essentialSpentVND - tx.amountVND);
+      us.totalDP -= dpToRevert;
+      us.lifetimeDP = Math.max(0, us.lifetimeDP - dpToRevert);
+      us.ascensionXP = Math.max(0, (us.ascensionXP ?? 0) - dpToRevert);
+      return { ...d, userState: us, transactions: d.transactions.filter((t) => t.id !== txId) };
+    });
+    toast("Expense undone");
+  };
+
   const logExpense: AppContextValue["logExpense"] = (input) => {
-    if (!data.userState) return false;
+    if (!data.userState) return "logged"; // unreachable in practice — UI is gated on userState
     const plannedTimestamp = new Date().toISOString();
     const dupKey = buildIdempotencyKeyFromPending(input, plannedTimestamp);
-    if (data.transactions.some((t) => buildIdempotencyKey(t) === dupKey)) {
+    if (!input.force && data.transactions.some((t) => buildIdempotencyKey(t) === dupKey)) {
       console.warn("[INGESTION] Duplicate transaction blocked:", dupKey);
-      return false;
+      return "duplicate";
     }
 
     const isEss = isEssentialCategory(input.category);
@@ -620,6 +680,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const todaySpent = todayDiscretionary;
       const limit = smartDailyLimit;
       if (todaySpent + slice > limit) {
+        // The −25 DP / streak-reset penalty applies at most once per local day;
+        // further over-limit logs still record + warn, without compounding losses.
+        const breachDay = dayKey(new Date());
+        const alreadyPenalized = data.userState.lastBreachDate === breachDay;
         mutate((d) => {
           if (!d.userState) return d;
           const tx: Transaction = {
@@ -640,16 +704,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           };
           // -25 penalty (does NOT subtract from lifetime), then add the small dpForAmount gain
           const gain = dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
-          let us = {
-            ...d.userState,
-            totalDP: d.userState.totalDP - 25,
-            ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) - 25),
-          };
+          let us = alreadyPenalized
+            ? { ...d.userState }
+            : {
+                ...d.userState,
+                totalDP: d.userState.totalDP - 25,
+                ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) - 25),
+                currentStreakDays: 0,
+                lastBreachDate: breachDay,
+              };
           us = applyDPGain(us, gain);
           us = {
             ...us,
             currentBalanceVND: us.currentBalanceVND - input.amountVND,
-            currentStreakDays: 0,
           };
           return {
             ...d,
@@ -660,16 +727,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               : d.vaultItems,
           };
         });
-        setBreach({ amountVND: input.amountVND, limitVND: smartDailyLimit });
-        return true;
+        setBreach({ amountVND: input.amountVND, limitVND: smartDailyLimit, alreadyPenalized });
+        return "logged";
       }
     }
 
     let bonusMsg = "";
+    const txId = uuid();
     mutate((d) => {
       if (!d.userState) return d;
       const tx: Transaction = {
-        id: uuid(),
+        id: txId,
         timestamp: plannedTimestamp,
         amountVND: input.amountVND,
         originalAmount: input.originalAmount,
@@ -705,9 +773,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return { ...d, userState: us, transactions: [tx, ...d.transactions], vaultItems };
     });
     const dpEarned = isEss ? 0 : dpForAmount(input.amountVND, input.category, !!input.fromVault, habit);
-    toast.success(`Expense Logged. +${dpEarned} DP Earned.`);
+    // UNDO is only offered for direct logs — vault claims also flip vault state,
+    // which a simple transaction removal would leave inconsistent.
+    const canUndo = !input.fromVault && !input.vaultId;
+    toast.success(`Expense Logged. +${dpEarned} DP Earned.`, {
+      duration: 6000,
+      action: canUndo ? { label: "UNDO", onClick: () => undoExpense(txId, dpEarned) } : undefined,
+    });
     if (bonusMsg) setTimeout(() => toast.success(bonusMsg), 600);
-    return true;
+    return "logged";
   };
 
   const addToVault: AppContextValue["addToVault"] = (input) => {
@@ -907,21 +981,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteReward = (rewardId: string) => {
-    const reward = data.rewards.find((r) => r.id === rewardId);
-    if (!reward) return;
-    const progressDP = (reward as any).currentDP ?? 0;
     mutate((d) => ({
       ...d,
       rewards: d.rewards.filter((r) => r.id !== rewardId),
     }));
-    toast.success(
-      progressDP > 0
-        ? `Reward deleted. ${progressDP} DP progress lost.`
-        : "Reward deleted."
-    );
+    toast.success("Reward deleted.");
   };
 
   const deleteVaultItem = (id: string) => {
+    // The +40 DP "impulse defeated" reward requires actually enduring at least
+    // half of the cooling window — instant add-then-remove must not farm DP.
+    const existing = data.vaultItems.find((v) => v.id === id);
+    const enduredEnough = existing
+      ? Date.now() - new Date(existing.createdAt).getTime() >=
+        existing.delayHours * 3600000 * 0.5
+      : false;
     mutate((d) => {
       const vi = d.vaultItems.find((v) => v.id === id);
       let txs = d.transactions;
@@ -932,7 +1006,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ? { ...t, status: "rejected" as const, vault_expires_at: null }
             : t,
         );
-        us = applyDPGain(d.userState, 40);
+        us = enduredEnough ? applyDPGain(d.userState, 40) : d.userState;
       }
       return {
         ...d,
@@ -941,7 +1015,81 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         vaultItems: d.vaultItems.filter((v) => v.id !== id),
       };
     });
-    toast.success("Item removed from vault. +40 DP.");
+    toast.success(
+      enduredEnough
+        ? "Item removed from vault. +40 DP."
+        : "Item removed from vault. Endure the cooldown next time to earn DP.",
+    );
+  };
+
+  // ===== Daily contracts =====
+  const secureContract: AppContextValue["secureContract"] = (id) => {
+    mutate((d) => {
+      if (!d.userState) return d;
+      const c = (d.userState.dailyContracts ?? []).find((x) => x.id === id);
+      if (!c || c.status !== "available") return d;
+      const us = applyDPGain(d.userState, c.reward);
+      return {
+        ...d,
+        userState: {
+          ...us,
+          dailyContracts: us.dailyContracts.map((x) =>
+            x.id === id ? { ...x, status: "secured" as const } : x,
+          ),
+        },
+      };
+    });
+  };
+
+  const forfeitContract: AppContextValue["forfeitContract"] = (id) => {
+    mutate((d) => {
+      if (!d.userState) return d;
+      const c = (d.userState.dailyContracts ?? []).find((x) => x.id === id);
+      if (!c || c.status !== "available") return d;
+      return {
+        ...d,
+        userState: {
+          ...d.userState,
+          totalDP: d.userState.totalDP + c.penalty,
+          ascensionXP: Math.max(0, (d.userState.ascensionXP ?? 0) + c.penalty),
+          dailyContracts: d.userState.dailyContracts.map((x) =>
+            x.id === id ? { ...x, status: "yielded" as const } : x,
+          ),
+        },
+      };
+    });
+  };
+
+  // ===== Subscriptions =====
+  const addSubscription: AppContextValue["addSubscription"] = (input) => {
+    const sub: Subscription = {
+      id: uuid(),
+      name: input.name.trim(),
+      amountCents: Math.max(1, Math.floor(input.amountCents)),
+      billingCycle: input.billingCycle,
+      nextBillingDate: new Date().toISOString(),
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    mutate((d) => ({ ...d, subscriptions: [sub, ...(d.subscriptions ?? [])] }));
+    toast.success(`Subscription tracked: ${sub.name}`);
+  };
+
+  const toggleSubscription: AppContextValue["toggleSubscription"] = (id) => {
+    mutate((d) => ({
+      ...d,
+      subscriptions: (d.subscriptions ?? []).map((s) =>
+        s.id === id ? { ...s, isActive: !s.isActive } : s,
+      ),
+    }));
+  };
+
+  const deleteSubscription: AppContextValue["deleteSubscription"] = (id) => {
+    mutate((d) => ({
+      ...d,
+      subscriptions: (d.subscriptions ?? []).filter((s) => s.id !== id),
+    }));
+    toast("Subscription removed");
   };
 
   // ===== Ascension Protocol =====
@@ -977,6 +1125,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     createReward,
     redeemReward,
     deleteReward,
+    secureContract,
+    forfeitContract,
+    addSubscription,
+    toggleSubscription,
+    deleteSubscription,
     pendingAscension,
     clearPendingAscension,
     withdrawFromSavings,

@@ -64,6 +64,10 @@ export interface UserState {
   lastContractRefreshDate: string;
   /** Set by migration when `total_income_cents` was inferred from legacy data — user should verify in Settings. */
   pyfIncomeInferred?: boolean;
+  /** Local day key (YYYY-MM-DD) of the last breach penalty — the −25 DP / streak reset applies at most once per day. */
+  lastBreachDate?: string;
+  /** Smart Daily Limit snapshot per local day key, recorded once at first computation. Pruned to the most recent 30 days. */
+  dailyLimitHistory?: Record<string, number>;
 }
 
 /** Alias for budget-cycle shape (same as `UserState`). */
@@ -157,33 +161,6 @@ export const STORAGE_KEY = "splurgeGuardData_v1";
 
 export const DEFAULT_USD_EXCHANGE_RATE = 26310;
 
-export interface LevelDef {
-  level: number;
-  title: string;
-  threshold: number;
-}
-
-export const LEVELS: LevelDef[] = [
-  { level: 1, title: "Initiate", threshold: 0 },
-  { level: 2, title: "Sentinel", threshold: 300 },
-  { level: 3, title: "Vanguard", threshold: 800 },
-  { level: 4, title: "Architect", threshold: 1500 },
-  { level: 5, title: "Praetorian", threshold: 2500 },
-  { level: 6, title: "Luminary", threshold: 4000 },
-  { level: 7, title: "Ascendant", threshold: 6000 },
-  { level: 8, title: "Sovereign", threshold: 8500 },
-  { level: 9, title: "Apex", threshold: 11500 },
-  { level: 10, title: "Prime Operator", threshold: 15000 },
-];
-
-export const levelForLifetimeDP = (lifetimeDP: number): LevelDef => {
-  let result = LEVELS[0];
-  for (const l of LEVELS) {
-    if (lifetimeDP >= l.threshold) result = l;
-    else break;
-  }
-  return result;
-};
-
-export const getLevelDef = (level: number): LevelDef =>
-  LEVELS.find((l) => l.level === level) ?? LEVELS[0];
+// NOTE: the single source of truth for rank/level progression is RANKS in
+// src/lib/ranks.tsx (driven by ascensionXP). The legacy LEVELS table that
+// previously lived here has been removed to avoid two diverging systems.

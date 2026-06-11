@@ -1,17 +1,27 @@
 import { RANKS } from '@/lib/ranks';
 import { useApp } from '@/context/AppContext';
+import { useDialogA11y } from '@/hooks/useDialogA11y';
 import { X, Hexagon } from 'lucide-react';
 
 const ROMAN_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 export function LevelGuideModal({ onClose }: { onClose: () => void }) {
   const { data } = useApp();
+  const dialogRef = useDialogA11y(true, onClose);
   const us = data.userState!;
   const currentRank = RANKS.find(r => r.level === us.currentLevel) ?? RANKS[0];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-2 pb-6 sm:p-6" onClick={onClose}>
-      <div className="w-full max-w-md h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col rounded-[2rem] border border-white/10 bg-gradient-to-b from-slate-950 via-[#0a0f1c] to-slate-950 shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-2 pb-6 sm:p-6" onClick={onClose} role="presentation">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ascension ranks guide"
+        className="w-full max-w-md h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col rounded-[2rem] border border-white/10 bg-gradient-to-b from-slate-950 via-[#0a0f1c] to-slate-950 shadow-2xl overflow-hidden outline-none"
+        onClick={e => e.stopPropagation()}
+      >
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 relative z-10">

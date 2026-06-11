@@ -25,15 +25,18 @@ export function StatusRing({
   innerLimit,
   size = 260,
 }: Props) {
+  // A zero (or negative) limit means there is no budget at all — render an
+  // explicit critical state instead of the misleading "Full Budget Intact".
+  const noBudget = limit <= 0;
   const pct = limit > 0 ? Math.min(used / limit, 1.5) : 0;
   const stroke = 14;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const visualPct = Math.min(pct, 1);
+  const visualPct = noBudget ? 1 : Math.min(pct, 1);
   const dash = c * visualPct;
   const ratio = pct;
-  const color = ratio > 1 ? "#ff4757" : ratio > 0.9 ? "#ff4757" : ratio > 0.7 ? "#fbbf24" : "#00ff87";
-  const glow = ratio > 1 ? "rgba(255,71,87,0.55)" : ratio > 0.7 ? "rgba(251,191,36,0.5)" : "rgba(0,255,135,0.5)";
+  const color = noBudget || ratio > 0.9 ? "#ff4757" : ratio > 0.7 ? "#fbbf24" : "#00ff87";
+  const glow = noBudget || ratio > 1 ? "rgba(255,71,87,0.55)" : ratio > 0.7 ? "rgba(251,191,36,0.5)" : "rgba(0,255,135,0.5)";
   const pulse = ratio > 1 ? "animate-pulse" : "";
 
   // Inner ring (weekly habit)
@@ -57,7 +60,7 @@ export function StatusRing({
   }, [remainingValue, mv]);
 
   const usedPct = Math.round(pct * 100);
-  const showFull = usedPct === 0;
+  const showFull = usedPct === 0 && !noBudget;
   const showCritical = usedPct > 80;
 
   return (
@@ -140,7 +143,11 @@ export function StatusRing({
             {remainingLabel ?? `${Math.round(pct * 100)}%`}
           </span>
         )}
-        {showFull ? (
+        {noBudget ? (
+          <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-rose-400">
+            No Budget — Refills on Payday
+          </span>
+        ) : showFull ? (
           <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-400 drop-shadow-[0_0_8px_rgba(0,255,135,0.5)]">
             Full Budget Intact
           </span>
@@ -149,7 +156,7 @@ export function StatusRing({
             Budget Critical
           </span>
         ) : (
-          <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.3em] text-slate-600">
+          <span className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-slate-600">
             {usedPct}% used
           </span>
         )}

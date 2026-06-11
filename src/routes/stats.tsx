@@ -106,6 +106,8 @@ function StatsPage() {
 
 function StatsPageBody() {
   const [trophyRoomOpen, setTrophyRoomOpen] = useState(false);
+  // Tap-to-inspect for the Vice Firewall matrix (hover tooltips are useless on touch).
+  const [selectedFirewallDay, setSelectedFirewallDay] = useState<number | null>(null);
   const app = useApp();
   const { vaultItems } = app.data;
   // userState is guaranteed by the StatsPage gate; assert non-null for TS.
@@ -163,6 +165,7 @@ function StatsPageBody() {
   }, []);
 
   const dailyLimit = app.smartDailyLimit ?? 0;
+  const dailyLimitHistory = app.data.userState?.dailyLimitHistory;
 
   const matrixData = useMemo(() => {
     const spent: Record<string, number> = {};
@@ -175,14 +178,18 @@ function StatsPageBody() {
       const dayTs = day.getTime();
       const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
       const spentThatDay = spent[dayKey] ?? 0;
+      // Judge each day against the Smart Daily Limit that applied on that day
+      // (snapshotted once per day in AppContext); fall back to today's limit
+      // for days predating the history feature.
+      const limitThatDay = dailyLimitHistory?.[dayKey] ?? dailyLimit;
 
       let status: "perfect" | "controlled" | "breach" = "perfect";
-      if (spentThatDay > 0 && spentThatDay <= dailyLimit) status = "controlled";
-      if (spentThatDay > dailyLimit) status = "breach";
+      if (spentThatDay > 0 && spentThatDay <= limitThatDay) status = "controlled";
+      if (spentThatDay > limitThatDay) status = "breach";
 
-      return { date: day, dayTs, spent: spentThatDay, status };
+      return { date: day, dayTs, spent: spentThatDay, status, limit: limitThatDay };
     });
-  }, [firewallDays, app.data.transactions, dailyLimit]);
+  }, [firewallDays, app.data.transactions, dailyLimit, dailyLimitHistory]);
 
   const cur = us.displayCurrency;
   const rate = us.usdExchangeRate;
@@ -308,7 +315,7 @@ function StatsPageBody() {
             </p>
           </div>
           <span
-            className={`font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-sm ${
+            className={`font-mono text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-sm ${
               isBurnWarning ? "bg-rose-500/10 text-rose-500" : "bg-emerald-400/10 text-emerald-400"
             }`}
           >
@@ -317,7 +324,7 @@ function StatsPageBody() {
         </div>
 
         <div className="mb-3">
-          <div className="flex justify-between font-mono text-[9px] text-slate-500 mb-1">
+          <div className="flex justify-between font-mono text-[10px] text-slate-500 mb-1">
             <span>Cycle Time Elapsed</span>
             <span>{Math.floor(timePercent)}%</span>
           </div>
@@ -330,7 +337,7 @@ function StatsPageBody() {
         </div>
 
         <div>
-          <div className="flex justify-between font-mono text-[9px] text-slate-500 mb-1">
+          <div className="flex justify-between font-mono text-[10px] text-slate-500 mb-1">
             <span>Budget Spent</span>
             <span className={isBurnWarning ? "text-rose-400" : "text-emerald-400"}>
               {Math.floor(burnPercent)}%
@@ -379,7 +386,7 @@ function StatsPageBody() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-cyan-400" />
-                  <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-cyan-400/90">
+                  <p className="font-mono text-[10px] sm:text-[10px] uppercase tracking-[0.4em] text-cyan-400/90">
                     The Freedom Engine
                   </p>
                 </div>
@@ -394,7 +401,7 @@ function StatsPageBody() {
 
               {/* ── Capital Core — Hero Metric ───────────────────────────── */}
               <div className="flex flex-col items-center text-center py-3 sm:py-5 mb-5">
-                <h2 className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.45em] text-emerald-400/70 mb-2">
+                <h2 className="font-mono text-[10px] sm:text-[10px] uppercase tracking-[0.45em] text-emerald-400/70 mb-2">
                   Total Capital Preserved
                 </h2>
                 <p
@@ -414,13 +421,13 @@ function StatsPageBody() {
                   those same days, minus what you actually spent on splurges: what is left is still
                   sitting in your pocket.
                 </p>
-                <span className="mt-3 block font-mono text-[9px] uppercase tracking-[0.35em] text-slate-500">
+                <span className="mt-3 block font-mono text-[10px] uppercase tracking-[0.35em] text-slate-500">
                   {discardedCount} vault impulse{discardedCount === 1 ? "" : "s"} defeated
                 </span>
               </div>
 
               <div className="mb-5 w-full rounded-xl border border-emerald-500/25 bg-slate-950/50 p-4 text-left ring-1 ring-emerald-500/10">
-                <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-emerald-400/80 mb-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-emerald-400/80 mb-3">
                   Inside this total
                 </p>
                 <div className="space-y-3">
@@ -445,7 +452,7 @@ function StatsPageBody() {
                     </p>
                   </div>
                 </div>
-                <p className="mt-3 font-mono text-[9px] uppercase tracking-widest text-slate-600 leading-relaxed">
+                <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-slate-600 leading-relaxed">
                   Rough daily pace so far: {fmtMoney(freedomAvgDailyPace, cur, rate)} · day{" "}
                   {freedomPreserved.effectiveElapsedDays} of this cycle. Your fun-money cap can
                   shift as payday gets closer, so we use the cap you see today as a fair estimate.
@@ -457,7 +464,7 @@ function StatsPageBody() {
                 <div className="mb-3 rounded-xl ring-1 ring-cyan-500/20 bg-cyan-500/10 backdrop-blur-md p-4">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Sparkles className="h-3 w-3 text-cyan-300" />
-                    <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/80">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-300/80">
                       Most Recent Milestone
                     </p>
                   </div>
@@ -469,7 +476,7 @@ function StatsPageBody() {
                 <div className="mb-4 rounded-xl ring-1 ring-cyan-500/20 bg-cyan-500/10 backdrop-blur-md p-4">
                   <div className="flex flex-col gap-1 w-full sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div className="min-w-0">
-                      <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/80 mb-1">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-300/80 mb-1">
                         Next Milestone
                       </p>
                       <p className="text-slate-300 text-sm leading-relaxed whitespace-normal flex-1 min-w-0">
@@ -477,7 +484,7 @@ function StatsPageBody() {
                       </p>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <p className="font-mono text-[8px] uppercase tracking-[0.4em] text-cyan-300/60">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-300/60">
                         Target
                       </p>
                       <p className="text-cyan-400 font-mono text-sm font-bold shrink-0 sm:text-right">
@@ -488,7 +495,7 @@ function StatsPageBody() {
 
                   {/* Segmented Reactor Progress Bar */}
                   <div>
-                    <div className="flex justify-between font-mono text-[9px] uppercase tracking-[0.3em] mb-1.5">
+                    <div className="flex justify-between font-mono text-[10px] uppercase tracking-[0.3em] mb-1.5">
                       <span className={isNearMilestone ? "text-emerald-300" : "text-cyan-300/70"}>
                         Reactor Charge
                       </span>
@@ -537,7 +544,7 @@ function StatsPageBody() {
                       />
                     </div>
                     {isNearMilestone && (
-                      <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.4em] text-emerald-300/90 text-right">
+                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.4em] text-emerald-300/90 text-right">
                         Final Push · Capital Surge Imminent
                       </p>
                     )}
@@ -559,12 +566,12 @@ function StatsPageBody() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-1.5">
                     <Trophy className="h-3 w-3 text-cyan-300/80" />
-                    <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-cyan-300/80">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-300/80">
                       The Conqueror&rsquo;s Ledger
                     </p>
                   </div>
                   {discardedCount > 0 && (
-                    <span className="font-mono text-[8px] uppercase tracking-[0.35em] text-slate-500 tabular-nums">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-slate-500 tabular-nums">
                       {discardedCount} Vault win{discardedCount === 1 ? "" : "s"}
                     </span>
                   )}
@@ -657,7 +664,7 @@ function StatsPageBody() {
                 ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex select-none flex-col items-center justify-center px-1">
-                <span className="mb-0.5 font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">
+                <span className="mb-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
                   Total
                 </span>
                 <span className="mt-0.5 text-[11px] font-bold tabular-nums leading-none text-white">
@@ -698,6 +705,7 @@ function StatsPageBody() {
 
         <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-3">
           {matrixData.map((cell, idx) => {
+            const isSelected = selectedFirewallDay === idx;
             let boxClasses = "w-full aspect-square rounded border transition-all duration-300 ";
             if (cell.dayTs > todayMs) {
               boxClasses += "bg-slate-800/30 border-slate-700/30";
@@ -718,16 +726,25 @@ function StatsPageBody() {
                   ? "right-0 translate-x-0"
                   : "left-1/2 -translate-x-1/2";
 
+            const dateLabel = cell.date.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            });
+
             return (
               <div key={cell.dayTs} className="relative group">
-                <div className={boxClasses} />
+                {/* Button (not hover-only) so touch users can inspect each day. */}
+                <button
+                  type="button"
+                  aria-label={`${dateLabel}: spent ${fmtMoney(cell.spent, cur, rate)}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedFirewallDay(isSelected ? null : idx)}
+                  className={`${boxClasses} block ${isSelected ? "ring-2 ring-cyan-300 ring-offset-1 ring-offset-slate-950" : ""}`}
+                />
                 <div
-                  className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap rounded bg-slate-950 border border-slate-700 px-2 py-1 font-mono text-[9px] text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity ${tooltipAlign}`}
+                  className={`pointer-events-none absolute bottom-full mb-1 z-10 whitespace-nowrap rounded bg-slate-950 border border-slate-700 px-2 py-1 font-mono text-[10px] text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity ${tooltipAlign}`}
                 >
-                  {cell.date.toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {dateLabel}
                   {": "}
                   {fmtMoney(cell.spent, cur, rate)}
                 </div>
@@ -736,7 +753,43 @@ function StatsPageBody() {
           })}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[9px] uppercase tracking-widest text-slate-500">
+        {selectedFirewallDay !== null && matrixData[selectedFirewallDay] && (
+          <div className="mb-3 rounded-lg border border-slate-700/60 bg-slate-950/60 px-3 py-2 font-mono text-[10px] text-slate-300">
+            {(() => {
+              const cell = matrixData[selectedFirewallDay];
+              const dateLabel = cell.date.toLocaleDateString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              });
+              const statusLabel =
+                cell.status === "perfect" ? "Zero spend" : cell.status === "controlled" ? "Controlled" : "Breach";
+              return (
+                <span>
+                  <span className="text-cyan-300">{dateLabel}</span>
+                  {" · spent "}
+                  <span className="font-bold tabular-nums">{fmtMoney(cell.spent, cur, rate)}</span>
+                  {" / limit "}
+                  <span className="tabular-nums">{fmtMoney(cell.limit, cur, rate)}</span>
+                  {" · "}
+                  <span
+                    className={
+                      cell.status === "breach"
+                        ? "text-rose-400"
+                        : cell.status === "controlled"
+                          ? "text-cyan-400"
+                          : "text-emerald-400"
+                    }
+                  >
+                    {statusLabel}
+                  </span>
+                </span>
+              );
+            })()}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-widest text-slate-500">
           <span>Older</span>
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1">
@@ -797,7 +850,7 @@ function StatsPageBody() {
                   <div className="flex justify-between items-baseline mb-1 gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm text-white truncate">{title}</p>
-                      <p className="font-mono text-[8px] uppercase tracking-widest text-slate-500">
+                      <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">
                         spread · {spreadDays}d
                       </p>
                     </div>
@@ -806,7 +859,7 @@ function StatsPageBody() {
                     </p>
                   </div>
 
-                  <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-cyan-600/50">
+                  <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-cyan-600/50">
                     {`[-${fmtMoney(dailyDrain, cur, rate)}/d]`}
                   </p>
 
@@ -845,29 +898,38 @@ function StatsPageBody() {
                 !!us.targetHabit &&
                 t.category.toLowerCase().trim() === us.targetHabit.toLowerCase().trim();
               const Icon = isHabit ? Target : (CATEGORY_ICON[t.category] ?? Package);
-              const iconColor = t.isEssential
-                ? "text-emerald-400"
-                : isHabit
-                  ? "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]"
-                  : "text-amber-400";
+              // Frozen (vault hold) and rejected (discarded impulse) rows are not
+              // real spending — render them visibly distinct so the ledger reads true.
+              const txStatus = t.status ?? "completed";
+              const isFrozen = txStatus === "frozen";
+              const isRejected = txStatus === "rejected";
+              const isSettled = txStatus === "completed";
               return (
                 <div
                   key={t.id}
-                  className="flex items-start gap-3 min-w-0 rounded-xl border border-white/5 bg-slate-900/20 p-3 sm:p-4 mb-2 transition-colors hover:bg-slate-900/40"
+                  className={`flex items-start gap-3 min-w-0 rounded-xl border border-white/5 bg-slate-900/20 p-3 sm:p-4 mb-2 transition-colors hover:bg-slate-900/40 ${
+                    isRejected ? "opacity-60" : ""
+                  }`}
                 >
                   <div
                     className={`flex-shrink-0 mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border ${
-                      t.isEssential
-                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                        : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                      isFrozen
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                        : isRejected
+                          ? "bg-slate-700/20 border-slate-600/30 text-slate-500"
+                          : t.isEssential
+                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                            : "bg-rose-500/10 border-rose-500/20 text-rose-400"
                     }`}
                   >
                     <Icon className="w-4 h-4" />
                   </div>
 
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="font-bold text-slate-200 truncate">{t.category}</p>
-                    <p className="font-mono text-[8px] sm:text-[9px] uppercase tracking-widest text-slate-500 truncate mt-0.5">
+                    <p className={`font-bold truncate ${isRejected ? "text-slate-500" : "text-slate-200"}`}>
+                      {t.category}
+                    </p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500 truncate mt-0.5">
                       {(() => {
                         const d = new Date(t.timestamp);
                         const hasTime = t.timestamp && String(t.timestamp).includes("T");
@@ -879,6 +941,16 @@ function StatsPageBody() {
                       })()}
                       <span className="mx-1.5 opacity-50">|</span>[
                       {t.fromVault ? "VAULT" : "DIRECT"}]
+                      {isFrozen && (
+                        <span className="ml-1.5 rounded border border-amber-500/30 bg-amber-500/10 px-1 py-0.5 text-amber-400">
+                          FROZEN
+                        </span>
+                      )}
+                      {isRejected && (
+                        <span className="ml-1.5 rounded border border-slate-600/40 bg-slate-700/20 px-1 py-0.5 text-slate-500">
+                          REVERTED
+                        </span>
+                      )}
                     </p>
                     {t.justification && (
                       <p className="text-[10px] italic text-slate-400 truncate mt-1 border-l border-slate-700 pl-2">
@@ -890,26 +962,36 @@ function StatsPageBody() {
                   <div className="flex flex-col items-end justify-start gap-2 flex-shrink-0 ml-2">
                     <p
                       className={`font-mono text-xs sm:text-sm font-bold tabular-nums ${
-                        t.isEssential ? "text-emerald-400/80" : "text-rose-400"
+                        isFrozen
+                          ? "text-amber-400"
+                          : isRejected
+                            ? "text-slate-500 line-through"
+                            : t.isEssential
+                              ? "text-emerald-400/80"
+                              : "text-rose-400"
                       }`}
                     >
                       {fmtMoney(Math.abs(t.amountVND ?? 0), cur, rate)}
                       {(t.amortizeDays ?? t.amortizationDays ?? 1) > 1 && (
-                        <span className="ml-2 px-1.5 py-0.5 rounded font-mono text-[8px] font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-500/70 whitespace-nowrap">
+                        <span className="ml-2 px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-cyan-500/10 border border-cyan-500/20 text-cyan-500/70 whitespace-nowrap">
                           📅 {t.amortizeDays ?? t.amortizationDays}D
                         </span>
                       )}
                     </p>
-                    <button
-                      onClick={() => app.deleteTransaction(t.id)}
-                      className="group flex items-center gap-1.5 px-2 py-1 rounded border border-transparent hover:border-rose-500/30 hover:bg-rose-500/10 transition-all active:scale-95 touch-none select-none"
-                      aria-label="Revert transaction"
-                    >
-                      <RotateCcw className="h-3 w-3 text-slate-600 group-hover:text-rose-400 transition-colors" />
-                      <span className="hidden sm:inline font-mono text-[9px] uppercase tracking-widest text-slate-600 group-hover:text-rose-400 transition-colors">
-                        Revert
-                      </span>
-                    </button>
+                    {/* Frozen rows belong to an active vault item — deleting them
+                        here would orphan it. Resolve those from the Vault page. */}
+                    {!isFrozen && (
+                      <button
+                        onClick={() => app.deleteTransaction(t.id)}
+                        className="group flex items-center gap-1.5 px-2 py-1 rounded border border-transparent hover:border-rose-500/30 hover:bg-rose-500/10 transition-all active:scale-95 select-none"
+                        aria-label={isSettled ? "Revert transaction" : "Remove record"}
+                      >
+                        <RotateCcw className="h-3 w-3 text-slate-600 group-hover:text-rose-400 transition-colors" />
+                        <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-widest text-slate-600 group-hover:text-rose-400 transition-colors">
+                          {isSettled ? "Revert" : "Remove"}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );

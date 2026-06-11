@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
@@ -79,6 +79,20 @@ function Index() {
   >(null);
   const receiptInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Receipt scanning calls a server function — it's the only online-dependent
+  // feature, so make that explicit instead of failing with a fetch error.
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
   const onPickReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file later
@@ -130,27 +144,6 @@ function Index() {
   const habitSpent = us.targetHabit ? weeklyHabitSpent(app.data.transactions, us.targetHabit) : 0;
   const habitLimit = us.weeklyHabitLimitVND;
 
-  const secureProtocol = (id: string) => {
-    const c = dailyContracts.find((x) => x.id === id);
-    if (!c || c.status !== 'available') return;
-    app.updateUserState({
-      totalDP: us.totalDP + c.reward,
-      ascensionXP: (us.ascensionXP ?? 0) + c.reward,
-      lifetimeDP: us.lifetimeDP + Math.max(0, c.reward),
-      dailyContracts: dailyContracts.map((x) => x.id === id ? { ...x, status: 'secured' as const } : x),
-    });
-  };
-
-  const forfeitProtocol = (id: string) => {
-    const c = dailyContracts.find((x) => x.id === id);
-    if (!c || c.status !== 'available') return;
-    app.updateUserState({
-      totalDP: us.totalDP + c.penalty,
-      ascensionXP: Math.max(0, (us.ascensionXP ?? 0) + c.penalty),
-      dailyContracts: dailyContracts.map((x) => x.id === id ? { ...x, status: 'yielded' as const } : x),
-    });
-  };
-
   const onCarouselScroll = () => {
     const el = carouselRef.current;
     if (!el) return;
@@ -169,7 +162,8 @@ function Index() {
   const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon..6=Sun
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-8 pt-6">
+    // pb-28 keeps the last cards clear of the fixed two-button CTA stack.
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0e1a] to-[#0a0e1a] pb-28 pt-6">
       {/* ── 1. SOVEREIGN BLACK CARD (OPERATOR ID) ──────────────────────── */}
       <div className="relative mt-6 mb-10 group">
         <div
@@ -234,7 +228,7 @@ function Index() {
               </div>
 
               <div className="flex flex-col min-w-0">
-                <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500 mb-0.5 flex items-center gap-1.5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-0.5 flex items-center gap-1.5">
                   <span
                     className="w-1.5 h-1.5 rounded-full animate-pulse"
                     style={{ backgroundColor: "#00FFA3", boxShadow: "0 0 8px #00FFA3", animationDuration: "2.4s" }}
@@ -256,7 +250,7 @@ function Index() {
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={() => setShowLevelGuide(true)}
-                    className="group/g flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                    className="group/g flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
                     style={{
                       color: currentRank.glowColor,
                       borderColor: `${currentRank.glowColor}40`,
@@ -335,7 +329,7 @@ function Index() {
             </h2>
           </div>
           {dailyContracts.length > 0 && (
-            <span className="font-mono text-[9px] uppercase tracking-widest text-cyan-400/80 bg-cyan-400/5 border border-cyan-400/20 rounded-full px-2 py-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-cyan-400/80 bg-cyan-400/5 border border-cyan-400/20 rounded-full px-2 py-0.5">
               {Math.min(carouselIndex + 1, dailyContracts.length)} of {dailyContracts.length}
             </span>
           )}
@@ -379,7 +373,7 @@ function Index() {
 
                 <div className="flex justify-between items-center mb-3">
                   <p
-                    className="font-mono text-[8px] text-cyan-400 uppercase tracking-widest"
+                    className="font-mono text-[10px] text-cyan-400 uppercase tracking-widest"
                     style={{ textShadow: !isCompleted && !isForfeited ? "0 0 6px rgba(0,212,255,0.6)" : "none" }}
                   >
                     CHALLENGE 0{index + 1}
@@ -389,7 +383,7 @@ function Index() {
                       initial={{ y: 5, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ duration: 0.45, delay: 0.05 * index, ease: "easeOut" }}
-                      className="font-mono text-[8px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded"
+                      className="font-mono text-[10px] text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-1.5 py-0.5 rounded"
                     >
                       EARNS: +{p.reward} DP
                     </motion.p>
@@ -421,7 +415,7 @@ function Index() {
                 <div className="mt-auto pt-4 border-t border-white/5">
                   {!isCompleted && !isForfeited && (
                     <div className="flex items-center gap-2">
-                      <HoldSecureButton onSecure={() => secureProtocol(p.id)} />
+                      <HoldSecureButton onSecure={() => app.secureContract(p.id)} />
                       <button
                         onClick={() => setForfeitTarget(p)}
                         className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg bg-slate-950 border-2 border-rose-900/60 text-rose-400/80 transition-all hover:bg-rose-500/10 hover:border-rose-500/60 hover:text-rose-400 active:scale-95"
@@ -448,17 +442,30 @@ function Index() {
             );
           })}
         </div>
-        {/* Dots */}
-        <div className="mt-3 flex items-center justify-center gap-2.5 px-5">
+        {/* Dots — interactive: tap to jump to a challenge */}
+        <div className="mt-3 flex items-center justify-center gap-1 px-5">
           {dailyContracts.map((_, i) => (
-            <span
+            <button
               key={i}
-              className={
-                i === carouselIndex
-                  ? "h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)] transition-all duration-300"
-                  : "h-1.5 w-1.5 rounded-full bg-slate-700 transition-all duration-300"
-              }
-            />
+              type="button"
+              aria-label={`Go to challenge ${i + 1} of ${dailyContracts.length}`}
+              aria-current={i === carouselIndex ? "true" : undefined}
+              onClick={() => {
+                const el = carouselRef.current;
+                if (!el) return;
+                el.scrollTo({ left: i * el.clientWidth * 0.85, behavior: "smooth" });
+              }}
+              className="flex h-7 w-7 items-center justify-center"
+            >
+              <span
+                aria-hidden
+                className={
+                  i === carouselIndex
+                    ? "h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)] transition-all duration-300"
+                    : "h-1.5 w-1.5 rounded-full bg-slate-700 transition-all duration-300"
+                }
+              />
+            </button>
           ))}
         </div>
         </>
@@ -497,7 +504,7 @@ function Index() {
                 onClick={() => setRaidOpen(true)}
                 className="mt-3 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 py-2.5 font-mono text-[10px] font-bold uppercase tracking-widest text-amber-200 hover:bg-amber-500/20 transition-colors"
               >
-                Raid savings (emergency)
+                Raid savings
               </button>
             )}
             {/* Cycle elapsed bar */}
@@ -532,12 +539,12 @@ function Index() {
             >
               {us.totalDP}
             </p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.35em] text-slate-600 mt-1">
+            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-slate-600 mt-1">
               Discipline Yield — Every action compounds
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {[3, 7, 14].includes(us.currentStreakDays) && (
+            {us.currentStreakDays >= 3 && (
               <div
                 className="relative flex h-9 w-9 items-center justify-center bg-gradient-to-br from-amber-300 to-amber-600 text-slate-950"
                 style={{
@@ -591,7 +598,7 @@ function Index() {
           <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/30 p-5 shadow-xl shadow-black/50 backdrop-blur-xl [box-shadow:inset_0_1px_0_0_rgba(255,255,255,0.05),0_20px_50px_-20px_rgba(0,0,0,0.8)]">
             <div className="mb-3 flex items-center justify-between">
               <span className="font-mono text-xs uppercase tracking-widest text-slate-500">Weekly {us.targetHabit} Limit</span>
-              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-widest">
+              <div className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest">
                 {DAY_LABELS.map((d, i) => (
                   <span
                     key={d}
@@ -689,13 +696,15 @@ function Index() {
 
           <button
             onClick={() => receiptInputRef.current?.click()}
-            disabled={scanning}
+            disabled={scanning || !online}
             className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-cyan-400/40 bg-slate-900/70 py-3 font-mono text-xs font-bold uppercase tracking-[0.25em] text-cyan-300 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400/70 hover:text-cyan-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {scanning ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Scanning…</>
-            ) : (
+            ) : online ? (
               <><ScanLine className="h-4 w-4" /> Scan Receipt</>
+            ) : (
+              <><ScanLine className="h-4 w-4" /> Scan Receipt (Online Only)</>
             )}
           </button>
           <input
@@ -722,7 +731,7 @@ function Index() {
         penalty={forfeitTarget?.penalty ?? 0}
         onCancel={() => setForfeitTarget(null)}
         onConfirm={() => {
-          if (forfeitTarget) forfeitProtocol(forfeitTarget.id);
+          if (forfeitTarget) app.forfeitContract(forfeitTarget.id);
           setForfeitTarget(null);
         }}
       />

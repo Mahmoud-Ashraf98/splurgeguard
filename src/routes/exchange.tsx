@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag, Trash2 } from "lucide-react";
+import { ChevronLeft, Plus, Minus, Sparkles, Zap, ShoppingBag, Trash2, History } from "lucide-react";
+import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { REWARD_ARCHETYPES, RewardArchetype } from "@/lib/archetypes";
 import { useLongPress } from "@/hooks/useLongPress";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
+import { triggerConfetti } from "@/lib/confetti";
+import { ConfirmModal } from "@/components/splurge/ConfirmModal";
+import type { Reward } from "@/lib/splurge-types";
 
 type ExchangeSearch = { new?: boolean };
 
@@ -37,6 +42,7 @@ function ExchangePage() {
   const [costDP, setCostDP] = useState(50);
   const [customTitle, setCustomTitle] = useState("");
   const [showIntegrity, setShowIntegrity] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Reward | null>(null);
 
   useEffect(() => {
     if (search.new) {
@@ -47,6 +53,16 @@ function ExchangePage() {
 
   const activeRewards = useMemo(
     () => app.data.rewards.filter((r) => r.status === "active"),
+    [app.data.rewards]
+  );
+
+  const redeemedRewards = useMemo(
+    () =>
+      app.data.rewards
+        .filter((r) => r.status === "redeemed")
+        .slice()
+        .sort((a, b) => (b.redeemedAt ?? "").localeCompare(a.redeemedAt ?? ""))
+        .slice(0, 20),
     [app.data.rewards]
   );
 
@@ -74,8 +90,19 @@ function ExchangePage() {
   };
 
   const handleRedeem = (rewardId: string) => {
+    const reward = app.data.rewards.find((r) => r.id === rewardId);
     const result = app.redeemReward(rewardId);
-    if (result === "insufficient_dp") setShowIntegrity(true);
+    if (result === "insufficient_dp") {
+      setShowIntegrity(true);
+      return;
+    }
+    if (result === "success") {
+      // The redemption is the dopamine peak of the whole loop — celebrate it.
+      triggerConfetti();
+      toast.success(`SPOIL CLAIMED: ${reward?.title ?? "Reward"}. Enjoy it guilt-free.`, {
+        duration: 6000,
+      });
+    }
   };
 
   return (
@@ -108,7 +135,7 @@ function ExchangePage() {
           </div>
         </div>
         <div className="rounded-xl border border-cyan-400/30 bg-slate-900/60 px-3 py-2 text-right backdrop-blur-xl">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500">Wallet</p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500">Wallet</p>
           <p
             className="font-mono text-lg font-black tabular-nums text-cyan-400"
             style={{ textShadow: "0 0 10px rgba(0,212,255,0.6)" }}
@@ -119,21 +146,50 @@ function ExchangePage() {
       </header>
 
       {view === "list" && (
-        <ListView
-          rewards={activeRewards}
-          dp={dp}
-          onRedeem={handleRedeem}
-          onDelete={(reward) => {
-            const progressDP = (reward as any).currentDP ?? 0;
-            const message =
-              progressDP > 0
-                ? `Delete "${reward.title}"? Your ${progressDP} DP progress will be lost. This cannot be undone.`
-                : `Delete "${reward.title}"? This cannot be undone.`;
-            if (!window.confirm(message)) return;
-            app.deleteReward(reward.id);
-          }}
-          onNew={() => setView("archetype-grid")}
-        />
+        <>
+          <ListView
+            rewards={activeRewards}
+            dp={dp}
+            onRedeem={handleRedeem}
+            onDelete={(reward) => setDeleteTarget(reward)}
+            onNew={() => setView("archetype-grid")}
+          />
+          {redeemedRewards.length > 0 && (
+            <section className="mt-8" aria-label="Claimed spoils">
+              <div className="mb-3 flex items-center gap-2">
+                <History className="h-3.5 w-3.5 text-slate-500" />
+                <h2 className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                  Claimed Spoils
+                </h2>
+              </div>
+              <div className="space-y-2">
+                {redeemedRewards.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-3 rounded-xl border border-white/5 bg-slate-900/20 px-4 py-3"
+                  >
+                    <span className="text-xl" aria-hidden>{r.emoji}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-300">{r.title}</p>
+                      {r.redeemedAt && (
+                        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-600">
+                          {new Date(r.redeemedAt).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <span className="flex-shrink-0 font-mono text-xs tabular-nums text-slate-500">
+                      −{r.costDP} DP
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
 
       {view === "archetype-grid" && <ArchetypeGrid onPick={openStepper} />}
@@ -150,6 +206,23 @@ function ExchangePage() {
       )}
 
       {showIntegrity && <IntegrityModal onClose={() => setShowIntegrity(false)} />}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Reward"
+        body={
+          <>
+            Delete <span className="font-bold text-white">{deleteTarget?.title}</span>? This cannot
+            be undone.
+          </>
+        }
+        confirmLabel="Delete"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) app.deleteReward(deleteTarget.id);
+          setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }
@@ -372,8 +445,11 @@ function Stepper({
           <Plus className="h-5 w-5" />
         </button>
       </div>
-      <p className="mb-6 text-center font-mono text-xs text-slate-500">
+      <p className="mb-1 text-center font-mono text-xs text-slate-500">
         ≈ {vnd} ₫
+      </p>
+      <p className="mb-6 text-center font-mono text-[10px] uppercase tracking-widest text-slate-600">
+        Exchange rate: 1 DP ≈ 100 ₫
       </p>
 
       <button
@@ -388,13 +464,22 @@ function Stepper({
 }
 
 function IntegrityModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useDialogA11y(true, onClose);
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="mx-4 w-full max-w-md rounded-3xl border border-amber-400/40 bg-slate-950/95 p-7 shadow-[0_0_60px_-10px_rgba(251,191,36,0.6)]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose} role="presentation">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="integrity-title"
+        onClick={(e) => e.stopPropagation()}
+        className="mx-4 w-full max-w-md rounded-3xl border border-amber-400/40 bg-slate-950/95 p-7 shadow-[0_0_60px_-10px_rgba(251,191,36,0.6)] outline-none"
+      >
         <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.4em] text-amber-300">
           Integrity Check
         </p>
-        <h2 className="mb-4 text-xl font-black text-white">Not enough Discipline Points… yet.</h2>
+        <h2 id="integrity-title" className="mb-4 text-xl font-black text-white">Not enough Discipline Points… yet.</h2>
         <p className="mb-6 text-sm leading-relaxed text-slate-300">
           We know you want this, and it's tempting to close the app and just go buy it anyway. But your past self set these rules to protect your future self. Earn the points. It will feel so much better when it's real.
         </p>

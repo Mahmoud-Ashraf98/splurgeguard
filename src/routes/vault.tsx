@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Lock, CheckCircle2, Trash2, Trophy, Clock, Plus } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { fmtMoney } from '@/lib/splurge-utils';
 import type { VaultItem } from '@/lib/splurge-types';
-import { toast } from 'sonner';
 import { LogSheet } from '@/components/splurge/LogSheet';
+import { ConfirmModal } from '@/components/splurge/ConfirmModal';
+
+type VaultSearch = { new?: boolean };
 
 export const Route = createFileRoute('/vault')({
+  validateSearch: (s: Record<string, unknown>): VaultSearch => ({
+    new: s.new === true || s.new === 'true',
+  }),
   head: () => ({
     meta: [
       { title: 'Vault — SplurgeGuard' },
@@ -41,7 +46,7 @@ function SectionLabel({
   return (
     <div className={`flex items-center gap-2 mb-3 ${color}`}>
       {icon}
-      <h2 className="font-mono text-[9px] uppercase tracking-[0.4em]">{label}</h2>
+      <h2 className="font-mono text-[10px] uppercase tracking-[0.4em]">{label}</h2>
     </div>
   );
 }
@@ -59,7 +64,7 @@ function CoolingCard({
   now: number;
   cur: 'VND' | 'USD';
   rate: number;
-  onRemove: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onRemove: () => void;
 }) {
   const totalMs = v.delayHours * 3600000;
   const elapsed = Math.max(0, now - new Date(v.createdAt).getTime());
@@ -80,7 +85,7 @@ function CoolingCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-white truncate">{v.itemName}</p>
-          <p className="font-mono text-[9px] uppercase tracking-widest text-slate-500 truncate">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-slate-500 truncate">
             {v.category} · {v.delayHours}h cool
           </p>
         </div>
@@ -96,7 +101,7 @@ function CoolingCard({
       )}
 
       <div className="mb-3 rounded-lg border border-amber-500/10 bg-slate-950/60 px-3 py-2 text-center">
-        <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-slate-500">
+        <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-slate-500">
           Unlocks In
         </p>
         <p className="font-mono text-2xl font-bold tabular-nums text-amber-400 tracking-wider">
@@ -105,7 +110,7 @@ function CoolingCard({
       </div>
 
       <div className="mb-3">
-        <div className="mb-1 flex justify-between font-mono text-[9px] uppercase tracking-widest text-slate-600">
+        <div className="mb-1 flex justify-between font-mono text-[10px] uppercase tracking-widest text-slate-600">
           <span>Time Endured</span>
           <span>{Math.floor(pct)}%</span>
         </div>
@@ -123,8 +128,9 @@ function CoolingCard({
 
       <div className="flex justify-end">
         <button
-          onPointerDown={onRemove}
-          className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 font-mono text-[9px] uppercase tracking-widest text-rose-400 transition-all duration-200 hover:border-rose-500/40 hover:bg-rose-500/10 active:scale-95 select-none touch-none"
+          type="button"
+          onClick={onRemove}
+          className="flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-rose-400 transition-all duration-200 hover:border-rose-500/40 hover:bg-rose-500/10 active:scale-95 select-none"
         >
           <Trash2 className="h-3 w-3" />
           Remove
@@ -146,8 +152,8 @@ function ReadyCard({
   index: number;
   cur: 'VND' | 'USD';
   rate: number;
-  onClaim: (e: React.PointerEvent<HTMLButtonElement>) => void;
-  onDiscard: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onClaim: () => void;
+  onDiscard: () => void;
 }) {
   return (
     <div
@@ -163,7 +169,7 @@ function ReadyCard({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-white truncate">{v.itemName}</p>
-          <p className="font-mono text-[9px] uppercase tracking-widest text-emerald-400 truncate">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-400 truncate">
             {v.category} · Cooling complete
           </p>
         </div>
@@ -179,22 +185,24 @@ function ReadyCard({
       )}
 
       <div className="mb-4 rounded-lg bg-emerald-400/5 border border-emerald-400/10 px-3 py-1">
-        <p className="text-center font-mono text-[9px] uppercase tracking-[0.4em] text-emerald-400">
+        <p className="text-center font-mono text-[10px] uppercase tracking-[0.4em] text-emerald-400">
           Vault Unlocked — Decision Required
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <button
-          onPointerDown={onClaim}
-          className="rounded-xl border border-slate-600/40 bg-slate-800/60 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 transition-all duration-200 hover:border-slate-500 hover:text-white active:scale-95 select-none touch-none"
+          type="button"
+          onClick={onClaim}
+          className="rounded-xl border border-slate-600/40 bg-slate-800/60 py-3 font-mono text-[10px] font-bold uppercase tracking-widest text-slate-300 transition-all duration-200 hover:border-slate-500 hover:text-white active:scale-95 select-none"
         >
           Claim Item
         </button>
 
         <button
-          onPointerDown={onDiscard}
-          className="rounded-xl py-3 font-mono text-[10px] font-black uppercase tracking-widest text-slate-950 transition-all duration-200 active:scale-95 select-none touch-none"
+          type="button"
+          onClick={onDiscard}
+          className="rounded-xl py-3 font-mono text-[10px] font-black uppercase tracking-widest text-slate-950 transition-all duration-200 active:scale-95 select-none"
           style={{
             background: 'linear-gradient(135deg, #00ff87, #00d4ff)',
             boxShadow: '0 0 20px rgba(0,255,135,0.4)',
@@ -212,7 +220,7 @@ function ReadyCard({
           Discard Impulse
         </button>
       </div>
-      <p className="mt-2 text-center font-mono text-[9px] uppercase tracking-[0.3em] text-emerald-400/70">
+      <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-400/70">
         Total Victory · DP Rewarded
       </p>
     </div>
@@ -260,7 +268,7 @@ function ArchivedRow({
         {fmtMoney(v.estimatedAmountVND, cur, rate)}
       </p>
       <p
-        className={`flex-shrink-0 font-mono text-[8px] uppercase tracking-widest ${
+        className={`flex-shrink-0 font-mono text-[10px] uppercase tracking-widest ${
           isDiscard ? 'text-emerald-400/60' : 'text-slate-600'
         }`}
       >
@@ -272,13 +280,26 @@ function ArchivedRow({
 
 function VaultPage() {
   const app = useApp();
+  const navigate = useNavigate();
+  const search = Route.useSearch();
   const [now, setNow] = useState(Date.now());
   const [vaultSheetOpen, setVaultSheetOpen] = useState(false);
+  const [removeTarget, setRemoveTarget] = useState<VaultItem | null>(null);
+  const [claimTarget, setClaimTarget] = useState<VaultItem | null>(null);
 
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(i);
   }, []);
+
+  // Deep link: /vault?new=true (dashboard quick-add, breach modal CTA)
+  // opens the vault sheet immediately, then cleans the URL.
+  useEffect(() => {
+    if (search.new) {
+      setVaultSheetOpen(true);
+      navigate({ to: '/vault', search: { new: undefined } as VaultSearch, replace: true });
+    }
+  }, [search.new, navigate]);
 
   // Vault cooling->ready transitions are handled globally in AppContext.
 
@@ -296,7 +317,7 @@ function VaultPage() {
   return (
     <div className="px-5 pb-32 pt-6">
       <header className="mb-6">
-        <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-cyan-400/70">
+        <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-cyan-400/70">
           Impulse Control
         </p>
         <h1 className="text-2xl font-black uppercase tracking-widest text-white">The Vault</h1>
@@ -344,10 +365,7 @@ function VaultPage() {
                 now={now}
                 cur={cur}
                 rate={rate}
-                onRemove={(e) => {
-                  e.stopPropagation();
-                  app.deleteVaultItem(v.id);
-                }}
+                onRemove={() => setRemoveTarget(v)}
               />
             ))}
           </div>
@@ -369,14 +387,8 @@ function VaultPage() {
                 index={index}
                 cur={cur}
                 rate={rate}
-                onClaim={(e) => {
-                  e.stopPropagation();
-                  app.approveVault(v.id);
-                }}
-                onDiscard={(e) => {
-                  e.stopPropagation();
-                  app.discardVault(v.id);
-                }}
+                onClaim={() => setClaimTarget(v)}
+                onDiscard={() => app.discardVault(v.id)}
               />
             ))}
           </div>
@@ -422,6 +434,45 @@ function VaultPage() {
         open={vaultSheetOpen}
         onClose={() => setVaultSheetOpen(false)}
         initialMode="vault"
+      />
+
+      <ConfirmModal
+        open={!!removeTarget}
+        title="Remove from Vault"
+        body={
+          <>
+            Delete <span className="font-bold text-white">{removeTarget?.itemName}</span> from the
+            vault? Its frozen hold will be released. DP is only awarded when you endure the
+            cooldown.
+          </>
+        }
+        confirmLabel="Remove"
+        onCancel={() => setRemoveTarget(null)}
+        onConfirm={() => {
+          if (removeTarget) app.deleteVaultItem(removeTarget.id);
+          setRemoveTarget(null);
+        }}
+      />
+
+      <ConfirmModal
+        open={!!claimTarget}
+        title="Confirm Purchase"
+        tone="info"
+        body={
+          <>
+            Claim <span className="font-bold text-white">{claimTarget?.itemName}</span> for{' '}
+            <span className="font-mono font-bold text-cyan-300">
+              {claimTarget ? fmtMoney(claimTarget.estimatedAmountVND, cur, rate) : ''}
+            </span>
+            ? This deducts from your fun-money balance and costs 10 DP.
+          </>
+        }
+        confirmLabel="Claim it"
+        onCancel={() => setClaimTarget(null)}
+        onConfirm={() => {
+          if (claimTarget) app.approveVault(claimTarget.id);
+          setClaimTarget(null);
+        }}
       />
     </div>
   );

@@ -63,7 +63,7 @@ function OnboardingCurrencyInput({
               {humanBadge}
             </span>
           )}
-          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[9px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
+          <span className="px-2.5 py-1 bg-slate-800/80 text-slate-400 text-[10px] font-bold uppercase rounded-md tracking-widest border border-slate-700/60">
             VND
           </span>
         </div>
@@ -149,6 +149,20 @@ export function Onboarding() {
 
   const incomeOverheadInvalid = incomeNum > 0 && overheadNum > 0 && incomeNum < overheadNum;
   const zeroSavingsCapacity = maxSavingsPool === 0 && incomeNum > 0 && incomeNum >= overheadNum;
+
+  // First unmet requirement, surfaced under the disabled CTA so new users are
+  // never left guessing which of the eight conditions is blocking them.
+  const firstBlocker = (() => {
+    if (!userName.trim()) return "Enter your name";
+    if (incomeNum <= 0) return "Enter your monthly take-home income";
+    if (incomeNum < overheadNum) return "Needs & bills cannot exceed income";
+    if (flexBalanceNum <= 0) return "Enter your current fun-money balance";
+    if (!payday) return "Pick your next payday";
+    if (!isPaydayStrictlyInFuture(payday)) return "Payday must be after today";
+    if (!targetHabit.trim()) return "Name the habit you want to control";
+    if (!habitLimitProvided) return "Set a weekly habit cap (0 is fine)";
+    return null;
+  })();
 
   const submitSavings = () => {
     if (!canContinueProfile || !payday || commitBlocked) return;
@@ -294,7 +308,7 @@ export function Onboarding() {
                   value={Number(habitLimit) || 0}
                   onCommit={(n) => setHabitLimit(n > 0 ? String(n) : "0")}
                   placeholder="500000"
-                  helper="Max you'll spend on this habit per week. Hit the cap and earn +250 DP every Monday."
+                  helper="Max you'll spend on this habit per week — enter 0 to skip the cap. Stay under it to earn +250 DP every Monday."
                 />
               </div>
               <button
@@ -305,6 +319,11 @@ export function Onboarding() {
               >
                 Continue to savings →
               </button>
+              {!canContinueProfile && firstBlocker && (
+                <p className="text-center font-mono text-[10px] uppercase tracking-widest text-slate-500" role="status">
+                  → {firstBlocker}
+                </p>
+              )}
             </>
           ) : (
             <>

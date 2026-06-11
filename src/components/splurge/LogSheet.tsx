@@ -50,13 +50,28 @@ const CatIcon = ({ name, className, isHabit }: { name: string; className?: strin
   const Icon = categoryIcons[name] ?? MoreHorizontal;
   return <Icon className={className} />;
 };
+import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
+import { useDialogA11y } from "@/hooks/useDialogA11y";
 import {
   DISCRETIONARY_CATEGORIES,
   ESSENTIAL_CATEGORIES,
   isEssentialCategory,
 } from "@/lib/splurge-types";
 import { fmtVND, fmtMoney } from "@/lib/splurge-utils";
+
+/** Compact human-readable magnitude badge: 1.5M, 750K. */
+const humanAmountBadge = (n: number): string | null => {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return (Number.isInteger(m) ? m : m.toFixed(1)) + "M";
+  }
+  if (n >= 1_000) {
+    const k = n / 1_000;
+    return (Number.isInteger(k) ? k : k.toFixed(1)) + "K";
+  }
+  return null;
+};
 
 interface Props {
   open: boolean;
@@ -129,24 +144,57 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
     return showCurrency && currency === "USD" ? Math.round(n * rate) : Math.floor(n);
   }, [amount, currency, showCurrency, rate]);
 
-  const formattedAmount = amount ? Number(amount).toLocaleString("en-US") : "";
+  // vi-VN grouping (dots) to match fmtVND / useCurrencyInput everywhere else.
+  const formattedAmount = amount ? new Intl.NumberFormat("vi-VN").format(Number(amount)) : "";
+  const amountBadge = !showCurrency || currency === "VND" ? humanAmountBadge(amountVND) : null;
 
-  const canLog = amountVND > 0 && category && justification.trim().length >= 5;
-  const canVault = itemName.trim().length > 0 && amountVND > 0 && category && justification.trim().length >= 5;
+  const justificationLen = justification.trim().length;
+  const canLog = amountVND > 0 && !!category && justificationLen >= 5;
+  const canVault = itemName.trim().length > 0 && amountVND > 0 && !!category && justificationLen >= 5;
+
+  // First unmet requirement — surfaced next to the disabled submit button so
+  // users are never stuck guessing why they can't continue.
+  const blocker = (() => {
+    if (mode === "vault" && itemName.trim().length === 0) return "Name the item";
+    if (amountVND <= 0) return "Enter an amount";
+    if (!category) return "Pick a category";
+    if (justificationLen < 5)
+      return `Justification needs ${5 - justificationLen} more character${5 - justificationLen === 1 ? "" : "s"}`;
+    return null;
+  })();
+
+  const dialogRef = useDialogA11y(open, onClose);
 
   if (!open) return null;
 
+  const buildLogInput = (force = false) => ({
+    amountVND,
+    originalAmount: showCurrency && currency === "USD" ? Number(amount) : undefined,
+    originalCurrency: showCurrency ? currency : ("VND" as const),
+    category,
+    justification: justification.trim(),
+    amortizationDays: isDiscretionarySelected && amortizeDays > 1 ? amortizeDays : undefined,
+    force,
+  });
+
   const submitLog = () => {
     if (!canLog) return;
-    const parsedAmort = isDiscretionarySelected && amortizeDays > 1 ? amortizeDays : undefined;
-    logExpense({
-      amountVND,
-      originalAmount: showCurrency && currency === "USD" ? Number(amount) : undefined,
-      originalCurrency: showCurrency ? currency : "VND",
-      category,
-      justification: justification.trim(),
-      amortizationDays: parsedAmort,
-    });
+    const result = logExpense(buildLogInput());
+    if (result === "duplicate") {
+      // Same category + amount within the same minute. Keep the sheet open and
+      // let the user decide — never drop a legitimate expense silently.
+      toast.warning("Possible duplicate: this amount & category was just logged.", {
+        duration: 8000,
+        action: {
+          label: "Log anyway",
+          onClick: () => {
+            logExpense(buildLogInput(true));
+            onClose();
+          },
+        },
+      });
+      return;
+    }
     onClose();
   };
 
@@ -163,9 +211,14 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={onClose} role="presentation">
       <div
-        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-emerald-400/40 bg-slate-900/95 backdrop-blur-2xl p-5 shadow-[0_-10px_60px_rgba(0,255,135,0.15)]"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={mode === "log" ? "Log expense" : "Add to vault"}
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border-t-2 border-emerald-400/40 bg-slate-900/95 backdrop-blur-2xl p-5 shadow-[0_-10px_60px_rgba(0,255,135,0.15)] outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -211,14 +264,24 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
           <label htmlFor="ls-amount" className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
             Amount {showCurrency && `(${currency})`}
           </label>
-          <input
-            id="ls-amount"
-            inputMode="numeric"
-            value={formattedAmount}
-            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-            placeholder="0"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-4 text-right font-mono text-3xl font-bold text-emerald-400 outline-none focus:border-emerald-400"
-          />
+          <div className="relative">
+            <input
+              id="ls-amount"
+              inputMode="numeric"
+              value={formattedAmount}
+              onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+              placeholder="0"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-4 text-right font-mono text-3xl font-bold text-emerald-400 outline-none focus:border-emerald-400"
+            />
+            {amountBadge && (
+              <span
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 select-none rounded border border-cyan-700/50 bg-cyan-950/70 px-2 py-0.5 text-[10px] font-black text-cyan-300"
+                style={{ boxShadow: "0 0 8px rgba(34,211,238,0.2)" }}
+              >
+                {amountBadge}
+              </span>
+            )}
+          </div>
           {showCurrency && currency === "USD" && amountVND > 0 && (
             <p className="mt-1 text-right font-mono text-xs text-slate-500">≈ {fmtVND(amountVND)}</p>
           )}
@@ -256,7 +319,7 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
 
           {catOpen && (
             <div className="mt-2 max-h-60 overflow-y-auto overscroll-contain rounded-lg border border-slate-700 bg-slate-950 shadow-[0_10px_40px_-10px_rgba(0,255,135,0.15)] animate-fade-in [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-              <div className="px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-cyan-400/70">
+              <div className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
                 Essentials
               </div>
               {ESSENTIAL_CATEGORIES.map((c) => (
@@ -273,7 +336,7 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
                   {category === c && <Check className="h-4 w-4 text-cyan-400" />}
                 </button>
               ))}
-              <div className="border-t border-slate-800 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.3em] text-emerald-400/70">
+              <div className="border-t border-slate-800 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-400/70">
                 Discretionary
               </div>
               {discretionaryWithHabit.map((c) => {
@@ -354,9 +417,17 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
         )}
 
         <div className="mb-5">
-          <label htmlFor="ls-justification" className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-slate-400">
-            Justification (min 5 chars)
-          </label>
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <label htmlFor="ls-justification" className="block font-mono text-[10px] uppercase tracking-wider text-slate-400">
+              Justification (min 5 chars)
+            </label>
+            <span
+              className={`font-mono text-[10px] tabular-nums ${justificationLen >= 5 ? "text-emerald-400" : "text-slate-500"}`}
+              aria-hidden
+            >
+              {justificationLen}/5
+            </span>
+          </div>
           <textarea
             id="ls-justification"
             value={justification}
@@ -373,7 +444,7 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
               <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
                 Consumption Lifespan
               </p>
-              <p className="font-mono text-[9px] text-cyan-400">
+              <p className="font-mono text-[10px] text-cyan-400">
                 {amountVND > 0
                   ? `Impact: ${fmtMoney(amountVND / amortizeDays, cur, rate)} / Day`
                   : "Enter amount above"}
@@ -396,7 +467,7 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
               ))}
             </div>
             {amortizeDays > 1 && amountVND > 0 && (
-              <p className="mt-2 text-[9px] italic text-slate-500 text-center leading-relaxed">
+              <p className="mt-2 text-[10px] italic text-slate-500 text-center leading-relaxed">
                 Bulk protection active. Only{" "}
                 <span className="text-cyan-500/80">
                   {fmtMoney(amountVND / amortizeDays, cur, rate)}/day
@@ -407,6 +478,11 @@ export function LogSheet({ open, onClose, initialMode = "log", prefill = null }:
           </div>
         )}
 
+        {blocker && (
+          <p className="mb-2 text-center font-mono text-[10px] uppercase tracking-widest text-slate-500" role="status">
+            → {blocker}
+          </p>
+        )}
         <button
           onClick={mode === "log" ? submitLog : submitVault}
           disabled={mode === "log" ? !canLog : !canVault}

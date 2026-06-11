@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -121,6 +121,17 @@ function AppShell() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Register the offline service worker so the installed PWA cold-starts
+  // without a network connection. Production only — dev relies on HMR.
+  useEffect(() => {
+    if (import.meta.env.PROD && "serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        /* offline support is progressive enhancement — never block the app */
+      });
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppProvider>

@@ -30,10 +30,12 @@ export function BottomNav() {
           const showBadge =
             (to === "/vault" && app.data.vaultItems.some((v) => v.status === "ready")) ||
             (to === "/exchange" && hasAffordableReward);
+          const badgeLabel = to === "/vault" ? "Vault item ready" : "Reward affordable";
           return (
             <Link
               key={to}
               to={to}
+              aria-current={active ? "page" : undefined}
               className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-[10px] uppercase tracking-wider transition-all duration-300 ${
                 active ? "-translate-y-1 text-cyan-400" : "text-slate-500 hover:text-slate-300"
               }`}
@@ -59,7 +61,10 @@ export function BottomNav() {
                   className={`h-6 w-6 transition-all ${active ? "drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]" : ""}`}
                 />
                 {showBadge && (
-                  <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
+                  <>
+                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-950 animate-pulse" aria-hidden></span>
+                    <span className="sr-only">{badgeLabel}</span>
+                  </>
                 )}
               </span>
               <span className="font-mono">{label}</span>
